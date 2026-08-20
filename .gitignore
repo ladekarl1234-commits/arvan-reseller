@@ -3,3 +3,4 @@ vendor/
 .phpunit.result.cache
 *.zip
 .env
+.playwright-cli/
