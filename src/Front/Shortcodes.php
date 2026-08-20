@@ -191,6 +191,10 @@ final class Shortcodes
         if (!$amount || $owner !== get_current_user_id()) {
             return Helpers::view('front/payment', self::ctx(['error' => __('تراکنش معتبر یافت نشد.', 'arvan-reseller')]));
         }
+        // Never mint a sandbox proof when the sandbox must not settle live.
+        if (\ArvanReseller\Payments\PaymentService::sandbox_blocked()) {
+            return Helpers::view('front/payment', self::ctx(['error' => __('درگاه پرداخت واقعی هنوز پیکربندی نشده است. با پشتیبانی تماس بگیرید.', 'arvan-reseller')]));
+        }
         return Helpers::view('front/payment', self::ctx([
             'ref'     => $ref,
             'type'    => $type,

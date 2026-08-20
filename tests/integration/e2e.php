@@ -156,7 +156,9 @@ check('retry succeeds', $retry['ok'], $retry['message']);
 check('order active after retry', OrderService::get((int) $fail_order['id'])['status'] === 'active');
 check('money never silently consumed', (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$wpdb->prefix}arvrs_ledger WHERE ref_id = %s", $fail_ref)) === 2);
 
-// ---------- 13. Per-customer commercial limits (review fix) ----------
+// ---------- 13. Per-customer spending limit (review fix) ----------
+// credit_limit is deliberately NOT a checkout gate (orders settle via the
+// gateway, net-zero on the wallet) — only spending_limit caps checkout.
 $carol = Customers::register('carol@example.com', 'password123', 'کارول');
 wp_set_current_user($carol);
 \ArvanReseller\Customers\Rules::save($carol, ['spending_limit' => 1000000, 'status' => 'active']);
@@ -164,20 +166,43 @@ $blocked = OrderService::create($carol, 'cloud_server', 'g1-8-8-100', ['region' 
 check('spending_limit blocks over-limit purchase', is_wp_error($blocked) && $blocked->get_error_code() === 'spending_limit',
     is_wp_error($blocked) ? $blocked->get_error_code() : 'no error');
 \ArvanReseller\Customers\Rules::save($carol, ['spending_limit' => '', 'credit_limit' => 0, 'status' => 'active']);
-$blocked2 = OrderService::create($carol, 'cloud_server', 'g1-2-2-25', ['region' => 'ir-thr-simin', 'image' => 'ubuntu-24.04']);
-check('credit_limit 0 blocks purchase with empty wallet', is_wp_error($blocked2) && $blocked2->get_error_code() === 'credit_limit',
-    is_wp_error($blocked2) ? $blocked2->get_error_code() : 'no error');
+$ok_order = OrderService::create($carol, 'cloud_server', 'g1-1-1-25', ['region' => 'ir-thr-simin', 'image' => 'ubuntu-24.04']);
+check('credit_limit does NOT block a gateway order (regression fix)', is_array($ok_order),
+    is_wp_error($ok_order) ? $ok_order->get_error_code() : 'ok');
 
-// ---------- 14. suspend_service policy action (review fix) ----------
-update_option('arvrs_settings', array_merge((array) get_option('arvrs_settings', []), ['policy_actions' => ['notify_customer', 'suspend_service']]));
-// Alice already has an active service and (after the section-9 drain) a low/negative balance.
-Ledger::append($alice, 'usage_debit', 500000, 'usage', 'e2e-suspend-drain', 'push to restricted');
-// Force restricted by simulating past-grace negativity: two more days of debt is not simulable here,
-// so assert the action WIRES to a status change when the stage reaches restricted via the engine directly.
-$suspend_stage = \ArvanReseller\Policies\PolicyEngine::stage(-100000, 500000, 100000, 0, 5); // grace_days=0, 5 days negative
-check('engine reaches restricted past grace', $suspend_stage === 'restricted', "stage=$suspend_stage");
-$suspend_actions = \ArvanReseller\Policies\PolicyEngine::actions_for('restricted', ['notify_customer', 'suspend_service']);
-check('suspend_service action fires at restricted', in_array('suspend_service', $suspend_actions, true));
+// ---------- 14. suspend_service applies then lifts on top-up (review fix) ----------
+// Isolated customer 'dave' with one directly-seeded service and a debt dated
+// past the grace window, so apply_policy reaches 'restricted' synchronously.
+update_option('arvrs_settings', array_merge((array) get_option('arvrs_settings', []),
+    ['policy_actions' => ['notify_customer', 'block_purchases', 'suspend_service'], 'policy_grace_days' => 3]));
+$dave = Customers::register('dave@example.com', 'password123', 'داوود');
+$wpdb->insert("{$wpdb->prefix}arvrs_services", [
+    'order_id' => 999001, 'customer_id' => $dave, 'credential_id' => 0, 'product' => 'cloud_server',
+    'plan_id' => 'g1-1-1-25', 'remote_id' => 'demo-seed-dave', 'status' => 'active',
+    'config' => '{}', 'connection' => '{}', 'is_demo' => 1,
+    'created_at' => gmdate('Y-m-d H:i:s'), 'updated_at' => gmdate('Y-m-d H:i:s'),
+]);
+// Debit dated 6 days ago → negative_since_days ≈ 6 > grace 3 → restricted.
+$wpdb->insert("{$wpdb->prefix}arvrs_ledger", [
+    'customer_id' => $dave, 'type' => 'usage_debit', 'direction' => 'debit', 'amount' => 500000,
+    'currency' => 'IRT', 'ref_type' => 'usage', 'ref_id' => 'dave-old-debt', 'description' => 'aged debt',
+    'actor' => 'system', 'is_demo' => 1, 'created_at' => gmdate('Y-m-d H:i:s', time() - 6 * 86400),
+]);
+$rstage = UsageSync::apply_policy($dave);
+check('customer reaches restricted stage', $rstage === 'restricted', "stage=$rstage");
+$sus = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$wpdb->prefix}arvrs_services WHERE customer_id = %d AND status = 'suspended'", $dave));
+check('services suspended at restricted', $sus >= 1, "suspended=$sus");
+check('purchases blocked while restricted', UsageSync::purchases_blocked($dave));
+$rescue_ref = 'TOP-RESCUE01';
+add_option('arvrs_topup_' . $rescue_ref, ['customer_id' => $dave, 'amount' => 10000000, 'at' => time()], '', false);
+PaymentService::handle_topup_callback($rescue_ref, ['sandbox_proof' => SandboxProvider::proof($rescue_ref, 10000000, 'topup'), 'type' => 'topup']);
+$sus_after = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$wpdb->prefix}arvrs_services WHERE customer_id = %d AND status = 'suspended'", $dave));
+check('top-up lifts suspension', $sus_after === 0, "suspended_after=$sus_after");
+check('purchases unblocked after top-up', !UsageSync::purchases_blocked($dave));
+
+// ---------- 15. demo ledger rows carry is_demo (reconciliation isolation) ----------
+$demo_ledger = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}arvrs_ledger WHERE is_demo = 1");
+check('demo-mode ledger rows are is_demo stamped', $demo_ledger > 0, "demo_rows=$demo_ledger");
 
 echo "\n" . ($GLOBALS['fails'] === 0 ? 'ALL E2E CHECKS PASSED' : $GLOBALS['fails'] . ' E2E CHECKS FAILED') . "\n";
 exit($GLOBALS['fails'] === 0 ? 0 : 1);

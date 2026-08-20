@@ -15,7 +15,7 @@
 defined('ABSPATH') || exit;
 
 define('ARVRS_VERSION', '1.0.0');
-define('ARVRS_SCHEMA_VERSION', 3);
+define('ARVRS_SCHEMA_VERSION', 4);
 define('ARVRS_FILE', __FILE__);
 define('ARVRS_DIR', plugin_dir_path(__FILE__));
 define('ARVRS_URL', plugin_dir_url(__FILE__));

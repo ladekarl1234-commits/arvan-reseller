@@ -87,9 +87,9 @@ final class Menu
         $cost    = (int) $wpdb->get_var("SELECT COALESCE(SUM(base_cost),0) FROM $orders_table WHERE status IN ('paid','provisioning','active')$demo_filter");
         $margin  = (int) $wpdb->get_var("SELECT COALESCE(SUM(margin),0) FROM $orders_table WHERE status IN ('paid','provisioning','active')$demo_filter");
         $failed  = (int) $wpdb->get_var("SELECT COUNT(*) FROM $orders_table WHERE status = 'provision_failed'$demo_filter");
-        $ledger  = Ledger::table();
-        $credit  = (int) $wpdb->get_var("SELECT COALESCE(SUM(CASE WHEN direction='credit' THEN amount ELSE -amount END),0) FROM $ledger");
-        $negatives = array_filter(Ledger::reconciliation(200), static function ($row) {
+        $include_demo = Plugin::demo_mode();
+        $credit  = Ledger::total_credit($include_demo);
+        $negatives = array_filter(Ledger::reconciliation(200, $include_demo), static function ($row) {
             return (int) $row['available'] < 0;
         });
 

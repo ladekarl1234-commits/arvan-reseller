@@ -73,13 +73,12 @@ final class BaseCosts
             ['object_storage', 'os-500gb', 2000000],
             ['object_storage', 'os-1tb',   3800000],
         ];
-        global $wpdb;
         foreach ($rows as [$product, $plan, $cost]) {
-            // Seed only if the row is absent; never clobber an admin-edited price.
-            $exists = (int) $wpdb->get_var($wpdb->prepare(
-                'SELECT COUNT(*) FROM ' . self::table() . ' WHERE product = %s AND plan_id = %s', $product, $plan
-            ));
-            if (!$exists) {
+            // Seed when absent; also repair a 0 (never a valid sellable price —
+            // a 0 row was seeded by an older version and would now be hidden
+            // from the storefront). A real admin-edited price is never 0, so
+            // this cannot clobber an intentional value.
+            if (self::get($product, $plan) <= 0) {
                 self::set($product, $plan, $cost, $source);
             }
         }

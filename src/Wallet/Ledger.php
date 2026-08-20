@@ -42,13 +42,17 @@ final class Ledger
             throw new \InvalidArgumentException('Invalid ledger entry: ' . $type);
         }
 
+        // Stamp demo rows so admin money views can exclude them in real
+        // operation (spec §11). Derived at write time from the active mode.
+        $is_demo = (class_exists('ArvanReseller\\Plugin') && \ArvanReseller\Plugin::demo_mode()) ? 1 : 0;
+
         // INSERT IGNORE + unique key = atomic idempotency without SELECT-then-INSERT races.
         $sql = $wpdb->prepare(
             'INSERT IGNORE INTO ' . self::table() .
-            ' (customer_id, type, direction, amount, currency, ref_type, ref_id, description, actor, created_at)
-              VALUES (%d, %s, %s, %d, %s, %s, %s, %s, %s, %s)',
+            ' (customer_id, type, direction, amount, currency, ref_type, ref_id, description, actor, is_demo, created_at)
+              VALUES (%d, %s, %s, %d, %s, %s, %s, %s, %s, %d, %s)',
             $customer_id, $type, $direction, $amount, 'IRT',
-            $ref_type, $ref_id, $description, $actor, Helpers::now()
+            $ref_type, $ref_id, $description, $actor, $is_demo, Helpers::now()
         );
         $wpdb->last_error = '';
         $wpdb->query($sql);
@@ -180,18 +184,33 @@ final class Ledger
         ) ?: [];
     }
 
-    /** Admin reconciliation: totals per customer. */
-    public static function reconciliation(int $limit = 100): array
+    /**
+     * Admin reconciliation: totals per customer. $include_demo=false (real
+     * operation) excludes demo-stamped rows so demo money never pollutes live
+     * figures (spec §11).
+     */
+    public static function reconciliation(int $limit = 100, bool $include_demo = true): array
     {
         global $wpdb;
+        $where = $include_demo ? '' : ' WHERE is_demo = 0';
         return $wpdb->get_results($wpdb->prepare(
             "SELECT customer_id,
                     SUM(CASE WHEN direction='credit' THEN amount ELSE 0 END) AS credits,
                     SUM(CASE WHEN direction='debit'  THEN amount ELSE 0 END) AS debits,
                     SUM(CASE WHEN direction='credit' THEN amount ELSE -amount END) AS available
-             FROM " . self::table() . '
+             FROM " . self::table() . $where . '
              GROUP BY customer_id ORDER BY available ASC LIMIT %d',
             $limit
         ), ARRAY_A) ?: [];
+    }
+
+    /** Total outstanding customer credit; excludes demo rows in real mode. */
+    public static function total_credit(bool $include_demo = true): int
+    {
+        global $wpdb;
+        $where = $include_demo ? '' : ' WHERE is_demo = 0';
+        return (int) $wpdb->get_var(
+            "SELECT COALESCE(SUM(CASE WHEN direction='credit' THEN amount ELSE -amount END),0) FROM " . self::table() . $where
+        );
     }
 }

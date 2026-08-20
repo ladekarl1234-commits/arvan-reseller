@@ -24,11 +24,25 @@ final class PaymentService
      * @param array $payload whitelisted provider fields
      * @return array{ok:bool,replay:bool,message:string,order:?array}
      */
+    /**
+     * The sandbox gateway hands a self-verifiable proof to the buyer, so it
+     * must never settle a real transaction. True when the active provider is
+     * the sandbox but the store is NOT in demo mode — every settlement path
+     * (checkout, callback, top-up, payment page) checks this.
+     */
+    public static function sandbox_blocked(): bool
+    {
+        return Plugin::payments()->id() === 'sandbox' && !Plugin::demo_mode();
+    }
+
     public static function handle_order_callback(string $payment_ref, array $payload): array
     {
         $order = OrderService::by_ref($payment_ref);
         if (!$order) {
             return ['ok' => false, 'replay' => false, 'message' => __('سفارش یافت نشد.', 'arvan-reseller'), 'order' => null];
+        }
+        if (self::sandbox_blocked()) {
+            return ['ok' => false, 'replay' => false, 'message' => __('درگاه پرداخت واقعی پیکربندی نشده است.', 'arvan-reseller'), 'order' => $order];
         }
 
         // Terminal/processed states answer idempotently BEFORE any side effect.
@@ -55,11 +69,17 @@ final class PaymentService
 
         $customer_id = (int) $claimed['customer_id'];
         // Double-entry-inspired pair on the unique business key (payment_ref):
-        // the money that came in, and the purchase it settled.
-        Ledger::append($customer_id, 'payment', (int) $claimed['amount'], 'order', $payment_ref,
-            sprintf(__('پرداخت سفارش #%d', 'arvan-reseller'), (int) $claimed['id']), 'gateway:' . Plugin::payments()->id());
-        Ledger::append($customer_id, 'purchase', (int) $claimed['amount'], 'order', $payment_ref,
-            sprintf(__('خرید سرویس — سفارش #%d', 'arvan-reseller'), (int) $claimed['id']));
+        // the money that came in, and the purchase it settled. A transient DB
+        // failure here must NOT strand a paid order: log it and continue to
+        // provisioning (the discrepancy surfaces in reconciliation + audit).
+        try {
+            Ledger::append($customer_id, 'payment', (int) $claimed['amount'], 'order', $payment_ref,
+                sprintf(__('پرداخت سفارش #%d', 'arvan-reseller'), (int) $claimed['id']), 'gateway:' . Plugin::payments()->id());
+            Ledger::append($customer_id, 'purchase', (int) $claimed['amount'], 'order', $payment_ref,
+                sprintf(__('خرید سرویس — سفارش #%d', 'arvan-reseller'), (int) $claimed['id']));
+        } catch (\Throwable $e) {
+            Audit::error('ledger.payment_append_failed', ['order' => (int) $claimed['id'], 'ref' => $payment_ref, 'error' => $e->getMessage()]);
+        }
 
         Notifier::customer($customer_id, 'payment_success',
             __('پرداخت موفق', 'arvan-reseller'),
@@ -101,15 +121,27 @@ final class PaymentService
         if (!is_array($intent)) {
             return ['ok' => false, 'replay' => false, 'message' => __('تراکنش یافت نشد.', 'arvan-reseller')];
         }
+        if (self::sandbox_blocked()) {
+            return ['ok' => false, 'replay' => false, 'message' => __('درگاه پرداخت واقعی پیکربندی نشده است.', 'arvan-reseller')];
+        }
         $verify = Plugin::payments()->verify($ref, (int) $intent['amount'], $payload);
         if (empty($verify['ok'])) {
             return ['ok' => false, 'replay' => false, 'message' => $verify['message'] ?? __('تأیید پرداخت ناموفق بود.', 'arvan-reseller')];
         }
-        $row_id = Ledger::append((int) $intent['customer_id'], 'topup', (int) $intent['amount'], 'topup', $ref,
-            __('افزایش اعتبار کیف پول', 'arvan-reseller'), 'gateway:' . Plugin::payments()->id());
+        try {
+            $row_id = Ledger::append((int) $intent['customer_id'], 'topup', (int) $intent['amount'], 'topup', $ref,
+                __('افزایش اعتبار کیف پول', 'arvan-reseller'), 'gateway:' . Plugin::payments()->id());
+        } catch (\Throwable $e) {
+            // Real DB failure — report failure so the gateway retries (the
+            // unique key makes the retry idempotent).
+            Audit::error('ledger.topup_append_failed', ['ref' => $ref, 'error' => $e->getMessage()]);
+            return ['ok' => false, 'replay' => false, 'message' => __('خطای موقت در ثبت تراکنش. لطفاً دوباره تلاش کنید.', 'arvan-reseller')];
+        }
         if ($row_id === 0) {
             return ['ok' => true, 'replay' => true, 'message' => __('این تراکنش قبلاً ثبت شده است.', 'arvan-reseller')];
         }
+        // Crediting the wallet can lift a suspension / clear a purchase block.
+        \ArvanReseller\Usage\UsageSync::apply_policy((int) $intent['customer_id']);
         Notifier::customer((int) $intent['customer_id'], 'topup_success',
             __('افزایش اعتبار موفق', 'arvan-reseller'),
             __('اعتبار کیف پول شما با موفقیت افزایش یافت.', 'arvan-reseller'));

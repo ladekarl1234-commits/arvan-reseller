@@ -90,7 +90,7 @@ final class Routes
             'methods' => 'POST', 'permission_callback' => $customer_auth,
             'args' => ['amount' => ['type' => 'integer', 'required' => true, 'minimum' => 100000, 'maximum' => 500000000]],
             'callback' => static function (\WP_REST_Request $r) {
-                if (!Plugin::demo_mode() && Plugin::payments()->id() === 'sandbox') {
+                if (PaymentService::sandbox_blocked()) {
                     return new \WP_Error('no_gateway', __('درگاه پرداخت واقعی هنوز پیکربندی نشده است.', 'arvan-reseller'), ['status' => 503]);
                 }
                 $url = PaymentService::start_topup(get_current_user_id(), (int) $r['amount']);
@@ -132,7 +132,7 @@ final class Routes
         // The sandbox gateway hands a self-verifiable proof to the buyer, so it
         // must NEVER be the live payment path in real operation — refuse to
         // sell until a real gateway adapter is registered (ADR-0006).
-        if (!Plugin::demo_mode() && Plugin::payments()->id() === 'sandbox') {
+        if (PaymentService::sandbox_blocked()) {
             return new \WP_Error('no_gateway', __('درگاه پرداخت واقعی هنوز پیکربندی نشده است. با پشتیبانی تماس بگیرید.', 'arvan-reseller'), ['status' => 503]);
         }
         if (UsageSync::purchases_blocked($customer_id)) {

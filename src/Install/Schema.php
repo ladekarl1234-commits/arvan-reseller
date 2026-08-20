@@ -112,6 +112,7 @@ final class Schema
                 ref_id varchar(64) NOT NULL DEFAULT '',
                 description text NULL,
                 actor varchar(64) NOT NULL DEFAULT 'system',
+                is_demo tinyint(1) NOT NULL DEFAULT 0,
                 created_at datetime NOT NULL,
                 PRIMARY KEY  (id),
                 UNIQUE KEY uniq_ref (ref_type,ref_id,type),

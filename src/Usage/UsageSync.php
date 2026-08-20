@@ -61,10 +61,20 @@ final class UsageSync
                 if (!$service) {
                     continue; // never attribute usage we cannot map (spec: no blind attribution)
                 }
-                $result = self::ingest((int) $service['id'], (int) $service['customer_id'], $row);
+                try {
+                    $result = self::ingest((int) $service['id'], (int) $service['customer_id'], $row);
+                } catch (\Throwable $e) {
+                    // One bad debit (transient DB error) must not abort the
+                    // whole cron run — record and move on.
+                    $stats['errors']++;
+                    Audit::error('usage.ingest_failed', ['service' => (int) $service['id'], 'error' => $e->getMessage()]);
+                    continue;
+                }
                 $stats['ingested'] += $result['ingested'];
                 $stats['debited']  += $result['debited'];
-                if ($result['ingested']) {
+                // Re-stage whenever the wallet actually moved — an ingest OR a
+                // crash-recovery back-fill can cross a policy threshold.
+                if ($result['ingested'] || $result['debited']) {
                     $touched[(int) $service['customer_id']] = true;
                 }
             }

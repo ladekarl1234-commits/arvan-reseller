@@ -80,16 +80,16 @@ final class OrderService
         $quote = Pricing::quote($product, $plan_id, (int) $plan['base_cost'], $customer_id);
         $price = (int) $quote['customer_price'];
 
-        // Enforce per-customer commercial limits (spec §customer rules).
+        // Enforce the per-customer spending cap at checkout (spec §customer
+        // rules). credit_limit is NOT a checkout gate: orders are settled via
+        // the gateway (net-zero on the wallet), so it governs how far
+        // usage-driven balance may go negative — that lives in the policy
+        // engine (grace → restricted), not here.
         $rule = \ArvanReseller\Customers\Rules::get($customer_id);
-        if ($rule) {
-            $balance = \ArvanReseller\Wallet\Ledger::balance($customer_id);
-            if ($rule['spending_limit'] !== null && ($balance['consumed'] + $price) > (int) $rule['spending_limit']) {
+        if ($rule && $rule['spending_limit'] !== null) {
+            $consumed = \ArvanReseller\Wallet\Ledger::balance($customer_id)['consumed'];
+            if (($consumed + $price) > (int) $rule['spending_limit']) {
                 return new \WP_Error('spending_limit', __('این خرید از سقف مجاز حساب شما عبور می‌کند. با پشتیبانی تماس بگیرید.', 'arvan-reseller'));
-            }
-            // credit_limit = how far the wallet may go negative on purchase.
-            if ($rule['credit_limit'] !== null && ($balance['available'] - $price) < -((int) $rule['credit_limit'])) {
-                return new \WP_Error('credit_limit', __('اعتبار کافی نیست. لطفاً ابتدا کیف پول را شارژ کنید.', 'arvan-reseller'));
             }
         }
 

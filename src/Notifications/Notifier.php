@@ -27,7 +27,11 @@ final class Notifier
 
     public static function customer(int $customer_id, string $type, string $title, string $body): void
     {
-        self::push($customer_id, $type, $title, $body);
+        // Email rides the SAME cooldown as the in-app notice: push() returns
+        // false when suppressed, so a steady-state warning does not mail hourly.
+        if (!self::push($customer_id, $type, $title, $body)) {
+            return;
+        }
         $user = get_userdata($customer_id);
         if ($user && in_array($type, ['payment_success', 'provisioned', 'provision_failed', 'low_balance', 'critical_balance', 'suspension_warning'], true)) {
             wp_mail($user->user_email, wp_specialchars_decode($title), $body); // best-effort
@@ -39,7 +43,8 @@ final class Notifier
         self::push(0, $type, $title, $body);
     }
 
-    private static function push(int $recipient, string $type, string $title, string $body): void
+    /** @return bool true when a notice was actually written (false = cooldown-suppressed) */
+    private static function push(int $recipient, string $type, string $title, string $body): bool
     {
         global $wpdb;
         if (in_array($type, self::COOLDOWN_TYPES, true)) {
@@ -49,7 +54,7 @@ final class Notifier
                 $recipient, $type, gmdate('Y-m-d H:i:s', time() - $hours * HOUR_IN_SECONDS)
             ));
             if ($recent) {
-                return; // still inside cooldown — no duplicate
+                return false; // still inside cooldown — no duplicate
             }
         }
         $wpdb->insert(self::table(), [
@@ -59,6 +64,7 @@ final class Notifier
             'body'        => $body,
             'created_at'  => Helpers::now(),
         ]);
+        return true;
     }
 
     public static function for_user(int $customer_id, int $limit = 10): array
