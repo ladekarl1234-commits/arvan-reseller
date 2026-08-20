@@ -7,6 +7,7 @@
 ![WordPress](https://img.shields.io/badge/WordPress-6.2%2B-21759b)
 ![License](https://img.shields.io/badge/license-GPL--2.0-blue)
 ![Tests](https://img.shields.io/badge/tests-46_unit_·_54_e2e-16a34a)
+![Expert review](https://img.shields.io/badge/expert_panel-72.5%2F100-b45309)
 
 ## Why this exists
 
@@ -153,6 +154,32 @@ Security is a first-class deliverable (70/300 points). Highlights — full detai
 - **Licensing**: bcrypt allowlist; only a SHA-256 fingerprint of the accepted token is stored.
 - **Auditability**: credential changes, pricing changes, refunds, license events → append-only audit log with IP.
 
+## Independent expert review
+
+This codebase was put through a **15-agent expert evaluation panel**. Each reviewer took one dimension, read the source (not the README), scored it 0–100 against a published scale, and filed evidence-backed findings with `file:line` references. They shared no context, so where two of them land on the same defect, that is corroboration rather than coordination.
+
+**Weighted result: 72.5 / 100** — 141 findings: **6 critical, 43 high, 64 medium, 28 low.**
+
+| Strongest | | Weakest | |
+|---|---:|---|---:|
+| Documentation | 85 | Business viability | 56 |
+| Code quality | 84 | Scalability | 62 |
+| Security | 84 | Visual design / Testing / a11y / Integration | 66 |
+| Product completeness | 82 | Operational readiness | 68 |
+
+The panel did not return a clean bill of health, and the record is published unedited on purpose. Its headline conclusions:
+
+- **`ArvanClient` retries non-idempotent `POST`s** on timeout/5xx — found independently by two reviewers, and the single most serious defect: a slow upstream create can charge once and provision twice.
+- **The recurring-revenue model is not implemented** — a "monthly package" is charged exactly once; there is no renewal path in the code.
+- **In real mode the wallet/usage/credit-policy subsystem is inert**, because ArvanCloud publishes no usage API (documented, but the consequence is larger than the docs imply).
+- **The payment screen can tell a customer the service is ready when provisioning failed.**
+
+Full record — process, per-dimension scores with reasoning, convergence analysis, and every finding with evidence and a fix:
+
+- 📋 **[docs/EXPERT_REVIEW.md](docs/EXPERT_REVIEW.md)** — the panel, the scores, the reasoning
+- 🐛 **[docs/review/ISSUE_BACKLOG.md](docs/review/ISSUE_BACKLOG.md)** — all 141 findings, each with ID, evidence, impact, fix and effort
+- 🤖 **[docs/review/panel-results.json](docs/review/panel-results.json)** — machine-readable results
+
 ## Installation
 
 **Requirements:** WordPress 6.2+, PHP 7.4+ with libsodium (standard), MySQL 5.7+/MariaDB 10.3+.
@@ -202,11 +229,11 @@ docs/                  Engineering handbook (ADRs, threat model, scalability…)
 
 ## Documentation
 
-[spec.md](spec.md) — engineering source of truth · [ARCHITECTURE.md](ARCHITECTURE.md) · [SECURITY.md](SECURITY.md) · [docs/STACK_EVALUATION.md](docs/STACK_EVALUATION.md) · [docs/SCALABILITY.md](docs/SCALABILITY.md) · [docs/CAPACITY_MODEL.md](docs/CAPACITY_MODEL.md) · [docs/API_INTEGRATION.md](docs/API_INTEGRATION.md) · [docs/DATA_MODEL.md](docs/DATA_MODEL.md) · [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md) · [docs/adr/](docs/adr/) · [docs/REQUIREMENTS_TRACEABILITY.md](docs/REQUIREMENTS_TRACEABILITY.md) · [CONTRIBUTING.md](CONTRIBUTING.md) · [HACKATHON_READINESS.md](HACKATHON_READINESS.md)
+[spec.md](spec.md) — engineering source of truth · [docs/EXPERT_REVIEW.md](docs/EXPERT_REVIEW.md) — independent 15-agent audit · [ARCHITECTURE.md](ARCHITECTURE.md) · [SECURITY.md](SECURITY.md) · [docs/STACK_EVALUATION.md](docs/STACK_EVALUATION.md) · [docs/SCALABILITY.md](docs/SCALABILITY.md) · [docs/CAPACITY_MODEL.md](docs/CAPACITY_MODEL.md) · [docs/API_INTEGRATION.md](docs/API_INTEGRATION.md) · [docs/DATA_MODEL.md](docs/DATA_MODEL.md) · [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md) · [docs/adr/](docs/adr/) · [docs/REQUIREMENTS_TRACEABILITY.md](docs/REQUIREMENTS_TRACEABILITY.md) · [CONTRIBUTING.md](CONTRIBUTING.md) · [HACKATHON_READINESS.md](HACKATHON_READINESS.md)
 
 ## Known limitations
 
-Honest list — each with the fallback that ships:
+Honest list — each with the fallback that ships. The independent panel found more than this list contained; its findings are the fuller answer and are tracked in [the backlog](docs/review/ISSUE_BACKLOG.md).
 
 - **No public Arvan billing/usage API** (verified) → real-mode usage rows are not fetchable; the reseller bills fixed monthly packages, and the full usage engine is demonstrated with the deterministic demo provider. Single integration point ready when Arvan publishes one.
 - **No public pricing API** → base costs are an admin-maintained table seeded from the public pricing page, with source + timestamp stamps.

@@ -1,0 +1,1291 @@
+{
+    "review_date": "2026-08-20",
+    "weighted_score": 72.5,
+    "reviewers": 15,
+    "finding_counts": {
+        "critical": 6,
+        "high": 43,
+        "medium": 64,
+        "low": 28
+    },
+    "dimensions": [
+        {
+            "dimension": "Business Viability & Value Proposition",
+            "short": "Business viability",
+            "weight": 7,
+            "score": 56,
+            "confidence": "high",
+            "verdict": "The provisioning-automation half of the pitch is real and the per-order margin math is genuinely tracked, but the money model only works for month one — there is no renewal/recurring charge anywhere in the code, real-mode usage returns an empty array so the entire wallet/usage/credit-policy value proposition is inert in production, and usage debits carry zero markup, so the recurring revenue a reseller business actually lives on is not implemented.",
+            "findings": [
+                {
+                    "severity": "critical",
+                    "title": "No renewal or recurring billing anywhere — a 'monthly package' is charged exactly once, forever",
+                    "location": "src/Install/Schema.php:84-103, src/Jobs/JobRunner.php:111-118",
+                    "impact": "The reseller sells a monthly package (BaseCosts seeds are explicitly 'monthly base costs', BaseCosts.php:56-75) and collects one payment. ArvanCloud keeps charging the reseller's upstream account hourly forever. Month 2 onward every active service is pure loss at 100% of upstream cost. At the documented Stage A profile (2,000 services, CAPACITY_MODEL.md:9-11) the reseller's upstream bill compounds monthly against a one-time revenue event. This is not a feature gap, it is the business model's revenue engine missing.",
+                    "recommendation": "Add `services.period_end` + a `renew_service` job that re-quotes at the current base cost, charges wallet-first (falling back to a gateway top-up link), and transitions to a `suspended`/`expired` state on non-payment. The state machine, ledger uniqueness keys and job runner already support this — it is a new job type and one column, not a rewrite.",
+                    "effort": "L"
+                },
+                {
+                    "severity": "critical",
+                    "title": "The entire wallet/usage/credit-policy subsystem is dead code in real mode",
+                    "location": "src/Arvan/RealProvider.php:317-320",
+                    "impact": "In production a customer's `available` balance can only ever be >= 0, so `PolicyEngine::stage()` returns HEALTHY permanently and the warning/critical/grace/restricted ladder, the negative-balance dashboard panel (templates/admin/dashboard.php:31-45), the reconciliation view and the usage tab never fire. Four of the eleven tables and roughly a third of the advertised feature surface ('Usage', 'Wallet', 'Policies' rows in the README capability table) do nothing for a paying reseller. README.md:211 admits usage 'is not fetchable' but does not state that the credit-policy product therefore has no real-mode function.",
+                    "recommendation": "Either (a) drive usage from what the plugin already knows — synthesize periodic charges from the sold plan's base cost, which is exactly what `DemoProvider::usage()` does at DemoProvider.php:158-159 and would make the policy engine live — or (b) state plainly in README's limitations that wallet/usage/policy are demo-only in 1.0. Shipping it as a headline capability while it is inert upstream is the kind of gap a first commercial customer finds in week one.",
+                    "effort": "L"
+                },
+                {
+                    "severity": "high",
+                    "title": "Usage debits are posted at raw upstream cost — the metered revenue path earns zero margin",
+                    "location": "src/Usage/UsageSync.php:116,123",
+                    "impact": "On the consumption model the plugin is architecturally built for, the reseller resells at exactly cost: 0% gross margin, and `orders.margin` does not capture it either because no order row is created. The demo therefore shows a customer's wallet being drained by the full upstream monthly cost on top of a marked-up package payment already collected at checkout — the customer is charged roughly twice for the same resource while the reseller's books record margin only once. The money model is not internally consistent between its two halves.",
+                    "recommendation": "Run usage cost through `Pricing::quote()` (or at minimum the global/product markup) before the ledger debit, and record the cost/price delta so metered margin lands in the same reporting path as order margin. Then decide explicitly whether checkout is a package sale OR a prepaid deposit — the current code does both simultaneously.",
+                    "effort": "S"
+                },
+                {
+                    "severity": "high",
+                    "title": "Real-mode cloud-server plans are unsellable out of the box; the wizard reports pricing as complete anyway",
+                    "location": "src/Pricing/BaseCosts.php:59-64 vs src/Arvan/RealProvider.php:66-77",
+                    "impact": "A real reseller finishes onboarding, is told «راه‌اندازی کامل شد. فروشگاه شما آماده است!» (Wizard.php:224), and lands on an empty cloud-server page. Recovery is hand-transcribing every Arvan flavor id and its price into the one-row-at-a-time form at templates/admin/pricing.php:52-58. Time-to-first-sale goes from minutes to an hour of error-prone data entry, and a mistyped base cost silently mis-prices every future order since margin is derived from it.",
+                    "recommendation": "Add an 'import plans from Arvan' action that inserts a `base_costs` row per live flavor with cost 0, and make the wizard's pricing check assert that at least one plan from the *active provider's* catalog has a non-zero base cost. That converts a silent empty storefront into an explicit checklist item.",
+                    "effort": "M"
+                },
+                {
+                    "severity": "high",
+                    "title": "Reported margin is notional — nothing reconciles it against what the reseller actually owes ArvanCloud",
+                    "location": "src/Admin/Menu.php:86-88, src/Pricing/BaseCosts.php:31-40",
+                    "impact": "The 'سود ناخالص' figure on the dashboard is a modelled number, not a P&L. If Arvan's real prices drift, a promotion applies, or a server runs 45 days instead of 30, the dashboard keeps reporting healthy margin while the reseller is losing money. A reseller cannot use this to decide markup levels, which is the single most important decision the tool exists to support.",
+                    "recommendation": "Label the figure as estimated in the UI, add a `base_costs.updated_at` staleness warning on the dashboard (the column already exists and is shown on the pricing page), and add a manual 'upstream invoice this month' input so actual COGS can be diffed against modelled cost. Cheap, and it converts a vanity metric into a decision metric.",
+                    "effort": "M"
+                },
+                {
+                    "severity": "medium",
+                    "title": "Financial reporting is lifetime-cumulative only — no MRR, no period, no churn",
+                    "location": "src/Admin/Menu.php:86-89",
+                    "impact": "For a recurring-revenue business the operator cannot answer 'what did I earn this month', 'is revenue growing', or 'how many services churned'. Combined with the missing renewal engine, the reseller has no instrument that would even reveal the month-2 revenue cliff. ROADMAP.md:16 mentions CSV export and monthly statements only at v1.2.",
+                    "recommendation": "Add a month selector to the dashboard queries (the index is already there) and a services-active-by-month count. Roughly a day of work for the reporting a reseller checks daily.",
+                    "effort": "M"
+                },
+                {
+                    "severity": "medium",
+                    "title": "Two of three products still require manual reseller intervention to deliver credentials",
+                    "location": "src/Arvan/RealProvider.php:220-225, docs/API_INTEGRATION.md:59",
+                    "impact": "README.md:13-15 sells the removal of exactly this — 'copy the IP and password, and email it back'. In practice the reseller still logs into the panel per cloud-server sale to retrieve or reset the root password, and per object-storage sale to mint and hand over S3 keys. The 'no human in the loop' claim holds fully only for CDN. The object-storage caveat is disclosed in README's limitations; the cloud-server password gap is not.",
+                    "recommendation": "Disclose the root-password path in README's known-limitations list alongside the S3 one, and give the admin a per-service 'send credentials' action that records the handoff in the audit log — so the residual manual step is at least tracked and auditable rather than invisible.",
+                    "effort": "M"
+                }
+            ]
+        },
+        {
+            "dimension": "Code Quality & Maintainability",
+            "short": "Code quality",
+            "weight": 8,
+            "score": 84,
+            "confidence": "high",
+            "verdict": "Unusually disciplined for a hackathon build — small single-purpose classes, consistent WordPress conventions, genuinely explanatory WHY comments, verified PHP 7.4 syntax discipline, and pure domain classes (PricingEngine, StateMachine, PolicyEngine, Ledger::derive) that are unit-tested without a DB — held back by a fragile string-matching contract between the job runner and the provisioner, ~100 lines of dead provider/helper surface, a default value that disagrees with itself across six files, and zero automated coverage of any `$wpdb` path.",
+            "findings": [
+                {
+                    "severity": "high",
+                    "title": "Job runner decides retry-vs-success by substring-matching English prose from Provisioner",
+                    "location": "src/Jobs/JobRunner.php:114",
+                    "impact": "Two failure modes. (1) Rewording either Provisioner string — a natural refactor, they are untranslated debug prose — silently converts a benign 'already handled' result into a thrown exception, so the job retries 5 times and lands in `dead` with an admin alert. (2) Non-retryable ProviderError kinds (`auth`, `invalid`) return `$e->customer_message()`, a Persian string (src/Arvan/DTO.php:88) that can never match either English needle, so a permanently misconfigured credential burns all 5 attempts and 53 minutes of backoff before surfacing.",
+                    "recommendation": "Return a machine-readable outcome from `Provisioner::provision()` — e.g. add `'code' => 'not_found'|'not_claimable'|'provisioned'|'failed'` to the returned array (the shape is already documented in its `@return` annotation) — and switch `JobRunner::execute()` on that code. The message field then stays free to be reworded or translated.",
+                    "effort": "S"
+                },
+                {
+                    "severity": "medium",
+                    "title": "Default brand color is defined six times with two different values",
+                    "location": "src/Support/Options.php:28",
+                    "impact": "A fresh install renders with `#14bfb4` (from DEFAULTS) but the moment an admin saves branding with an empty or invalid color, `sanitize_hex_color(...) ?: '#0c6960'` writes the *other* teal — the storefront accent silently changes on an unrelated save. Changing the product's default color now requires editing six files and noticing that two of them disagree.",
+                    "recommendation": "Delete the five `'#0c6960'` literals and read the single source: `Options::DEFAULTS['brand_color']` (via `Options::get('brand_color')`, which already falls back to DEFAULTS). Same treatment for the CSS token in assets/css/front.css:9.",
+                    "effort": "S"
+                },
+                {
+                    "severity": "medium",
+                    "title": "~100 lines of dead provider and helper surface that must still be maintained and reviewed",
+                    "location": "src/Arvan/ProviderInterface.php:36",
+                    "impact": "Every future contributor reads, reviews and must keep compiling ArvanCloud delete/status endpoints that no code path can reach — including a `DELETE /servers/{id}` implementation that has never executed. New provider adapters are forced to implement three methods nothing calls. The duplicated masking means a change to the mask format silently applies in one place only.",
+                    "recommendation": "Delete `status()`/`delete()`/`is_real()` from the interface and both providers (git history keeps them for when a service-management UI actually lands), drop `Services::set_status()`, and make `Credentials::all()` call `Crypto::mask()` instead of rebuilding the string.",
+                    "effort": "M"
+                },
+                {
+                    "severity": "medium",
+                    "title": "Credential selection has a redundant branch that defeats its own stated preference",
+                    "location": "src/Arvan/Credentials.php:115",
+                    "impact": "The second `if` fires on exactly the rows the first one skipped, so the pair collapses to `if ($fallback === null) $fallback = $candidate;` — the documented preference for an unrestricted credential is never applied. A reseller with credential A restricted to `cdn` (priority 5) and credential B unrestricted (priority 10) gets A as the fallback for `object_storage`, contradicting the class docblock's stated selection order. The dead branch also actively misleads the next reader into believing the preference exists.",
+                    "recommendation": "Either drop the first `if` (accepting first-in-priority-order as the fallback) or implement the intent with two accumulators — `$unrestricted` and `$any` — and `return $unrestricted ?? $any;`.",
+                    "effort": "S"
+                },
+                {
+                    "severity": "medium",
+                    "title": "No automated test covers any `$wpdb` path — the money and idempotency code has no regression net",
+                    "location": "tests/bootstrap.php:79",
+                    "impact": "The subtlest code in the repo is the untested code. `Ledger::append`'s replay-vs-real-failure distinction (Ledger.php:66-79) is exactly the logic whose regression means silent money loss, and a refactor of it produces a green `composer test`. New contributors get no fast feedback on the paths CONTRIBUTING.md declares highest-risk.",
+                    "recommendation": "Add an in-memory SQLite `$wpdb` shim to `tests/bootstrap.php` (PDO sqlite handles `INSERT … ON DUPLICATE`/`INSERT IGNORE` after a small rewrite, or run the existing schema through it) and port the five highest-value e2e checks — double callback, duplicate usage period, job claim race, refund credit, spending limit — into the unit suite so `composer test` covers them.",
+                    "effort": "L"
+                },
+                {
+                    "severity": "medium",
+                    "title": "Blocking sleeps inside the synchronous checkout/callback request path",
+                    "location": "src/Arvan/RealProvider.php:201",
+                    "impact": "A real-mode server purchase can hold the payment-callback PHP worker for 15 s of polling plus up to ~5.5 s of client retry — past many PHP `max_execution_time` and gateway callback timeouts, in which case the customer sees a failure for an order that actually succeeded. It also makes the provisioning path effectively impossible to unit-test without waiting real seconds.",
+                    "recommendation": "Drop the polling loop: `create_server()` already has a defined 'creating' return, and the durable job queued at PaymentService.php:106 is the designed mechanism for completing the picture. Return immediately with `'creating'` and let a `refresh_service` job fill the IP.",
+                    "effort": "S"
+                },
+                {
+                    "severity": "medium",
+                    "title": "Adding a product means editing ~10 sites, including hard-coded product lists that bypass Catalog::PRODUCTS",
+                    "location": "src/Arvan/Credentials.php:36",
+                    "impact": "The two literal arrays are the dangerous ones: a fourth product added to `Catalog::PRODUCTS` would be sellable and priceable, yet silently unassignable to a credential and silently strippable from a customer's `allowed_products` — a permission bug with no error message. The remaining spread makes 'add a product' a multi-hour change with no checklist in code.",
+                    "recommendation": "Replace both literals with `Catalog::PRODUCTS` (both files already sit downstream of it), and move the per-product config field definitions into one place — the `options()['fields']` shape the providers already return — so `sanitize_config()` and product.php can be driven from it rather than from parallel `if` chains.",
+                    "effort": "M"
+                },
+                {
+                    "severity": "low",
+                    "title": "Three concrete comment defects: a docblock attached to the wrong function, a stale @return, and a duplicated const comment",
+                    "location": "src/Payments/PaymentService.php:22",
+                    "impact": "IDE hovers and generated API docs attach a callback signature to a boolean predicate; a reader of `guard()` looks for a return value that does not exist. These are cheap credibility losses in a codebase whose comments are otherwise its strongest asset.",
+                    "recommendation": "Move the 22-26 block down to `handle_order_callback()`, change the `guard()` line to note that it `wp_die()`s on failure, and keep one of the two Notifier comments.",
+                    "effort": "S"
+                },
+                {
+                    "severity": "low",
+                    "title": "UsageSync::apply_policy is an 80-line multi-responsibility function with a duplicated `global $wpdb`",
+                    "location": "src/Usage/UsageSync.php:130",
+                    "impact": "The interaction between `mark_at_risk` (active→at_risk at :170) and the `else` reactivation branch (suspended→active at :193, at_risk→active at :199) is order-dependent and takes real effort to reason about; the bulk UPDATEs also bypass `Services::set_status()` and its status whitelist, so the two ways to change service status can drift. Highest-risk function in the module and, per the finding above, entirely untested.",
+                    "recommendation": "Split into `stage_for($customer_id)`, `notify_for_stage($customer_id, $stage, $worsened)` and `apply_service_holds($customer_id, $actions, $stage)`; hoist the single `global $wpdb;` and move the message table to a private const.",
+                    "effort": "M"
+                },
+                {
+                    "severity": "low",
+                    "title": "Admin order action relies on a helper's hidden exit() for control flow, with no return statements",
+                    "location": "src/Admin/Actions.php:243",
+                    "impact": "Adding logging, a shutdown hook, or any early-return refactor to `back()` turns every handler into fall-through: a 'cancel' action would also emit the 'unknown operation' redirect. A reader must jump to `back()` to learn the function ever terminates.",
+                    "recommendation": "Make `back()`'s exit explicit at each call site (`return self::back(…);` plus a `never`-style docblock) or convert the chain to a `switch` with `break`s and a single tail redirect; and copy PaymentService's two-line comment explaining the queue-then-inline pattern.",
+                    "effort": "S"
+                }
+            ]
+        },
+        {
+            "dimension": "Technical Architecture & Engineering Quality",
+            "short": "Architecture",
+            "weight": 10,
+            "score": 77,
+            "confidence": "high",
+            "verdict": "A genuinely well-reasoned modular monolith with real domain purity, a real provider seam and unusually disciplined DB-level concurrency correctness — undercut by a service-locator composition root that every module reaches back into (creating the cycles the docs deny), two layer inversions, and unrecoverable stuck states in the \"durable\" job/provisioning path.",
+            "findings": [
+                {
+                    "severity": "high",
+                    "title": "Durable job queue has no reaper: a crashed worker strands a job in 'running' forever",
+                    "location": "src/Jobs/JobRunner.php:56, 73-77",
+                    "impact": "A PHP fatal, OOM or max_execution_time kill mid-job (the common case, since provisioning does blocking HTTP + sleeps) leaves the job permanently in `running`: never re-run, never dead-lettered, no admin alert, and invisible on the health page except as a stuck counter. For `provision_order` that means a paid order silently never provisions — the exact failure ADR-0004 claims the table design eliminates (\"crash-safety of paid-but-unprovisioned orders\").",
+                    "recommendation": "Add a stale-claim sweep at the top of `run_due()`: `UPDATE jobs SET status='pending' WHERE status='running' AND claimed_at < UTC now minus N minutes`. The `claimed_at` column already exists and is populated for exactly this purpose.",
+                    "effort": "S"
+                },
+                {
+                    "severity": "high",
+                    "title": "Orders can become permanently stuck in 'provisioning' with an orphaned upstream resource",
+                    "location": "src/Provisioning/Provisioner.php:44-48, src/Jobs/JobRunner.php:112-116",
+                    "impact": "A single crash or timeout in the provisioning window produces: a paid customer with no service, an order frozen in a non-terminal state, a real ArvanCloud resource created and billed with no local `services` row (so it is invisible to usage sync and to `Ledger::reconciliation_by_credential`), and a job queue that reports success. No code path recovers it; the admin \"retry\" button hits the same not-claimable branch.",
+                    "recommendation": "Treat `provisioning` as reclaimable after a timeout (add it to the claim disjunction with an `updated_at` age guard), and reconcile against the provider before re-creating — `ProviderInterface::status()` already exists for exactly this. At minimum, do not report `not claimable` as job success without checking that a service row exists.",
+                    "effort": "M"
+                },
+                {
+                    "severity": "high",
+                    "title": "Up to 15s of blocking sleep plus synchronous email inside the payment callback request",
+                    "location": "src/Arvan/RealProvider.php:200-218, src/Payments/PaymentService.php:91-97",
+                    "impact": "The payment callback — the one request that must return fast and idempotently — can block for 15-25s plus SMTP. Real gateways retry on callback timeout; the replay path is safe, but the customer-visible request stalls. Worse, this directly defeats ADR-0004's stated mitigation of its own named risk (\"Long-running jobs vs PHP max_execution_time. Batch size 5 keeps runs short\"): five queued `provision_order` jobs at ~15s+HTTP each blow past a 30s `max_execution_time`, and the killed run leaves rows in the un-reapable `running` state above.",
+                    "recommendation": "Return `status='creating'` from `create_server()` immediately (the `RemoteResource` already models it, line 220) and let a follow-up `status()` job fill in the address, instead of polling in-request. Enqueue notification email rather than calling `wp_mail` on the payment path.",
+                    "effort": "M"
+                },
+                {
+                    "severity": "medium",
+                    "title": "Composition root is a service locator that seven modules depend on, creating the cycles ARCHITECTURE.md denies",
+                    "location": "src/Plugin.php:60-82 (consumers: Wallet/Ledger.php:47, Arvan/Catalog.php:42,50,60,66, Orders/OrderService.php:110, Provisioning/Provisioner.php:52,55, Usage/UsageSync.php:51, Payments/PaymentService.php:35,58,114, Admin/Menu.php:85)",
+                    "impact": "Nothing below Presentation can be constructed or tested without the root and its ambient global state (demo mode is re-derived from options + DB at every call site). This is exactly the \"static accessors rot into hidden globals\" risk ADR-0001 names, and it is why the unit suite covers only the four pure classes plus Crypto/License — `Ledger::append`, `OrderService::create`, `Catalog` and `Provisioner` are structurally untestable without a full WP install.",
+                    "recommendation": "Pass the provider into `Catalog`/`Provisioner`/`UsageSync` as an argument (they all already know the product), and move the demo flag to an explicit `Support\\Mode::is_demo()` in Support so no Application/Infrastructure module imports the root. Then update ARCHITECTURE.md:49 or make the claim true.",
+                    "effort": "M"
+                },
+                {
+                    "severity": "medium",
+                    "title": "Presentation layer runs raw SQL against another module's table to fetch an encrypted secret",
+                    "location": "src/Admin/Actions.php:202-204, src/Admin/Menu.php:80-89",
+                    "impact": "Secret handling leaks out of the module that owns it, so any future change to storage/encryption must be chased into the admin layer; and the ownership rule in ARCHITECTURE.md:32-47 (`Arvan` owns credentials, `Orders` owns order rows) is not actually held by the code. It also means `Support\\Crypto` decrypt calls appear in a request handler rather than behind the credential API.",
+                    "recommendation": "Add `Credentials::token_for(int $id): ?string` and `OrderService::revenue_summary(bool $include_demo)`; delete `global $wpdb` from `src/Admin/` entirely (currently 3 occurrences).",
+                    "effort": "S"
+                },
+                {
+                    "severity": "medium",
+                    "title": "Jobs (Infrastructure) hard-codes dispatch into Application modules, inverting the declared layer direction",
+                    "location": "src/Jobs/JobRunner.php:108-124",
+                    "impact": "The queue cannot be extracted or reused without dragging the business modules with it — which undercuts ADR-0011's Stage C claim that `Jobs` is a clean extraction seam (\"a worker polls the same table\"). Adding a job type requires editing an infrastructure file.",
+                    "recommendation": "Register handlers at boot from the owning modules (`JobRunner::handle('provision_order', [Provisioner::class,'provision'])` called from `Plugin::boot`), or expose a filter. The composition root that should own this wiring already exists.",
+                    "effort": "S"
+                },
+                {
+                    "severity": "medium",
+                    "title": "Demo-mode check issues an uncached DB query on every ledger write and catalog read",
+                    "location": "src/Plugin.php:49-57, src/Wallet/Ledger.php:47, src/Usage/UsageSync.php:116-125",
+                    "impact": "A usage sync ingesting N records issues N extra credential queries; `Menu::dashboard()` alone triggers it three times per page load; `Catalog::plans/options` twice per product. Cheap per call, but it puts an unbounded uncached query in the money write path for no functional reason.",
+                    "recommendation": "Memoize in a static on `Plugin` for the request (mode cannot change mid-request), or cache `has_verified_credential()` in a transient invalidated by `Credentials::record_test`/`save`/`delete`.",
+                    "effort": "S"
+                },
+                {
+                    "severity": "low",
+                    "title": "The documented module dependency table is stale in at least four places",
+                    "location": "ARCHITECTURE.md:32-47",
+                    "impact": "The table is the artifact a reviewer or new engineer trusts to reason about coupling; being wrong on four edges means it cannot be used to predict blast radius, and nothing enforces it.",
+                    "recommendation": "Regenerate the table from actual `use` statements and add a cheap CI-less check (a unit test that greps imports per module against an allowlist) so it cannot drift again.",
+                    "effort": "S"
+                },
+                {
+                    "severity": "low",
+                    "title": "Only one extension point exists in the entire plugin; no lifecycle events at all",
+                    "location": "src/Plugin.php:77 (repo-wide)",
+                    "impact": "For a WordPress plugin handling orders and money, the absence of events like `arvrs_order_paid` / `arvrs_service_provisioned` means no CRM, accounting or analytics integration is possible without forking. The one real seam (payments) is also the only one whose abstraction has a second implementation.",
+                    "recommendation": "Fire `do_action('arvrs_order_paid', $order)` / `'arvrs_service_provisioned'` / `'arvrs_policy_stage_changed'` at the three points that already exist in `PaymentService`, `Provisioner` and `UsageSync::apply_policy`, and mirror the payment filter for the Arvan provider.",
+                    "effort": "S"
+                },
+                {
+                    "severity": "low",
+                    "title": "The claim that WordPress-freeness is \"enforced by the unit suite\" is not mechanically true",
+                    "location": "ARCHITECTURE.md:28, tests/bootstrap.php:8-103",
+                    "impact": "The purity property is real today (I verified the three engines call nothing), but it is preserved by discipline, not by the mechanism the doc credits — so it will silently erode.",
+                    "recommendation": "Add a one-assert test that scans the four pure files for WP function/`$wpdb` tokens, or move them to a namespace the bootstrap loads before defining any shim.",
+                    "effort": "S"
+                }
+            ]
+        },
+        {
+            "dimension": "Product Quality & Feature Completeness",
+            "short": "Product completeness",
+            "weight": 10,
+            "score": 82,
+            "confidence": "high",
+            "verdict": "Every headline capability in spec.md and the README genuinely exists and is wired end to end — this is a coherent product, not a demo shell — but the complete purchase flow only works in Demo Mode, and a handful of promised details (credit_limit enforcement, per-product credential routing, any service-termination path) are absent or broken.",
+            "findings": [
+                {
+                    "severity": "high",
+                    "title": "Leaving Demo Mode disables all selling — checkout, top-up and the payment page all hard-fail with no admin warning",
+                    "location": "src/Payments/PaymentService.php:33-36",
+                    "impact": "The documented happy path — reseller enters a real ArvanCloud token in the wizard — produces a storefront where every purchase and every wallet top-up returns \"contact support\". Nothing surfaces this: `Wizard::validation_checks()` (Wizard.php:112-135) checks license/arvan/pricing/pages but not the gateway, and the System Health page prints the provider label with no danger badge (templates/admin/health.php:45). The reseller discovers the store is dead only from a customer complaint.",
+                    "recommendation": "Add a gateway readiness check to `Wizard::validation_checks()` and a red row on System Health when `sandbox_blocked()` is true, and either ship one real PSP adapter or make the real-mode block an explicit, documented admin setting rather than an invisible side effect of leaving Demo Mode.",
+                    "effort": "M"
+                },
+                {
+                    "severity": "high",
+                    "title": "Real-mode Cloud Server storefront renders empty: API flavor IDs have no base-cost rows and nothing detects it",
+                    "location": "src/Arvan/RealProvider.php:71-75",
+                    "impact": "After a successful real-credential onboarding, /cloud-server shows the «پلن‌ها موقتاً در دسترس نیستند» error card until the admin hand-adds a base-cost row for every upstream flavor id. The wizard's pricing check passes regardless because it only asserts `count(BaseCosts::all()) > 0` (Wizard.php:126), so onboarding reports green on a catalog that cannot sell.",
+                    "recommendation": "After a credential test succeeds, fetch the real plan list and flag any plan with no base cost in the Pricing screen and in the wizard's validation step; the Pricing page already has the `new_plan_id` input to fix them, it just needs to name the missing rows.",
+                    "effort": "M"
+                },
+                {
+                    "severity": "medium",
+                    "title": "`credit_limit` is an admin form field that is persisted and never read by any decision path",
+                    "location": "src/Customers/Rules.php:58",
+                    "impact": "A reseller who sets a per-customer negative-credit cap gets no behaviour change whatsoever, and `docs/REQUIREMENTS_TRACEABILITY.md:16` asserts the opposite: \"spending_limit & credit_limit enforced in `OrderService::create`\". That is a documented-but-absent feature and a misleading traceability row.",
+                    "recommendation": "Either pass the per-customer `credit_limit` into `PolicyEngine::stage()` as the restricted threshold (a few lines in `UsageSync::apply_policy`), or delete the field and its admin input and correct the traceability row.",
+                    "effort": "S"
+                },
+                {
+                    "severity": "medium",
+                    "title": "Per-product credential routing can hand a product-restricted credential to the wrong product",
+                    "location": "src/Arvan/Credentials.php:112-121",
+                    "impact": "With a first-ordered credential restricted to `cdn` and a second unrestricted credential, `select_for('cloud_server')` returns the CDN-only credential — the plugin provisions a server against an account the admin explicitly scoped away from that product, and the mis-routing is then recorded in `services.credential_id` and in the per-credential reconciliation view. README advertises \"per-product routing, priority and health tracking\".",
+                    "recommendation": "Make the restricted-credential fallback a last resort: collect unrestricted candidates first and only fall back to a restricted one if no unrestricted credential exists (or refuse and raise a ProviderError, which is safer for money-bearing routing).",
+                    "effort": "S"
+                },
+                {
+                    "severity": "medium",
+                    "title": "No service-termination or status-refresh path exists; `ProviderInterface::delete()`/`status()` are dead code",
+                    "location": "src/Arvan/ProviderInterface.php",
+                    "impact": "spec §5.2 lists `active → cancelled (service termination)` as an authoritative transition and `Services` defines a `cancelled` status, but no UI or code path reaches either. After a refund the remote ArvanCloud resource keeps running, keeps being billed to the reseller, keeps appearing as active in the customer dashboard, and keeps accruing usage debits. The service record is also write-once — a resource deleted or failed upstream never updates locally.",
+                    "recommendation": "Wire one admin action on the service/order detail page that calls `Plugin::arvan($product)->delete()` then `Services::set_status($id,'cancelled')` behind a confirm, and call it from the refund flow for `active` orders; a periodic `status()` reconcile job would close the drift loop.",
+                    "effort": "M"
+                },
+                {
+                    "severity": "low",
+                    "title": "Documentation cites code paths and counts that do not match the repo",
+                    "location": "README.md:148",
+                    "impact": "A judge who spot-checks a cited symbol or count finds it does not exist, which cheapens an otherwise unusually honest documentation set (the API_INTEGRATION \"NOT available\" table is genuinely accurate).",
+                    "recommendation": "Point the README bullet at the actual owner-scoping mechanism, reconcile the E2E check count in both files, and fix the ADR cross-reference.",
+                    "effort": "S"
+                },
+                {
+                    "severity": "low",
+                    "title": "Declared-but-unused surfaces: `usage_sync` job type, `orders.credential_id`, `usage_records.raw`, reservation ledger types",
+                    "location": "src/Jobs/JobRunner.php:118",
+                    "impact": "Minor dead weight rather than user-visible breakage, but README's \"derived balances, reservations, reconciliation views\" implies a reservation feature that has no writer (ROADMAP does disclose reservation-based checkout as future work).",
+                    "recommendation": "Drop the unused job case and columns, or wire the usage cron through the durable job table so a missed run is retried like every other job.",
+                    "effort": "S"
+                }
+            ]
+        },
+        {
+            "dimension": "UI & Visual Design Quality / Design-System Fidelity",
+            "short": "Visual design",
+            "weight": 7,
+            "score": 66,
+            "confidence": "high",
+            "verdict": "A genuinely designed, coherent Persian-first RTL storefront with real responsive restructuring, undermined by a token system that is largely decorative, a brand color that fails to propagate to the very surfaces that carry the brand, and three semantic status pills that fail WCAG AA.",
+            "findings": [
+                {
+                    "severity": "high",
+                    "title": "Brand-color token does not propagate to the surfaces that carry the brand",
+                    "location": "assets/css/front.css:9-45,89-93,146,198,216,328,343,365,375,405; assets/css/admin.css:7",
+                    "impact": "White-labelling is the product's core promise. A reseller who picks purple gets purple primary buttons and plan radios sitting inside a teal hero, teal nav pills, a teal header chip, teal product icons and a teal shadow under the purple button - a visibly broken two-palette UI on the very first screen, and a wp-admin that stays teal regardless.",
+                    "recommendation": "Replace every literal teal with color-mix derivations of --arvrs-brand (--arvrs-brand-surface for the #e6f8f6/#eefaf8 tints, --arvrs-grad-dark for the three hero/gateway gradients, --arvrs-dark derived from brand), and emit the same :root override on admin pages from Menu::assets so admin.css inherits it.",
+                    "effort": "M"
+                },
+                {
+                    "severity": "high",
+                    "title": "Token scale defined then bypassed: grad-dark unused while its exact value is inlined twice; 32 literal radii vs 3 token uses",
+                    "location": "assets/css/front.css:34-45 vs :146,:343,:405 and 32 border-radius declarations",
+                    "impact": "The :root block reads as a design system but does not govern the stylesheet, so there is no single place to change rhythm, radius or type scale, and the documented token claim is falsifiable by a judge with ctrl-F. Radii drift by 1-2px between visually sibling components (button 13px, input 12px, tab 10px, card 18px, product card 20px, gateway 22px, hero 26px).",
+                    "recommendation": "Collapse to one radius scale and use the tokens; add --space-* and --text-* tokens and replace the 22 literal sizes; either use --arvrs-grad-dark at :343/:405 or delete it; correct the readiness-doc token claim to what the CSS actually does.",
+                    "effort": "M"
+                },
+                {
+                    "severity": "high",
+                    "title": "Three of five semantic status pills fail WCAG AA contrast at 11.5px bold",
+                    "location": "assets/css/front.css:30-33,300-305",
+                    "impact": "These pills are rendered by Helpers::status_tag on every order row, service card, job row and health check in both the customer dashboard and wp-admin - the single most-repeated component in the product fails the accessibility claim the docs make for it.",
+                    "recommendation": "Darken the three foregrounds to hit 4.5:1 on their own backgrounds (roughly #0a7c3d, #c1234a, #0a5f9e) or raise .arvrs-tag to 12.5-13px; re-check the same pairs in admin.css:61-66 where the tag is 11px.",
+                    "effort": "S"
+                },
+                {
+                    "severity": "high",
+                    "title": "Admin declares Vazirmatn but never loads it - every admin page falls back to system fonts",
+                    "location": "assets/css/admin.css:26; src/Admin/Menu.php:68",
+                    "impact": "The whole reseller-facing admin - eight pages plus the 7-step onboarding wizard that the readiness doc leads with as UI/UX evidence - renders Persian in Segoe UI/Tahoma while the storefront renders Vazirmatn. The two halves of the product do not share typography, and the wizard's 24px/900-weight display headings (admin.css:97) fall back to a face that has no comparable weight.",
+                    "recommendation": "Move the three @font-face declarations into a shared stylesheet enqueued by both entry points, or duplicate them at the top of admin.css.",
+                    "effort": "S"
+                },
+                {
+                    "severity": "medium",
+                    "title": "Global .arvrs-card margin-bottom fights every flex/grid container, so declared gaps are never the real gaps",
+                    "location": "assets/css/front.css:130,133,135; templates/front/dashboard.php:115,162",
+                    "impact": "Vertical rhythm is nowhere near the values the stylesheet declares, and the two wallet cards in dashboard.php:162-179 end up separated by 36px inside a container whose own wrapper already adds an inline margin-bottom:20px.",
+                    "recommendation": "Drop margin-bottom from .arvrs-card and let containers own spacing (add .arvrs-stack to the few places cards are emitted bare).",
+                    "effort": "S"
+                },
+                {
+                    "severity": "medium",
+                    "title": "Three different page gutters at 390px because the shared container primitive is dead code",
+                    "location": "assets/css/front.css:66,76,126,423,446",
+                    "impact": "At 390px the header brand mark sits 24px from the edge, page content 16px, and the footer 24px - the vertical edge line visibly steps twice down a single mobile screen. Because the container was copied three times instead of shared, the fix has to be made in three places.",
+                    "recommendation": "Apply .arvrs-shell to the header inner, main and footer and delete the duplicated max-width/padding declarations, so the mobile gutter change happens once.",
+                    "effort": "S"
+                },
+                {
+                    "severity": "medium",
+                    "title": "No mobile navigation, and the fixed-height header overflows in the 640-760px band",
+                    "location": "assets/css/front.css:76,87,445; assets/js/front.js (no menu code); templates/front/partials/shell-top.php:27-31",
+                    "impact": "On a 390px phone the three product links (Cloud Server / CDN / Object Storage) disappear entirely from the shell - the storefront's primary navigation is reachable only by tapping the logo. Between roughly 640 and 760px, a long Persian brand name pushes the nav onto a second wrapped row inside a 68px-tall bar, spilling over the content below.",
+                    "recommendation": "Add a <details>-based disclosure menu (no JS needed) for <=640px, and give .arvrs-brand-name a max-width with text-overflow:ellipsis plus min-width:0 on the flex parent so the header degrades instead of wrapping.",
+                    "effort": "M"
+                },
+                {
+                    "severity": "medium",
+                    "title": "Decorative overlay paints on top of hero and auth content because of stacking order",
+                    "location": "assets/css/front.css:149-154,378-382",
+                    "impact": "The 28%-alpha coral wash tints the hero headline, badge and the white 'view plans' CTA rather than sitting behind them, and the same happens over the auth panel's welcome copy. pointer-events:none masks the interaction bug but leaves the visual one.",
+                    "recommendation": "Add z-index:1 to .arvrs-hero-body and .arvrs-auth-aside-body (or z-index:0 to the two ::after overlays) and drop the pointer-events workaround.",
+                    "effort": "S"
+                },
+                {
+                    "severity": "medium",
+                    "title": "Semantic color misused for a positive claim, and .arvrs-alert-body markup differs across four call sites",
+                    "location": "templates/front/product.php:20,26-28; templates/front/payment.php:24,56; templates/front/dashboard.php:56; templates/front/auth.php:25; assets/css/front.css:286-297",
+                    "impact": "The storefront's headline selling point is badged in the same red the system uses for 'suspended' and 'provisioning failed', training the user's eye wrongly. And the plan-unavailable alert renders its explanatory line in an off-scheme teal-grey against yellow instead of the alert's dark amber ink.",
+                    "recommendation": "Use arvrs-tag-success for the instant-delivery badge; fix .arvrs-alert-body to one element contract (a <div> with a <strong> title and a <p> that inherits the alert color) and scope .arvrs-muted out of alerts with .arvrs-alert p { color: inherit; opacity: .85 }.",
+                    "effort": "S"
+                },
+                {
+                    "severity": "medium",
+                    "title": "Declared weight hierarchy is fictional, and 49 inline styles carry four off-palette hexes past existing tokens",
+                    "location": "assets/css/front.css:49-51; templates/front/dashboard.php:233,235; templates/admin/dashboard.php:40; templates/admin/customers.php:30; templates/admin/customer-detail.php:116",
+                    "impact": "Card titles, page titles, stat values and body bold are all specified as distinct weights (800 vs 900 vs 700) but render identically, so the intended typographic hierarchy is flat. And the admin shows two different reds and two different greens for the same credit/debit concept on adjacent pages.",
+                    "recommendation": "Ship the Vazirmatn variable font (one file, real 700-900 range) or collapse the stylesheet to the three weights that exist; replace the four inline hexes with var(--danger)/var(--success) and reuse the amount-credit/debit classes.",
+                    "effort": "M"
+                }
+            ]
+        },
+        {
+            "dimension": "UX & Usability (customer + reseller journeys)",
+            "short": "UX & usability",
+            "weight": 9,
+            "score": 71,
+            "confidence": "high",
+            "verdict": "A genuinely well-crafted Persian RTL storefront and admin — coherent design system, real empty states, an excellent 7-step wizard, and customers never touch wp-admin — undermined by the one journey that matters most: the payment screen announces \"سرویس شما آماده است\" even when provisioning failed, and the customer is then told nothing, ever.",
+            "findings": [
+                {
+                    "severity": "critical",
+                    "title": "Payment page tells the customer the service is ready even when provisioning failed",
+                    "location": "src/Payments/PaymentService.php:92-99, templates/front/payment.php:53-63, src/Provisioning/Provisioner.php:61-72",
+                    "impact": "The customer pays money, is told the service is ready, clicks through to a services tab that is empty (dashboard.php:109-113 shows 'هنوز سرویسی ندارید.'), receives no notification and no email, and the only trace is 'خطا در راه‌اندازی' buried in the orders tab with no explanation, no retry, no refund request and no support link. This is the core journey and it misreports a paid transaction.",
+                    "recommendation": "Return the provisioning outcome in the callback payload (ok/pending/failed + Provisioner's customer_message()), branch payment.php on it into three states (ready / 'در حال راه‌اندازی — چند لحظه دیگر بررسی کنید' / failed-with-support-CTA), and add Notifier::customer($cid, 'provision_failed', ...) in the ProviderError branch — Notifier.php:36 already whitelists that type for email.",
+                    "effort": "M"
+                },
+                {
+                    "severity": "high",
+                    "title": "Every admin alert is written to the DB and rendered nowhere — $notices is dead",
+                    "location": "src/Admin/Menu.php:113, templates/admin/dashboard.php",
+                    "impact": "The reseller's entire alerting surface is invisible. A failed provisioning, a dead job or a broken ArvanCloud credential produces a notification row nobody can ever see; the operator only learns of it by noticing a KPI counter (dashboard.php:27-28) or by opening the health page.",
+                    "recommendation": "Render the $notices feed as a panel on templates/admin/dashboard.php (title, body, time, unread styling), and make the 'راه‌اندازی ناموفق' / 'وظایف متوقف' KPI cards link to admin.php?page=arvan-reseller-orders&status=provision_failed and to the health page.",
+                    "effort": "S"
+                },
+                {
+                    "severity": "high",
+                    "title": "Mid-payment network error strands the customer on a permanent spinner with both buttons disabled",
+                    "location": "assets/js/front.js:96-113 and 136-154",
+                    "impact": "A dropped connection or 5xx at the moment of payment leaves 'در حال تأیید پرداخت…' spinning forever with no way to retry or cancel — the worst possible place to dead-end. The same failure on top-up leaves the button stuck on 'در حال پردازش…' with no error shown.",
+                    "recommendation": "Add `.catch()` to both handlers restoring button state and showing ARVRS.i18n.error in the existing alert markup (#arvrs-pay-status / #arvrs-topup-error) instead of alert(); on the gateway, keep the ref visible so the customer can be told 'وضعیت پرداخت نامشخص است — پیشخوان را بررسی کنید'.",
+                    "effort": "S"
+                },
+                {
+                    "severity": "high",
+                    "title": "Abandoned payment is a dead end: the pending-orders page is unreachable from the UI",
+                    "location": "templates/front/checkout.php, templates/front/dashboard.php:138-159, src/Front/Shortcodes.php:112-125",
+                    "impact": "A customer who closes the gateway tab, or returns tomorrow, has no route in the interface to pay an order they already configured. The page titled 'سفارش‌های در انتظار پرداخت' exists, works, and is orphaned.",
+                    "recommendation": "Add a 'پرداخت' button in the dashboard orders row for pending_payment/payment_processing (reuse Plugin::payments()->start()), and surface a header chip or dashboard banner when pending orders exist.",
+                    "effort": "S"
+                },
+                {
+                    "severity": "medium",
+                    "title": "Any logged-in non-customer (the reseller previewing their own store) is trapped in an auth → dashboard → auth loop",
+                    "location": "src/Front/Shortcodes.php:114, 130, 151-154; src/Front/FormActions.php:20-21, 68-72",
+                    "impact": "The reseller testing their own storefront while logged into WordPress — the single most likely first-run behaviour after the wizard's 'پیش‌نمایش فروشگاه' link — hits an unbreakable loop with no message explaining that their WP account is not a customer account.",
+                    "recommendation": "In require-login/auth, detect `is_user_logged_in() && !is_customer()` and render a distinct state: 'شما با حساب مدیریت وارد شده‌اید' with 'خروج و ورود به‌عنوان مشتری' and a link back to wp-admin.",
+                    "effort": "S"
+                },
+                {
+                    "severity": "medium",
+                    "title": "No password reset anywhere, and a failed registration returns the user to the login tab with all fields lost",
+                    "location": "templates/front/auth.php:19-65, src/Front/FormActions.php:25-29, 57-59",
+                    "impact": "A forgotten password is a hard dead end inside the branded storefront — the customer must discover the unbranded wp-login.php on their own. And every registration error costs the user their typed values plus a tab-switch they were not told to make.",
+                    "recommendation": "Add a 'فراموشی گذرواژه' link to wp_lostpassword_url() in auth.php, and pass a `tab=register` flag plus the submitted display_name/email back on the redirect so the correct panel opens pre-filled.",
+                    "effort": "S"
+                },
+                {
+                    "severity": "medium",
+                    "title": "All dates shown to Persian users are raw Gregorian UTC strings; usage periods are rendered by substring surgery",
+                    "location": "templates/front/dashboard.php:132, 153, 191, 213; src/Support/Helpers.php:73-76",
+                    "impact": "An Iranian customer reading a billing screen gets a Gregorian calendar in Persian digits, shifted 3.5 hours from local time, and a usage period whose end date is truncated away — directly undermining trust in the money numbers next to it.",
+                    "recommendation": "Add a Helpers::datetime() that converts to site timezone and Jalali (or at minimum wp_date() with the site offset), and replace the substr pair with two formatted dates.",
+                    "effort": "M"
+                },
+                {
+                    "severity": "medium",
+                    "title": "The post-purchase service card shows raw English snake_case keys as labels",
+                    "location": "templates/front/dashboard.php:125-131, src/Arvan/DemoProvider.php:91-111",
+                    "impact": "The single moment the customer is most likely to screenshot or act on reads as untranslated developer output, and a non-cloud-expert is left to work out how to connect on their own.",
+                    "recommendation": "Map connection keys to Persian labels (a small array beside Helpers::status_tag), add a copy button per value, and add one line of product-specific guidance ('برای اتصال SSH: ssh root@<ip>' / 'رکوردهای NS دامنه را به ns1/ns2 تغییر دهید').",
+                    "effort": "S"
+                },
+                {
+                    "severity": "medium",
+                    "title": "Product navigation vanishes on phones with no replacement",
+                    "location": "assets/css/front.css:443-445",
+                    "impact": "On mobile — the dominant traffic for an Iranian retail storefront — a customer on the dashboard or a product page cannot reach another product without first noticing that the brand mark is a link back to the storefront.",
+                    "recommendation": "Keep the nav as a horizontally scrollable strip below the header at ≤640px (the same overflow-x pattern already used for .arvrs-tabs, front.css:317-319), or add a details/summary disclosure menu.",
+                    "effort": "S"
+                },
+                {
+                    "severity": "low",
+                    "title": "Untranslated internals leak into the Persian admin, and detail pages have no back-link",
+                    "location": "templates/admin/orders.php:17-19, templates/admin/wizard.php:113-118, templates/admin/customer-detail.php:18-22, templates/admin/order-detail.php:9-18",
+                    "impact": "The reseller admin reads as half-localised in exactly the places an operator scans fastest, and after opening a customer file or order the only way back to the list is the browser Back button or the sidebar.",
+                    "recommendation": "Route the filter chips and ledger/event types through Helpers::status_tag (or a small type-label map), use $def['title'] in the wizard pages list, and add a '← بازگشت به فهرست' link at the top of both detail templates.",
+                    "effort": "S"
+                }
+            ]
+        },
+        {
+            "dimension": "Reliability, Failure Handling & Data Integrity",
+            "short": "Reliability",
+            "weight": 10,
+            "score": 71,
+            "confidence": "high",
+            "verdict": "The idempotency-first design is genuinely well thought out — atomic single-UPDATE claims, an append-only ledger with a unique business key, and a crash back-fill for usage — but it is undermined by a duplicate-remote-resource path on API timeout, two states (order `provisioning`, job `running`) from which no admin repair exists, and a swallowed write on the money path with no reconciliation repair.",
+            "findings": [
+                {
+                    "severity": "critical",
+                    "title": "Non-idempotent POSTs are auto-retried on timeout while the provider ignores the idempotency key — duplicate paid-for remote resources",
+                    "location": "src/Arvan/ArvanClient.php:65-104 and src/Arvan/RealProvider.php:137-149",
+                    "impact": "A `POST /servers` that succeeds upstream but exceeds the 20s read timeout is re-sent up to twice more, creating two or three cloud servers for one order. Only one remote_id is ever stored, so the extras are invisible to the plugin and bill the reseller's ArvanCloud account indefinitely. For CDN/bucket the retry instead returns 4xx (already exists) → ProviderError('invalid') → non-retryable → order lands in `provision_failed` with the resource actually created, and every admin retry fails the same way. The three local idempotency layers guard against duplicate *local invocations*; nothing guards an in-flight upstream write.",
+                    "recommendation": "Retry only idempotent methods (GET/PUT/DELETE) in ArvanClient; for POST, either send the idempotency key as a header the API honors, or on timeout do a reconcile GET (list servers/domains/buckets filtered by the generated name) before deciding whether to re-issue. At minimum stop retrying POST and surface the timeout as an ambiguous state requiring reconciliation.",
+                    "effort": "M"
+                },
+                {
+                    "severity": "high",
+                    "title": "An order stuck in `provisioning` is unrecoverable: no admin action exists and the retry job reports success",
+                    "location": "src/Provisioning/Provisioner.php:44-48, src/Jobs/JobRunner.php:113-117, templates/admin/order-detail.php:39-63",
+                    "impact": "Any interruption after the PAID→PROVISIONING claim strands the order permanently: customer paid, no service, no retry, no refund, no cancel, and the durable job silently self-completes. The trigger is realistic, not theoretical — inline provisioning runs in the REST callback and `create_server` alone can burn 15s of `sleep(3)` polling (RealProvider.php:200-218) on top of four HTTP calls at 20s each, so PHP's max_execution_time fatal lands squarely inside this window.",
+                    "recommendation": "Add a reaper that moves orders sitting in `provisioning` past a timeout (e.g. updated_at older than 15 min) back to `provision_failed`, and allow the retry/refund buttons for `provisioning`. Also stop treating 'not claimable' as job success — requeue with backoff instead.",
+                    "effort": "M"
+                },
+                {
+                    "severity": "high",
+                    "title": "Jobs left in `running` are never reclaimed — no reaper, not selectable, not retryable",
+                    "location": "src/Jobs/JobRunner.php:73-105, 137-156",
+                    "impact": "A worker killed mid-job leaves the row `running` forever. It is invisible to the queue, absent from the failed-jobs list, and the admin retry button rejects it. health.php:52 prints the `running` count so the operator can see the number grow but has no control to act on it — recovery requires manual SQL. For a `provision_order` job this compounds finding #2: the order is stuck and its recovery job is stuck too.",
+                    "recommendation": "In `run_due`, also reclaim `status='running' AND claimed_at < NOW() - INTERVAL 10 MINUTE` back to `pending` (attempts already incremented, so the dead-letter cap still applies), and let `retry()` accept `running` as well as `dead`.",
+                    "effort": "S"
+                },
+                {
+                    "severity": "high",
+                    "title": "Ledger write failure on a settled payment is swallowed with no repair path — money with no record",
+                    "location": "src/Payments/PaymentService.php:75-82",
+                    "impact": "A transient DB error (deadlock, connection drop) at that instant produces an order in PAID/ACTIVE whose money exists nowhere in the ledger. Downstream this silently corrupts `consumed`, so the `spending_limit` gate at OrderService.php:88-94 under-counts and lets the customer exceed their cap; `total_credit()` and per-customer reconciliation are both wrong, and the only trace is an `error`-level audit row nobody is alerted on.",
+                    "recommendation": "Either enqueue a durable `ledger_backfill` job carrying (customer, order, ref, amount) when the append throws — the unique key makes it replay-safe — or add an admin reconciliation view that diffs orders in PAID/ACTIVE against ledger rows with matching `ref_id` and offers a one-click repair.",
+                    "effort": "M"
+                },
+                {
+                    "severity": "medium",
+                    "title": "Provisioner ignores the service-insert result and transitions to ACTIVE regardless",
+                    "location": "src/Provisioning/Provisioner.php:74-75, src/Services/Services.php:34-41",
+                    "impact": "On a failed service INSERT the order is still marked ACTIVE with a remote resource that was really created. The customer's dashboard shows an active order and zero services; usage attribution has no row to map to; `Services::by_order()` returns null so a later retry would try to provision a *second* resource. The Provisioner also reports `['ok' => true, 'service_id' => 0]`, so the job records success.",
+                    "recommendation": "Check `$service_id > 0` (and `$wpdb->last_error`) before the ACTIVE transition; on failure throw so the job retries — the UNIQUE(order_id) plus the `by_order` guard make the retry safe.",
+                    "effort": "S"
+                },
+                {
+                    "severity": "medium",
+                    "title": "A failed claim is always reported to the caller as a successful replay, including on amount mismatch",
+                    "location": "src/Payments/PaymentService.php:64-68, src/Orders/OrderService.php:165-191",
+                    "impact": "If the order amount ever diverges from the amount that was verified (admin edit, re-priced row, a real gateway that settles a partial amount), the customer and the gateway are told the payment succeeded and was already processed, while the order remains in `pending_payment` with no service, no ledger row and no alert. The mismatch is not even audited — only `payment.verify_failed` is logged, and that branch was not taken.",
+                    "recommendation": "Have `claim_paid` distinguish the two cases (re-read the row and compare status vs amount) and return a mismatch as `ok:false` with an `Audit::error('payment.amount_mismatch', ...)` so it lands on the admin's radar instead of being reported as success.",
+                    "effort": "S"
+                },
+                {
+                    "severity": "medium",
+                    "title": "The entire idempotency model rests on unique indexes that migration never verifies, plus an unguarded full-table backfill",
+                    "location": "src/Install/Schema.php:212-229",
+                    "impact": "If any unique index silently fails to materialize on an upgraded site, `INSERT IGNORE` degrades to plain INSERT and every replay guarantee in the plugin evaporates — duplicate ledger credits, duplicate services, double-debited usage — with nothing detecting it. The schema version is stamped as migrated either way, so `maybe_migrate()` never retries. The unbounded ledger UPDATE also risks a lock/timeout on a large table, after which the version is still marked complete.",
+                    "recommendation": "After the dbDelta loop, assert the critical indexes exist (`SHOW INDEX FROM ... WHERE Key_name = 'uniq_ref'`) and surface a hard admin health failure if missing; only `update_option` the version once the assertions pass. Batch the is_demo backfill with a LIMIT loop.",
+                    "effort": "M"
+                },
+                {
+                    "severity": "medium",
+                    "title": "Payment callbacks are rate-limited per client IP at 30/5min — a real gateway is one IP",
+                    "location": "src/Rest/Routes.php:156-158",
+                    "impact": "Server-to-server gateway callbacks all arrive from a small set of gateway IPs, so the budget is shared across all customers: past ~6 settlements/minute, legitimate payment confirmations are rejected with 429. Money is captured at the gateway while the order stays `pending_payment` until (and unless) the gateway's own retry policy re-delivers within the window. Browser-return callbacks from behind one corporate NAT hit the same ceiling.",
+                    "recommendation": "Key the limit on the payment ref rather than the IP (a few attempts per ref is the real abuse signal), or exempt verified callbacks entirely — `verify()` is already the authenticity gate the route's own comment relies on.",
+                    "effort": "S"
+                },
+                {
+                    "severity": "low",
+                    "title": "Fixed 48-hour usage window with no per-service watermark; suspended services stop syncing while still running",
+                    "location": "src/Usage/UsageSync.php:51, src/Services/Services.php:84-95",
+                    "impact": "WP-Cron is traffic-triggered, so a low-traffic site or a >48h outage loses that usage permanently — there is no catch-up path and the back-fill in `ingest()` only helps for periods still inside the window. A suspended customer's resources keep running and keep costing the reseller upstream while the plugin stops recording any of it, and re-activation does not recover the gap.",
+                    "recommendation": "Store `last_usage_sync_at` per service and use `max(last_synced, now-30d)` as the `since` bound; keep suspended services in the sync set (billing the debt is the point of suspension) or explicitly record the un-metered interval so the operator can see it.",
+                    "effort": "M"
+                },
+                {
+                    "severity": "low",
+                    "title": "Top-up intents are written to wp_options and never deleted or expired",
+                    "location": "src/Payments/PaymentService.php:107-115, 118-150",
+                    "impact": "The options table accumulates one permanent row per top-up attempt including all abandoned ones, and an intent stays redeemable forever — a callback presenting a months-old ref still credits the wallet. Replay of a *settled* ref is blocked by the ledger unique key, so this is bounded growth plus an unbounded intent lifetime rather than a double-credit.",
+                    "recommendation": "Reject intents older than a few hours (`$intent['at']`), and delete the option once the top-up is ledgered; a scheduled sweep of `arvrs_topup_%` older than 24h covers abandoned ones.",
+                    "effort": "S"
+                }
+            ]
+        },
+        {
+            "dimension": "Data Model, Analytics & Reporting Quality",
+            "short": "Data & analytics",
+            "weight": 7,
+            "score": 72,
+            "confidence": "high",
+            "verdict": "The transactional data model is genuinely well-designed — append-only ledger with derived balances, four distinct races each closed by a purpose-built UNIQUE key, integer money, UTC timestamps, and a clean order→event→service→usage→ledger traceability chain — but the analytics half is thin (lifetime sums with no time dimension, no export) and the `is_demo` dimension stops short of the customer wallet, leaving demo money in real balances.",
+            "findings": [
+                {
+                    "severity": "high",
+                    "title": "Customer wallet balance and ledger history ignore `is_demo` — demo money counts as real",
+                    "location": "src/Wallet/Ledger.php:126-133 (and :160-164)",
+                    "impact": "Every per-customer money view is demo-blind: the front-end wallet card (templates/front/dashboard.php:75, shell-top.php:35), the REST balance endpoint (src/Rest/Routes.php:179-184), the admin customer list and customer-detail balances (src/Admin/Menu.php:157,171), the spending-limit gate (OrderService.php:89) and the entire policy staging chain (UsageSync::apply_policy → Ledger::balance). A site that demos with fake top-ups and then goes live shows those top-ups as spendable real credit forever. The `is_demo` dimension therefore covers 3 admin aggregates and 0 of the ~7 customer-facing money views.",
+                    "recommendation": "Give `balance()`/`entries()` the same `$include_demo` parameter and default it to `Plugin::demo_mode()`, exactly as the dashboard already does at Menu.php:90 — one `WHERE is_demo = 0` clause reused across all callers.",
+                    "effort": "S"
+                },
+                {
+                    "severity": "high",
+                    "title": "`negative_since_days` measures the last debit, not the start of the negative period — RESTRICTED is unreachable",
+                    "location": "src/Wallet/Ledger.php:143-153",
+                    "impact": "Any customer with a live service gets a fresh debit every hour, so `MAX(created_at)` is always ~now and the function returns 0. The stage pins at GRACE indefinitely and never reaches RESTRICTED — which means `block_purchases` and `suspend_service` (PolicyEngine.php:65) never fire for exactly the population they exist for. The credit-policy enforcement tail is dead code driven by a data-model gap: nothing records when the balance crossed zero.",
+                    "recommendation": "Either store a `negative_since` timestamp on `customer_rules` (set/cleared whenever the sign of the derived balance flips in `apply_policy`), or compute the true crossing point with a running-sum window query over the ledger. The current one-line approximation is not merely imprecise — it inverts the policy outcome.",
+                    "effort": "M"
+                },
+                {
+                    "severity": "high",
+                    "title": "Derived balance pulls the whole ledger into PHP, and the customers list does it N+1 times",
+                    "location": "src/Wallet/Ledger.php:123-133; src/Admin/Menu.php:170-180",
+                    "impact": "With hourly `usage_debit` rows, one service accrues ~8,760 ledger rows/year; a 3-year customer with 5 services is ~130k rows deserialized into PHP arrays on every wallet render, REST call, checkout spending-limit check, and once per row on the admin customers page. The same aggregate is already computed correctly in SQL in `reconciliation()` (:196-204), so the slow path is a choice, not a constraint. There is no snapshot/checkpoint row to bound the scan.",
+                    "recommendation": "Add a SQL aggregate variant (`SUM(CASE WHEN direction='credit' ...)` grouped by type) for the hot path and keep `derive()` for unit testing; batch the customers-list balances into one `GROUP BY customer_id` query. If history growth matters, add a periodic checkpoint row and derive forward from it.",
+                    "effort": "M"
+                },
+                {
+                    "severity": "high",
+                    "title": "No time dimension in any report — revenue, cost and margin are lifetime sums only",
+                    "location": "src/Admin/Menu.php:86-88",
+                    "impact": "A reseller cannot answer the questions a reseller must answer: revenue this month vs last, margin by product line, top customers by spend, growth trend, or receivables aging. The three KPI cards are cumulative-since-install numbers that only ever go up, and no data can leave the plugin for accounting or tax — the ledger is a well-built journal with no way to produce a statement.",
+                    "recommendation": "Add a date-range selector driving `WHERE created_at BETWEEN` on the existing (currently unused) `orders.created_at` index, plus `GROUP BY product` and a top-customers-by-revenue query, and a CSV export of `ledger` and `orders` for a period. The schema already supports all of this; only the reporting layer is missing.",
+                    "effort": "M"
+                },
+                {
+                    "severity": "medium",
+                    "title": "Index set does not match the query set: `audit_log.level` unindexed, four declared indexes unused",
+                    "location": "src/Install/Schema.php:69,102,121,167-168; src/Audit/Audit.php:64-68",
+                    "impact": "`audit_log` is the fastest-growing table and its one filtered read (the admin security-report page and the health page's `Audit::recent(10,'error')`) is a full table scan that degrades linearly forever. Meanwhile four index trees are maintained on every INSERT for no reader. DATA_MODEL.md:43 asserts the audit keys are `created_at`, `action` — presented as if they serve the queries, which they do not.",
+                    "recommendation": "Replace `KEY action` with `KEY level_id (level, id)` to serve the actual filter-plus-order, and drop `orders.created_at`/`services.remote_id`/`ledger.created_at` unless the missing time-range reports (above) are added — in which case `orders.created_at` becomes justified.",
+                    "effort": "S"
+                },
+                {
+                    "severity": "medium",
+                    "title": "`usage_records` carries neither `is_demo` nor a cost/price split — the recurring stream has no reportable margin",
+                    "location": "src/Install/Schema.php:124-138; src/Wallet/Ledger.php:172-185",
+                    "impact": "Usage cost is debited to the customer 1:1 with no markup and no record of what the reseller paid upstream, so gross margin is reportable only on one-time orders and is structurally unknowable for consumption revenue. The per-credential reconciliation report — the one place a reseller checks whether their Arvan invoice matches what they billed — silently includes demo usage, and demo services (provisioned with `credential_id` NULL) are coerced to `0` by the `(int) $credential_id` cast at Services.php:29, so they surface as a phantom credential row.",
+                    "recommendation": "Add `is_demo`, `base_cost` and `currency` to `usage_records`, mirror the demo filter into `reconciliation_by_credential()`, and preserve NULL for demo credential ids. Note this is currently latent in production because RealProvider::usage() returns `[]` (RealProvider.php:317-320) — but that makes the usage-based reports demo-only, which should be stated where they are rendered.",
+                    "effort": "M"
+                },
+                {
+                    "severity": "medium",
+                    "title": "Four unbounded tables with no retention or pruning path",
+                    "location": "repo-wide (src/Install/Schema.php; uninstall.php)",
+                    "impact": "Hourly usage across N services writes 2 rows/service/hour (usage + ledger debit) plus a `longtext` blob — ~17.5k rows and potentially tens of MB per service per year, permanently, on shared WordPress hosting. The only retention control offered is a binary \"delete everything on uninstall\" toggle. The ledger *should* be append-only forever; `usage_records.raw`, completed `jobs` rows and `level='info'` audit rows should not.",
+                    "recommendation": "Add a monthly rollup for closed usage periods (keep the aggregate, drop `raw`), a cron that deletes `jobs` in status `done` older than N days, and an audit-log retention window for non-`audit` levels. Document that the ledger itself is intentionally never pruned.",
+                    "effort": "M"
+                },
+                {
+                    "severity": "medium",
+                    "title": "Dashboard order counts skip the demo filter applied two lines above them",
+                    "location": "src/Admin/Menu.php:102-103",
+                    "impact": "In live operation the \"سفارش‌ها\" (orders) KPI card on the dashboard (templates/admin/dashboard.php:24) counts demo orders alongside real ones, sitting directly beside a revenue card that excludes them — two headline numbers on the same row computed on different populations, which is the specific failure mode that erodes trust in a reporting screen.",
+                    "recommendation": "Append `$demo_filter` to both counts (it is already built and in scope on line 85).",
+                    "effort": "S"
+                },
+                {
+                    "severity": "low",
+                    "title": "Declared model surface that no code path writes: `orders.credential_id`, and 4 of 10 ledger types",
+                    "location": "src/Install/Schema.php:61; src/Wallet/Ledger.php:16-17",
+                    "impact": "`derive()` computes `'reserved' => max(0, $reserved - $released)` (Ledger.php:117) which is structurally always 0 and is surfaced as a real wallet field. DATA_MODEL.md:34 lists all ten types as if they were live, so the documented model overstates what the ledger actually records — a reviewer reconciling docs to code finds 40% of the type vocabulary is aspirational.",
+                    "recommendation": "Drop `orders.credential_id` (routing is a service-level fact) and either implement the reservation/release pair or remove those types and the `reserved` field until they are needed.",
+                    "effort": "S"
+                },
+                {
+                    "severity": "low",
+                    "title": "No FKs and no application-level referential cleanup — deleting a credential orphans its services",
+                    "location": "src/Arvan/Credentials.php:68-73",
+                    "impact": "The orphaned services still exist upstream in the deleted Arvan account, but the plugin can no longer tell the reseller which account holds them — and `reconciliation_by_credential()` groups them under an id that resolves to nothing, so the per-credential reconciliation report becomes silently wrong. Absent FKs, this is exactly the class of breakage FKs prevent, and there is no compensating guard.",
+                    "recommendation": "Refuse deletion when `SELECT 1 FROM services WHERE credential_id = %d AND status IN ('active','at_risk') LIMIT 1` returns a row (offer disable instead — `enabled` already exists), and NULL the column on delete otherwise.",
+                    "effort": "S"
+                }
+            ]
+        },
+        {
+            "dimension": "Operational Readiness (in-product observability & admin operations)",
+            "short": "Operational readiness",
+            "weight": 8,
+            "score": 68,
+            "confidence": "high",
+            "verdict": "A genuinely thoughtful health page and a broad set of no-SQL admin actions get an operator through most routine day-2 work, but three real incident blockers — admin alerts that are written and never displayed, jobs stranded in `running` with no UI recovery, and credential health that only updates when a human clicks Test — plus an audit log you cannot actually search mean a live incident still ends in phpMyAdmin.",
+            "findings": [
+                {
+                    "severity": "high",
+                    "title": "Admin alerts are write-only: notifications are stored, passed to the dashboard, and never rendered",
+                    "location": "src/Admin/Menu.php:113 + templates/admin/dashboard.php (69 lines, no `$notices`)",
+                    "impact": "Every operator-facing alert the system raises — `job_dead`, `provision_failed`, `usage_sync_failed`, `customer_at_risk` — is inserted into `wp_arvrs_notifications` with `customer_id = 0` and is then visible in exactly zero places, in-app or by email. An operator learns about a failed provisioning only by noticing a red counter tile on the dashboard or scrolling the audit page. The whole admin notification subsystem is dead weight at runtime.",
+                    "recommendation": "Render `$notices` as a panel in `dashboard.php` (the data is already being fetched), and add an unread-count badge on the plugin menu via `add_menu_page`'s title. For anything at `job_dead`/`provision_failed` severity, also `wp_mail()` the site admin from `Notifier::admin()` on the same cooldown mechanism already implemented in `push()`.",
+                    "effort": "S"
+                },
+                {
+                    "severity": "high",
+                    "title": "Jobs stranded in `running` are invisible and unrecoverable from the UI",
+                    "location": "src/Jobs/JobRunner.php:73-77,137-156",
+                    "impact": "A PHP fatal, OOM or request timeout mid-`execute()` is not a `\\Throwable` the catch block sees, so the row stays `running` forever. That order never provisions, the job does not appear in the health page's failed list, and no admin button can move it. The only signal is the `running: N` counter on the health page, which looks identical to a healthy in-flight job. Recovery requires a manual `UPDATE` in the database.",
+                    "recommendation": "Add a stale-claim reset at the top of `run_due()` — one statement: `UPDATE ... SET status='pending', run_at=NOW() WHERE status='running' AND claimed_at < NOW() - INTERVAL 15 MINUTE` — and include `running` rows older than that threshold in `failed()` so they surface with a retry button.",
+                    "effort": "S"
+                },
+                {
+                    "severity": "high",
+                    "title": "Credential health is manual-only; a revoked token keeps showing \"connected\" until someone clicks Test",
+                    "location": "src/Arvan/Credentials.php:134 (callers: src/Admin/Actions.php:206,211 and src/Onboarding/Wizard.php:198 only)",
+                    "impact": "The single most common upstream incident — an expired or revoked ArvanCloud API token — produces a health page that says everything is fine while every provisioning silently fails. The operator's first-look diagnostic actively misleads them.",
+                    "recommendation": "Call `Credentials::record_test($credential_id, false, $e->getMessage())` from the `ProviderError` catch in `Provisioner` and `UsageSync` whenever `$e->kind === 'auth'`, and emit the already-declared `credential_failed` admin notification there. Requires threading the selected `$credential['id']` (already computed at Provisioner.php:52) into the catch.",
+                    "effort": "M"
+                },
+                {
+                    "severity": "medium",
+                    "title": "The audit log cannot be investigated: no filter by object/user/date, fixed 100 rows, no export, no index, no retention",
+                    "location": "src/Audit/Audit.php:61-73; src/Admin/Menu.php:271; src/Install/Schema.php:156-169",
+                    "impact": "To answer \"what happened to order #4127 last Tuesday\" the operator can only eyeball the most recent 100 events. On a site doing meaningful volume the relevant rows have already scrolled off, and the table grows without bound alongside a filter query that gets slower as it does. README.md:154 sells this as compliance-grade auditability (\"append-only audit log with IP\"); the storage honours that, the retrieval does not.",
+                    "recommendation": "Add `object_type`/`object_id`/`user_id`/date-range parameters plus offset pagination to `Audit::recent()`, wire them as filters on `audit.php`, add `KEY level_created (level, id)` and `KEY object (object_type, object_id)` in the next schema bump, and add a daily prune cron with an operator-set retention window.",
+                    "effort": "M"
+                },
+                {
+                    "severity": "medium",
+                    "title": "Correlation-ID trace breaks at the order boundary; successful upstream calls are never logged",
+                    "location": "src/Provisioning/Provisioner.php:62,66,81; src/Arvan/ArvanClient.php:106,121",
+                    "impact": "From order #4127's detail page an operator can see it failed with `timeout: ...` but cannot get the correlation id to hand ArvanCloud support without hunting the audit page for a matching `{\"order\":4127,...,\"cid\":\"…\"}` blob — and for the far more common \"it succeeded upstream but looks wrong\" complaint there is no upstream request record whatsoever.",
+                    "recommendation": "Append the cid to the order-event note at Provisioner.php:62 and to the `provision.success` audit detail (`ProviderError` already carries it; return it from the provider `create()` result for the success case), so the order timeline itself is the trace.",
+                    "effort": "S"
+                },
+                {
+                    "severity": "medium",
+                    "title": "No order lookup by payment reference or ID — the most common support entry point",
+                    "location": "src/Orders/OrderService.php:216; src/Admin/Menu.php:117-139",
+                    "impact": "A customer disputing a charge quotes a payment/tracking reference. The operator cannot search for it — they must guess the customer, open that customer's detail, and scan. For a bare order id there is no search either; only a hand-edited `&order=` URL works.",
+                    "recommendation": "Add a `$search` parameter to `OrderService::list()` matching `payment_ref = %s OR id = %d`, and a search input on `orders.php`. The unique index already makes it a point lookup.",
+                    "effort": "S"
+                },
+                {
+                    "severity": "medium",
+                    "title": "Dead-job list shows no payload, no order link, and truncates the error to 12 words with no detail view",
+                    "location": "templates/admin/health.php:57-74; src/Jobs/JobRunner.php:140-144",
+                    "impact": "The operator sees `provision_order | 5 attempts | Arvan API unreachable: cURL error 28: Operation timed…` and cannot tell which order it belongs to, which customer is affected, or read the rest of the message. Diagnosing a batch of dead provisioning jobs means opening the `wp_arvrs_jobs` table to read `payload`.",
+                    "recommendation": "Include `payload` in the `failed()` SELECT and render the decoded `order_id` as a link to `admin.php?page=arvan-reseller-orders&order=N`; put the full `last_error` in a `title` attribute or a `<details>` block instead of hard-trimming it.",
+                    "effort": "S"
+                },
+                {
+                    "severity": "medium",
+                    "title": "Services page is entirely read-only — no resync, suspend, or reconcile against upstream state",
+                    "location": "templates/admin/services.php (whole file)",
+                    "impact": "If a resource is deleted or changed on the ArvanCloud side, or a local status is wrong after a partial failure, the plugin's view of it drifts permanently and there is no operator action to reconcile, re-fetch connection details, manually suspend a specific abusive service, or terminate one. All of it becomes a DB edit.",
+                    "recommendation": "Add a per-service `refresh` action calling the provider for current remote state, plus manual `suspend`/`resume` that write the same local statuses `apply_policy()` already uses — both reuse the existing guard/audit pattern in `Actions.php`.",
+                    "effort": "M"
+                },
+                {
+                    "severity": "low",
+                    "title": "Redaction is key-name based only; upstream error text and job errors are stored verbatim",
+                    "location": "src/Audit/Audit.php:15,45-59; src/Arvan/ArvanClient.php:121; src/Jobs/JobRunner.php:95",
+                    "impact": "The health page's own heading claims the error list is محرمانه‌زدایی‌شده (redacted). That guarantee holds for structured detail keys but not for free-text upstream messages, which are exactly where a provider is most likely to echo a request header or signed URL back at you.",
+                    "recommendation": "Add a value-side pass to `redact()`: regex-replace long high-entropy substrings and `Bearer|Apikey \\S+` patterns in string values before storage. Cheap, and it makes the on-screen claim true.",
+                    "effort": "S"
+                },
+                {
+                    "severity": "low",
+                    "title": "Scheduled usage syncs record a timestamp but no result counts, so a silently empty run looks healthy",
+                    "location": "src/Usage/UsageSync.php:87; src/Admin/Actions.php:321-326",
+                    "impact": "An hourly sync that touched 40 services and ingested 0 records — the signature of a broken usage endpoint or a mis-mapped `remote_id` (silently `continue`d at UsageSync.php:60-62) — is indistinguishable on the health page from a correct run. Revenue leaks quietly.",
+                    "recommendation": "Move the `Audit::log(..., $stats)` call to the end of `sync_all()` itself so both paths record it, and show the last run's counts next to the timestamp on the health page.",
+                    "effort": "S"
+                }
+            ]
+        },
+        {
+            "dimension": "Scalability & Performance",
+            "short": "Scalability",
+            "weight": 8,
+            "score": 62,
+            "confidence": "high",
+            "verdict": "The schema, indexing, atomic job claiming and asset discipline are genuinely well-built, but the single most-executed hot path (wallet balance on every page render) is an unbounded row fetch summed in PHP, the admin customer list N+1s that same call 20 times, and three of the scalability doc's headline claims — including one labelled \"[verified in code]\" — are contradicted by the code they describe.",
+            "findings": [
+                {
+                    "severity": "critical",
+                    "title": "Ledger::balance() fetches every ledger row for a customer into PHP, on every front-end page render",
+                    "location": "src/Wallet/Ledger.php:123-133, src/Front/Shortcodes.php:48",
+                    "impact": "CAPACITY_MODEL.md:22 puts ledger growth at 48,000 rows/day across 1,000 customers = ~48 rows/customer/day, so the ≤10³ figure is exceeded in three weeks and a one-year-old customer's every page view loads ~17,500 rows into PHP memory. Nothing about this is an indexed aggregate; it is an O(rows-per-customer) fetch on the most-executed path in the product, and it degrades continuously and permanently because the ledger is append-only with no checkpointing.",
+                    "recommendation": "Replace the row fetch with a single SQL aggregate: `SELECT SUM(CASE WHEN direction='credit' THEN amount ELSE -amount END) ...` plus the three type-scoped sums, keeping `derive()` for the unit tests. Add the checkpoint rows already contemplated in ADR-0007 once that flattens out, and correct the SCALABILITY.md claim to match whichever ships.",
+                    "effort": "S"
+                },
+                {
+                    "severity": "high",
+                    "title": "Admin customer list N+1s the unbounded balance query — 20 full ledger scans per page render",
+                    "location": "src/Admin/Menu.php:170-179",
+                    "impact": "Each iteration is the unbounded fetch from finding #1, so the customers screen loads 20 × (that customer's entire ledger history) into PHP per render — ~350,000 rows at the capacity model's own one-year volumes. The pagination is real but it bounds the wrong axis: rows-per-page is capped, rows-per-row is not. This is the exact pattern the doc claims is fine.",
+                    "recommendation": "One grouped query for the visible page: `SELECT customer_id, SUM(CASE WHEN direction='credit' THEN amount ELSE -amount END) FROM ledger WHERE customer_id IN (...) GROUP BY customer_id`, keyed back onto the user rows.",
+                    "effort": "S"
+                },
+                {
+                    "severity": "high",
+                    "title": "Catalog cache miss makes a blocking upstream call inside page render, with no negative caching and no stampede guard",
+                    "location": "src/Arvan/Catalog.php:47-55, src/Arvan/ArvanClient.php:17-19",
+                    "impact": "The claim is false on the miss path. Every 6h expiry sends the first N concurrent storefront/product requests upstream simultaneously (no lock, no stale-while-revalidate). During an ArvanCloud degradation it is worse: because errors are never cached, *every* page view retries — up to 3 attempts × 20s + backoff per call, ×2 calls for cloud_server ≈ 120s of blocked PHP-FPM worker per visitor. A provider outage becomes a full storefront outage through worker exhaustion, and the \"[verified in code]\" label makes a reviewer trust the wrong thing.",
+                    "recommendation": "Cache the failure short (`set_transient($key, [], 60)`) so an outage costs one upstream call per minute, serve the stale value past TTL while one request refreshes it, and drop or qualify the \"no external HTTP in any page render\" claim.",
+                    "effort": "S"
+                },
+                {
+                    "severity": "high",
+                    "title": "Hourly usage sync rescans the entire ledger twice — the real first bottleneck, and not the one the docs name",
+                    "location": "src/Usage/UsageSync.php:83-85, :131-143, src/Wallet/Ledger.php:136-153",
+                    "impact": "Every customer who ingested any usage in the hour is touched, so a run loads roughly 2× the entire ledger table into PHP every hour, and that cost grows with total ledger history forever — ~35M rows/hour after year one at the documented Stage A ceiling. SCALABILITY.md:63 names \"usage ingestion via WP-Cron\" as what breaks first and prescribes chunking by service-ID range (:67); chunking does not help here, because the policy pass cost is proportional to accumulated ledger size, not to the batch. The documented fix does not address the documented-away bottleneck's larger sibling.",
+                    "recommendation": "Have `negative_since_days()` accept the already-computed balance instead of recomputing it, and move balance derivation to SQL (finding #1). Then re-run the \"what breaks first\" analysis — the answer changes.",
+                    "effort": "S"
+                },
+                {
+                    "severity": "high",
+                    "title": "sync_all() is unbounded and unchunked in one request; the demo provider materialises every usage row in memory first",
+                    "location": "src/Usage/UsageSync.php:36-89, src/Services/Services.php:84-95, src/Arvan/DemoProvider.php:146-174",
+                    "impact": "At the documented Stage A ceiling of 2,000 services that is ~96,000 objects built in memory before a single row is written, followed by up to 96,000 INSERT IGNOREs plus 96,000 ledger appends in one PHP request with no time budget and no resume point. There is no checkpoint, so a timeout at 90% wastes the run (idempotency makes it safe, not cheap). The docs acknowledge this precisely (:63-67), which is worth real credit — but the shipped code is still the unchunked version, so the Stage A envelope of \"≤2,000 active services\" is an untested claim about code that provably allocates 96k objects at that number.",
+                    "recommendation": "Stream: yield rows per service rather than returning one array, and enqueue `usage_sync` chunks by service-ID range as the doc already plans (it is the ~20 lines SCALABILITY.md:67 estimates). Add a wall-clock budget that re-enqueues the remainder.",
+                    "effort": "M"
+                },
+                {
+                    "severity": "medium",
+                    "title": "Jobs stuck in 'running' are never reclaimed and never surfaced; claimed_at is written but never read",
+                    "location": "src/Jobs/JobRunner.php:55-58, :73-77, :137-145",
+                    "impact": "A PHP fatal, an OOM, or a max_execution_time kill mid-provision leaves the row 'running' permanently: the order is never provisioned, no retry fires, no dead-letter notification is sent, and the System Health page cannot show it. SCALABILITY.md:25 names `status='dead'` count as one of the two numbers worth alerting on, so the failure mode that produces no 'dead' row is exactly the one monitoring misses. Probability rises with load, since long-running jobs are the ones that time out.",
+                    "recommendation": "Add `OR (status='running' AND claimed_at < NOW() - INTERVAL 10 MINUTE)` to the due query (attempts is already incremented at claim time, so the existing backoff/dead-letter logic handles it unchanged).",
+                    "effort": "S"
+                },
+                {
+                    "severity": "medium",
+                    "title": "Admin dashboard runs six uncached full-table aggregates per render, including two whole-ledger scans and count_users()",
+                    "location": "src/Admin/Menu.php:86-103",
+                    "impact": "`GROUP BY customer_id ORDER BY <computed> ASC` cannot use an index for the sort, so it is a full scan plus temp table plus filesort over ~17.6M rows/year (CAPACITY_MODEL.md:22); the credential reconciliation is a full scan of the 17.5M-row usage table joined to services. `count_users()` is a known full usermeta scan. None of it is cached — grep confirms the only `set_transient`/`wp_cache_*` uses in src/ are the catalog and the rate limiter — so cost is paid per admin page view, and the dashboard is the page an operator refreshes most.",
+                    "recommendation": "Wrap the dashboard payload in a 60-300s transient (the object cache Stage B installs then makes it free), bound the reconciliation queries by date, and index `is_demo` if the demo filter stays on the SUM.",
+                    "effort": "S"
+                },
+                {
+                    "severity": "medium",
+                    "title": "Pricing N+1: one customer_rules query per plan, repeated for every plan on every storefront and product render",
+                    "location": "src/Pricing/Pricing.php:23, src/Customers/Rules.php:21-27, src/Front/Shortcodes.php:72 and :97",
+                    "impact": "The identical single row is re-fetched once per plan: with ~20 plans across three products that is ~60 duplicate queries per storefront render for a logged-in customer, and the catalog REST endpoint repeats it per plan per call. It scales with catalog size rather than customer count, so it will not appear in the doc's customer-count scale table at all — but it is paid on the storefront, the highest-traffic page (CAPACITY_MODEL.md:33 assumes 10 req/s burst there).",
+                    "recommendation": "Static-memoise `Rules::get()` per customer_id for the request — a two-line array cache in `Rules`, which also fixes the repeated calls from `can_purchase()` and `apply_policy()`.",
+                    "effort": "S"
+                },
+                {
+                    "severity": "medium",
+                    "title": "Plugin::demo_mode() runs an uncached credentials query per call, including once per ledger row during ingestion",
+                    "location": "src/Plugin.php:50-56, src/Arvan/Credentials.php:125-131, src/Wallet/Ledger.php:47",
+                    "impact": "Doubles the query count of the ledger write path: at the capacity model's 48,000 ledger rows/day that is 48,000 extra round trips per day, concentrated inside the hourly sync request that finding #5 already shows is the tightest one. `Plugin::arvan()` and `Catalog::plans()` call it too, so it also lands on page renders.",
+                    "recommendation": "Memoise the result in a static for the request (it cannot change mid-request except through the credentials admin action, which can reset it).",
+                    "effort": "S"
+                },
+                {
+                    "severity": "low",
+                    "title": "Composite indexes do not match the actual sort orders; OFFSET pagination degrades on deep pages",
+                    "location": "src/Install/Schema.php:137, :120-121, src/Usage/UsageSync.php:220-225",
+                    "impact": "Each customer-dashboard render sorts that customer's whole usage history (~17.5k rows/year) to return 20 — a filesort that grows linearly and is invisible until it isn't. OFFSET pagination re-scans skipped rows, so deep admin pages degrade, and `templates/admin/orders.php:48` infers \"has next page\" from `count($orders) === 20` rather than a count, so there is no total to bound it with.",
+                    "recommendation": "Add `KEY customer_recent (customer_id, id)` to usage_records and ledger; index `is_demo` if the demo split stays on aggregates. Keyset pagination (`WHERE id < :last_seen`) is the follow-up if deep paging ever matters.",
+                    "effort": "S"
+                }
+            ]
+        },
+        {
+            "dimension": "Testing & QA Quality",
+            "short": "Testing & QA",
+            "weight": 9,
+            "score": 66,
+            "confidence": "high",
+            "verdict": "Real, well-chosen unit tests over the pure domain plus a genuine (not mocked) WordPress end-to-end money flow put this well above hackathon norms, but ~46 tests / 103 assertions cover only ~9 of 40 classes, several assertions are decorative or misnamed, and every guard that actually protects money under contention — the ledger unique key on the order path, claim_paid races, the sandbox-gateway block, the v3→v4 migration — is validated by nothing.",
+            "findings": [
+                {
+                    "severity": "high",
+                    "title": "Order-payment replay test short-circuits before the DB idempotency guard it claims to prove",
+                    "location": "tests/integration/e2e.php:86-92",
+                    "impact": "The three real duplicate-payment defenses are untested by this test: the UNIQUE KEY uniq_ref (ref_type,ref_id,type) at Schema.php:119, the `rows_affected === 0` duplicate signal at Ledger.php:63, and the atomic status-guarded UPDATE in OrderService::claim_paid (OrderService.php:179-185). Drop the unique index entirely and every check in section 6 still passes. The state pre-check is also the guard that is useless under concurrency — two simultaneous callbacks both read a payable status.",
+                    "recommendation": "Add a check that calls the ledger/claim layer directly on an already-settled ref: assert `Ledger::append($cust,'payment',$amt,'order',$ref,...) === 0` and `OrderService::claim_paid($ref,$amt,'tx2') === null` after settlement, so the DB-level guards are exercised independently of the status short-circuit.",
+                    "effort": "S"
+                },
+                {
+                    "severity": "high",
+                    "title": "sandbox_blocked() — the guard that stops a self-verifiable sandbox proof settling real money — has zero coverage",
+                    "location": "src/Payments/PaymentService.php:33-36 (used at :44 and :124)",
+                    "impact": "The highest-severity money bug the project found in review is protected by no test. A refactor that reorders the checks in handle_order_callback / handle_topup_callback, or that changes Plugin::payments() resolution, silently re-opens free provisioning against a live store, and the suite stays green.",
+                    "recommendation": "Add a unit test that stubs demo_mode off with the sandbox provider active and asserts both callbacks return ok=false, plus an E2E check that flips demo_mode to false mid-run and asserts a sandbox-proof callback is refused before any ledger row is written.",
+                    "effort": "S"
+                },
+                {
+                    "severity": "high",
+                    "title": "The only real data migration (v3→v4 ledger is_demo back-stamp) is unreachable from every test",
+                    "location": "src/Install/Schema.php:221-227",
+                    "impact": "An UPDATE that rewrites every ledger row's is_demo flag — the flag that decides whether money counts as real in reconciliation — is untested in both directions. If the `$in_demo` inference at :223 is wrong (note it defaults to demo when 'demo_mode' is absent from settings), a live reseller upgrading from v3 has their entire real ledger stamped as demo and excluded from money views, with no test to catch it.",
+                    "recommendation": "Add an integration check that seeds arvrs_schema_version=3 plus a few ledger rows under both settings shapes, calls Schema::migrate(), and asserts the is_demo outcome for each — including the 'settings key absent' default.",
+                    "effort": "M"
+                },
+                {
+                    "severity": "high",
+                    "title": "Two of the five License tests assert nothing about the license code; one is named for an invariant it never exercises",
+                    "location": "tests/unit/LicenseTest.php:11-27 and :29-38",
+                    "impact": "The claimed invariant in TESTING.md:19 ('storage shape, no-plaintext-in-repo guarantee, bcrypt round-trip') is only half real. Nothing verifies that a *successful* activation stores only a fingerprint and never the plaintext token — the exact leak the design exists to prevent. Both tests are green by construction and can never fail on a regression in License.",
+                    "recommendation": "Make the allowlist injectable (constructor arg, filter, or a settable static) so a test can activate a known token and assert the persisted option contains a fingerprint and not the token. Delete the password_hash test or replace it with one that calls License::verify().",
+                    "effort": "M"
+                },
+                {
+                    "severity": "medium",
+                    "title": "Three E2E checks cannot fail or assert something weaker than their own label",
+                    "location": "tests/integration/e2e.php:117, :123, :232",
+                    "impact": "Three of 53 checks are decorative. Worse, the labels are what a reader (or judge) audits against: 'created once' and 'reconciliation isolation' both read as invariants that are not being tested. The cooldown is in fact tested one line later at :126, but the stamping complement is tested nowhere — demo/real ledger mixing, listed at TESTING.md:41 as a defect the review round found, has no assertion that can catch its return.",
+                    "recommendation": "Assert the expected stage exactly (compute the balance and pin 'warning'/'critical'), change :123 to `=== 1`, and add `COUNT(*) FROM ledger WHERE is_demo = 0` equals 0 for the demo run.",
+                    "effort": "S"
+                },
+                {
+                    "severity": "medium",
+                    "title": "No negative authentication or authorization tests anywhere: isolation is only ever tested between two logged-in customers",
+                    "location": "tests/integration/e2e.php:128-142; src/Rest/Routes.php:36; src/Front/FormActions.php:33,49,76",
+                    "impact": "The suite proves customer B sees customer A's data as an empty list; it does not prove an anonymous or non-customer principal is refused, nor that a missing/forged nonce blocks login, registration, logout, checkout or top-up. A permission_callback accidentally set to __return_true, or a dropped check_admin_referer, ships green — and those are one-token regressions.",
+                    "recommendation": "Add checks that dispatch /me/services and /me/orders with `wp_set_current_user(0)` asserting 401/403, one asserting a subscriber-without-customer-role is refused, and unit-level tests of the form handlers with an invalid nonce.",
+                    "effort": "M"
+                },
+                {
+                    "severity": "medium",
+                    "title": "SQLite-only integration structurally hides the exact MySQL failure mode Ledger::append is written to defend against",
+                    "location": "src/Wallet/Ledger.php:63-71; TESTING.md:54",
+                    "impact": "The single code path that can silently swallow a customer's top-up is untestable on the platform the tests run on, and the documentation understates the gap as a dialect detail rather than a divergence in the semantics the money logic depends on. Also unverified on SQLite: utf8mb4 collation for the Persian text fields, dbDelta index-length behaviour on the 191-char unique keys, and MySQL's affected-rows-vs-matched-rows semantics used by claim_paid.",
+                    "recommendation": "Add a unit test with a fake $wpdb that returns rows_affected=0 with and without last_error and pins both branches (return 0 vs throw), and run the E2E once on MySQL — or amend TESTING.md:54 to name truncation/warning semantics explicitly instead of 'same SQL dialect subset'.",
+                    "effort": "M"
+                },
+                {
+                    "severity": "medium",
+                    "title": "Zero concurrency tests for a design whose entire correctness argument is about races",
+                    "location": "src/Wallet/Ledger.php:49; src/Orders/OrderService.php:179-191; src/Provisioning/Provisioner.php:35-48",
+                    "impact": "The failure the whole idempotency design targets — two gateway callbacks or two job workers arriving at once — is the one scenario never simulated. Sequential replays take the state-machine short-circuit instead (see finding 1), so the concurrent branch at PaymentService.php:65-68 (`$claimed` null) is dead code as far as the suite is concerned.",
+                    "recommendation": "At minimum drive the branch deterministically: call claim_paid twice in a row and assert the second returns null, and call Provisioner::provision twice on the same paid order asserting 'already provisioned' with one row in arvrs_services. A true parallel test needs MySQL, but these two checks would at least cover the branches.",
+                    "effort": "M"
+                },
+                {
+                    "severity": "medium",
+                    "title": "JobRunner (durable queue, backoff, dead-lettering) is untested, and the enqueue+inline double-provision path is never exercised",
+                    "location": "src/Jobs/JobRunner.php:74-101; tests/integration/e2e.php:154",
+                    "impact": "Provisioning idempotency is claimed in the header comment of e2e.php but only proven at the DemoProvider level (same idempotency_key → same remote_id, UsageAndRedactionTest.php:46-52). Nothing proves the system does not create a second billable cloud server when the queued job runs after inline provisioning succeeded — the most expensive possible regression. Retry exhaustion, backoff indexing and the admin dead-letter notification are equally unexercised.",
+                    "recommendation": "In the E2E, run the queue tick after the successful order and re-assert `COUNT(*) FROM arvrs_services WHERE order_id = ...` is 1; add a small unit test over the backoff index and the attempts >= max_attempts dead-letter decision.",
+                    "effort": "M"
+                },
+                {
+                    "severity": "low",
+                    "title": "No automated coverage of the browser layer; the .playwright-cli directory holds manual session dumps, not tests",
+                    "location": "repo-wide (assets/js/front.js, templates/, .playwright-cli/)",
+                    "impact": "Every client-side behaviour is regression-tested by a human: form validation, the checkout flow's client state, RTL rendering, the wizard, and any XSS-relevant escaping in templates. The REST-level dispatch checks in the E2E do not touch a rendered page, so an unescaped variable in a template or a broken submit handler is invisible to the suite. Honest disclosure at TESTING.md:55 mitigates the credibility cost but not the risk.",
+                    "recommendation": "Even three Playwright checks — register→login, checkout→pay→service visible, admin wizard completes — would cover the highest-traffic paths; and widen the composer lint script to `find src -name '*.php' -print0 | xargs -0 -n1 php -l`.",
+                    "effort": "L"
+                }
+            ]
+        },
+        {
+            "dimension": "Security Engineering (application security)",
+            "short": "Security",
+            "weight": 12,
+            "score": 84,
+            "confidence": "high",
+            "verdict": "The core WordPress attack surface is genuinely locked down — every $wpdb call is prepared, every state-changing path has capability+nonce, there is no IDOR anywhere, and payment verification/replay/amount-binding are real and unit-tested — but the upstream provisioning path silently discards its idempotency key while blindly retrying POSTs, and two SECURITY.md/THREAT_MODEL claims don't survive contact with the code.",
+            "findings": [
+                {
+                    "severity": "high",
+                    "title": "RealProvider discards the idempotency key while ArvanClient blindly retries POSTs — duplicate billable upstream resources",
+                    "location": "src/Arvan/RealProvider.php:137 + src/Arvan/ArvanClient.php:64-104",
+                    "impact": "ArvanCloud accepts `POST /regions/{r}/servers`, the response times out at 20s or returns 502, the client re-POSTs, and a second server is created upstream. Only the first `remote_id` returned is stored in `arvrs_services`, so the duplicate is invisible to the plugin: it is never listed, never usage-synced, never deleted on cancel, and bills the reseller's Arvan account indefinitely. The three local idempotency layers in `Provisioner` cannot see it because the duplication happens below them, inside a single `create()` call. SECURITY.md's \"A browser refresh, duplicated callback, or twice-delivered job cannot create two remote resources\" is true as written but reads as a retry-safety guarantee the code does not provide.",
+                    "recommendation": "Send the key upstream as an idempotency header on create calls, and separately stop retrying non-idempotent methods: gate the retry loop on `in_array($method, ['GET','HEAD'], true)` (or on an explicit `$retry_safe` flag passed by the caller) so POST failures surface as `ProviderError('unknown')` for the job runner to reconcile rather than being re-fired. At minimum, on a POST timeout do a GET reconciliation by name/tag before the retry.",
+                    "effort": "M"
+                },
+                {
+                    "severity": "medium",
+                    "title": "THREAT_MODEL S5 \"DB dump alone is useless\" is false on any install without salt constants in wp-config.php",
+                    "location": "src/Support/Crypto.php:22-26",
+                    "impact": "On a WordPress install where salts were not written into wp-config.php (managed hosts that auto-provision, hand-rolled installs, restored-from-migration sites), the sodium key material and the `token_enc` ciphertext live in the *same* database. A single DB dump — the exact M3 adversary the threat model names — decrypts every stored ArvanCloud API token, which grants full control of the reseller's upstream account. The plugin never checks or surfaces which case it is in; the Health page (src/Admin/Menu.php:252) reports `sodium` availability only.",
+                    "recommendation": "Add a `defined('AUTH_SALT') && AUTH_SALT !== 'put your unique phrase here'` check, surface it as a red row on the Health page next to the sodium check, and refuse to save new credentials (or loudly warn) when it fails. Correct the SECURITY.md/THREAT_MODEL wording to say the key derives from salts *when they are file-defined constants*.",
+                    "effort": "S"
+                },
+                {
+                    "severity": "medium",
+                    "title": "POST /me/topup is unrate-limited and writes a permanent wp_options row per call",
+                    "location": "src/Rest/Routes.php:89-99 + src/Payments/PaymentService.php:107-115",
+                    "impact": "Any registered customer (registration is open and self-service) can loop `POST /me/topup` and add unbounded permanent rows to `wp_options` — one per request, never garbage-collected, surviving until plugin uninstall. That is authenticated storage exhaustion plus degradation of every `get_option`/`wp_load_alloptions` path on the site, from an endpoint whose neighbours are all throttled. The intent rows also accumulate silently after every successful top-up, so even normal use leaks rows.",
+                    "recommendation": "Add `Helpers::rate_limit('topup:'.get_current_user_id(), 10, 300)` to the route callback, and `delete_option('arvrs_topup_'.$ref)` in `handle_topup_callback` once the ledger row is written (the ledger unique key already carries replay safety, so the intent row is not needed afterwards). Sweep stale intents older than a day in the existing cron job.",
+                    "effort": "S"
+                },
+                {
+                    "severity": "medium",
+                    "title": "Refund credits the wallet without confirming the original payment was ever ledgered",
+                    "location": "src/Admin/Actions.php:286-292 + src/Payments/PaymentService.php:75-82",
+                    "impact": "Because the normal payment pair nets to zero on the wallet (credit `payment` + debit `purchase`), a refund is a net `+amount` wallet credit that assumes the pair was written. If the pair was dropped by the swallowed exception (deadlock, disk-full, connection loss — exactly the conditions the catch exists for), refunding that order mints wallet credit backed by nothing, which the customer can then spend on further provisioning. The audit trail records the discrepancy but nothing blocks the action.",
+                    "recommendation": "Before appending the refund, require the settlement row: `SELECT id FROM ledger WHERE ref_type='order' AND ref_id=%s AND type='purchase'`; if absent, refuse with a notice pointing the admin at the reconciliation view. Alternatively make the payment-pair failure fatal to the callback (return `ok=false`) so the gateway retries — the ledger unique key already makes that retry safe.",
+                    "effort": "S"
+                },
+                {
+                    "severity": "medium",
+                    "title": "Two SECURITY.md control claims are not true of the code (get_owned has no production callers; not every route has an args schema)",
+                    "location": "SECURITY.md:17,70 vs src/Services/Services.php:63 and src/Rest/Routes.php:74-77,101-107",
+                    "impact": "Neither gap is currently exploitable — the ownership guarantee actually comes from session-derived IDs in `me_list` and the SQL-scoped `mark_read` — but a reviewer who trusts the control inventory will believe a centralized ownership helper is enforcing single-row access. The first future endpoint that takes a service ID (a \"view service\" or \"cancel service\" route) will be written against a document that says the check is already centralized, when in fact nothing calls it. A false entry in a control inventory is a latent authorization bug.",
+                    "recommendation": "Either wire `get_owned` into a real single-row path or delete the claim from SECURITY.md/THREAT_MODEL/README and say plainly that all customer reads are list-scoped by session ID. Add `args` to the two routes (`page`-less `/me/summary` needs none, so soften the claim to \"every route that accepts parameters\") — the `(?P<id>\\d+)` regex plus `(int)` cast is adequate, but the doc should match.",
+                    "effort": "S"
+                },
+                {
+                    "severity": "low",
+                    "title": "Public registration silently overrides the site's membership setting and leaks account existence",
+                    "location": "src/Identity/Customers.php:61-85 + src/Front/FormActions.php:47-59",
+                    "impact": "Activating the plugin turns on open user registration on any WordPress site regardless of the admin's Membership setting — a surprising security-posture change for a site that deliberately disabled it. The differential error also gives account enumeration (slowly: 5 probes per 10 minutes per IP, trivially parallelised across IPs), and 8 characters with no complexity or breach check is a weak floor for accounts that hold spendable wallet balances.",
+                    "recommendation": "Return an identical neutral message for both the taken-email and success cases (\"if this address is new, you are now signed in; otherwise sign in\"), or gate registration behind an explicit plugin setting that the wizard sets, and note in the admin UI that enabling the storefront enables customer signup. Consider raising the floor via `wp_check_password_strength`-equivalent server-side length/entropy checks.",
+                    "effort": "S"
+                },
+                {
+                    "severity": "low",
+                    "title": "arvrs_notice / arvrs_error are attacker-controlled reflected text in both admin and front notices",
+                    "location": "templates/admin/partials/notices.php:4-5 + src/Front/Shortcodes.php:156-157",
+                    "impact": "Not XSS — `esc_html` is correctly applied at every sink and I verified all of them. But an attacker can hand an admin or a customer a link like `…/wp-admin/admin.php?page=arvan-reseller-credentials&arvrs_error=<attacker text>` that renders arbitrary text inside a first-party WordPress error banner. That is a credible phishing/social-engineering primitive on a page that also hosts the API-token entry form (\"Your ArvanCloud token expired — re-enter it below\").",
+                    "recommendation": "Replace query-string flash messages with keyed codes: pass `arvrs_notice=branding_saved` and look the human string up from a server-side map, rendering nothing for an unknown key. That removes the injection primitive without changing the UX.",
+                    "effort": "S"
+                },
+                {
+                    "severity": "low",
+                    "title": "Test harness ships inside the plugin with no ABSPATH guard",
+                    "location": "tests/integration/e2e.php:1-40, tests/bootstrap.php:1-20",
+                    "impact": "Both files are directly requestable at `/wp-content/plugins/arvan-reseller/tests/…` on a default install. Execution fails fast (undefined classes) rather than doing damage, but with `display_errors` on it discloses the absolute filesystem path and PHP version in the fatal, and `bootstrap.php` will happily define global function shims in a web request context. It is also the one place in the codebase that breaks the otherwise uniform direct-access guard.",
+                    "recommendation": "Add `defined('ABSPATH') || exit;` to both files (WP-CLI's `eval-file` and PHPUnit's bootstrap both satisfy or predate it — for `bootstrap.php` use a `php_sapi_name() === 'cli' || exit;` guard instead), and add `tests/ export-ignore` plus a `.distignore` so the shipped artifact excludes them.",
+                    "effort": "S"
+                },
+                {
+                    "severity": "low",
+                    "title": "Rate limiter is a non-atomic read-modify-write, so burst limits are bypassable",
+                    "location": "src/Support/Helpers.php:82-91",
+                    "impact": "N parallel requests arriving inside one read-write window all pass, and the counter advances by 1 instead of N. The login limiter (10/600s per IP, FormActions.php:34) and the payment-callback limiter (30/300s per IP, Routes.php:156) can therefore be exceeded by a straightforward concurrent burst rather than serial requests. These are throttles rather than authorization boundaries, so impact is bounded — but the claimed protection is weaker than stated.",
+                    "recommendation": "Use `wp_cache_add($key, 0, '', $window)` followed by `wp_cache_incr($key)` when a persistent object cache is present (atomic there), falling back to the transient path otherwise; or accept it and add the race to the documented limitations alongside the multi-server note.",
+                    "effort": "S"
+                }
+            ]
+        },
+        {
+            "dimension": "Accessibility & Internationalization",
+            "short": "Accessibility & i18n",
+            "weight": 5,
+            "score": 66,
+            "confidence": "high",
+            "verdict": "The customer-facing storefront shows genuine, above-average accessibility craft — associated labels, correct tab/alert ARIA, bidi-aware `dir=\"ltr\"` on every LTR data field, reduced-motion support — but the admin UI has no label association at all, the shared color tokens fail WCAG AA in both stylesheets, and the \"i18n\" is `__()`-wrapping without an actual catalog, a `lang` attribute, or locale-switchable direction.",
+            "findings": [
+                {
+                    "severity": "high",
+                    "title": "No admin form field is label-associated: `<label>` and `<input>` are siblings with no `for`",
+                    "location": "templates/admin/branding.php:22-39, credentials.php:85-96, policies.php:17-24, pricing.php:20-27, customer-detail.php:39-64",
+                    "impact": "A screen-reader user in wp-admin hears \"edit, blank\" for the brand name, support email, API token, markup percentage, warning threshold, negative-credit cap and spending limit. Roughly forty controls that configure pricing, credit policy and ArvanCloud credentials are unidentifiable without sighted context, and clicking the label text does not focus the field. This directly falsifies HACKATHON_READINESS.md:25, which claims \"labels on every field ✅\".",
+                    "recommendation": "Add `id` to each admin input and `for` to its label, exactly as `templates/admin/wizard.php` and every front template already do. The wrapped checkboxes (`credentials.php:90,94`, `policies.php:40`) are already fine via implicit association and need no change.",
+                    "effort": "M"
+                },
+                {
+                    "severity": "high",
+                    "title": "Shared status-tag palette fails WCAG AA in both stylesheets — success pill is 2.89:1",
+                    "location": "assets/css/front.css (.arvrs-tag-* block), assets/css/admin.css:60-66",
+                    "impact": "These pills are the sole carrier of order and service state — `Helpers::status_tag()` emits them for all twenty statuses including `pending_payment`, `provision_failed`, `suspended` and `blocked` (src/Support/Helpers.php:38-59), and they appear in every front and admin table. Low-vision users and anyone on a dim or glare-affected screen cannot reliably read whether an order failed or a service is suspended. spec.md:157 claims \"contrast per Sorkhab tokens\".",
+                    "recommendation": "Darken the four failing foregrounds against their tinted backgrounds — e.g. success `#0a7038`, info `#0a5c99`, danger `#a81f42`, default `#405957` all clear 4.5:1 on the existing backgrounds with no layout change. Fix once in each `:root`/`.arvrs-admin` token block, since both stylesheets duplicate the same five values.",
+                    "effort": "S"
+                },
+                {
+                    "severity": "high",
+                    "title": "Plugin never emits `lang`, and `dir=\"rtl\"` is hardcoded — translation cannot change direction",
+                    "location": "templates/front/partials/shell-top.php:14, front/auth.php:7, front/payment.php:14, admin/{wizard,services,pricing,policies}.php",
+                    "impact": "Two distinct failures. (a) WCAG 3.1.1/3.1.2: on a site whose `<html lang>` is `en-US` (the WordPress default), every Persian string is spoken by an English voice — the whole storefront becomes unintelligible to a screen-reader user. (b) The plugin is not actually internationalized: translate it to English or Arabic-vs-Persian and the layout is still forcibly RTL with right-aligned tables, so the `__()` wrapping buys nothing.",
+                    "recommendation": "Emit `dir=\"<?php echo is_rtl() ? 'rtl' : 'ltr'; ?>\" lang=\"<?php echo esc_attr(str_replace('_','-',get_locale())); ?>\"` on each `.arvrs-app`/`.arvrs-admin` wrapper, and swap the two `text-align: right` rules for `text-align: start` — the file already uses `margin-inline`, `padding-inline-start` and `margin-inline-start` elsewhere, so the logical-property habit exists.",
+                    "effort": "S"
+                },
+                {
+                    "severity": "medium",
+                    "title": "Customer-facing ArvanCloud error messages bypass `__()` entirely",
+                    "location": "src/Arvan/DTO.php:88-96",
+                    "impact": "The six most likely checkout failure messages — the ones a user sees when provisioning times out or the upstream API rate-limits — are frozen in Persian and invisible to `wp i18n make-pot`. Together with the three hardcoded Persian strings in `assets/js/front.js`, an English or Arabic translation of the plugin would still show Persian at exactly the moments the user most needs to understand what happened.",
+                    "recommendation": "Wrap all six in `__(…, 'arvan-reseller')`. Do the same for `assets/js/front.js:78` (`|| 'ادامه و پرداخت'`), `:122` (`'✓ کال‌بک تکراری شناسایی شد — …'`) and `:152` (`'پرداخت و شارژ'`) by adding those keys to the `i18n` array already localized at src/Front/Assets.php:43-46.",
+                    "effort": "S"
+                },
+                {
+                    "severity": "medium",
+                    "title": "`Domain Path: /languages` points at a directory that does not exist; no .pot ships",
+                    "location": "arvan-reseller.php:12,51",
+                    "impact": "619 correctly-wrapped `__()` calls produce zero translatable output in practice — there is no catalog for a translator to open and no build step that generates one, so the loader silently no-ops for every locale. \"i18n-ready\" (spec.md:156) is true of the call sites but not of the deliverable.",
+                    "recommendation": "Generate and commit `languages/arvan-reseller.pot` (`wp i18n make-pot . languages/arvan-reseller.pot`), plus an `fa_IR` .po/.mo so the shipped Persian is itself a translation rather than the untranslatable source strings.",
+                    "effort": "S"
+                },
+                {
+                    "severity": "medium",
+                    "title": "White-on-teal gradients that ignore the brand variable fail AA — hero and stat text at ~2:1",
+                    "location": "assets/css/front.css (.arvrs-hero, .arvrs-auth-aside, .arvrs-stat.is-brand), admin.css:72-77",
+                    "impact": "The hero subtitle, the login-screen value proposition, the wallet-balance stat labels, and — most seriously — every \"Save settings\" / \"Test connection\" primary button in wp-admin carry text below the 4.5:1 AA threshold, several below even the 3:1 large-text floor. The admin button is a regression against a WordPress default that already passed.",
+                    "recommendation": "Cap the gradient light stop (e.g. end at `#0c8a80`, luminance 0.198, which gives white 4.44:1 and clears 3:1 comfortably for the large hero h1), raise the three `rgba(255,255,255,.75-.85)` values to solid `#fff`, and drop the `.arvrs-admin .button-primary` gradient override or restrict it to `#0a7a72`-and-darker.",
+                    "effort": "M"
+                },
+                {
+                    "severity": "medium",
+                    "title": "Payment success destroys keyboard focus and relies on reveal-to-announce live regions",
+                    "location": "assets/js/front.js:95-116, templates/front/payment.php:47-66",
+                    "impact": "A screen-reader or keyboard user who confirms payment is silently returned to the top of the document with no announcement that the transaction settled or that a service was provisioned — the exact moment the flow most needs confirmation. Live regions whose content changes while unrendered, or that are merely un-hidden, are announced inconsistently across NVDA/JAWS/VoiceOver, so the \"در حال تأیید پرداخت…\" and error messages may never be spoken. The failure branch uses a raw `alert()` (front.js:109), a blocking modal with no styling or context.",
+                    "recommendation": "Move focus to `#arvrs-pay-done` (give it `tabindex=\"-1\"`) after revealing it. Keep the `role=\"status\"` elements permanently rendered and set `textContent` after they are visible rather than before; unhide first, then write. Replace the `alert()` with the existing `.arvrs-alert-danger` + `role=\"alert\"` pattern already used on the product page.",
+                    "effort": "M"
+                },
+                {
+                    "severity": "medium",
+                    "title": "Brand color is user-settable to any hex with no contrast guard, and drives all CTA/focus colors",
+                    "location": "templates/admin/branding.php:30, src/Admin/Actions.php:74, src/Front/Assets.php:47-49",
+                    "impact": "A reseller picking any light or mid teal/yellow/lime — which a bare color picker invites — silently drops the primary CTA, the wallet chip, the active nav link and every focus ring below AA, with no warning in the UI. The derived ramp (`brand-2`, `brand-3`, `brand-ink` via `color-mix`) is well-designed but only safe for dark inputs; the failure is ungated rather than inherent.",
+                    "recommendation": "Compute the relative luminance of the submitted hex in `Actions.php` and either reject/warn below the threshold that keeps white text at 4.5:1, or auto-derive the on-brand text color (white vs `--arvrs-ink`) per contrast instead of hardcoding `color: #fff !important` on `.arvrs-btn-primary`.",
+                    "effort": "M"
+                },
+                {
+                    "severity": "low",
+                    "title": "`role=\"tablist\"` has no arrow-key navigation, and admin focus ring is downgraded to a failing 1px",
+                    "location": "assets/js/front.js:25-35, assets/css/admin.css:87",
+                    "impact": "Tab semantics promise arrow-key behavior that isn't there; the fallback (both buttons in tab order) works but is inconsistent with what AT announces. The admin focus indicator fails SC 1.4.11 non-text contrast (3:1 required) and is thinner than the core ring it overrides, making keyboard traversal of the credentials and policy forms harder than in unstyled wp-admin.",
+                    "recommendation": "Add a `keydown` handler for ArrowLeft/ArrowRight (direction-swapped in RTL), Home and End with roving `tabindex`, or drop `role=\"tablist\"` and let them be plain buttons. Change `admin.css:87` to `box-shadow: 0 0 0 2px var(--brand-ink)` (`#0a7a72`, ≈5.9:1) or simply stop overriding core's focus style.",
+                    "effort": "S"
+                },
+                {
+                    "severity": "low",
+                    "title": "Shortcode output nests `<main>` inside the theme's `<main>` and adds a second `<h1>`",
+                    "location": "templates/front/partials/shell-top.php:47, src/Install/PageFactory.php:41, src/Front/Shortcodes.php:27-33",
+                    "impact": "Nearly every WordPress theme already wraps `the_content()` in `<main>` and renders the page title as `<h1>`. The result is two `main` landmarks (invalid HTML, ambiguous \"skip to main\" target) and two `<h1>`s per page, so heading-based navigation lands on the theme's page title rather than the plugin's real page heading. There is also no skip link and no `sr-only` utility anywhere in the CSS, and the visible `!` / `i` / `✓` glyphs in `.arvrs-alert-mark` are not `aria-hidden`, so each alert is prefixed by a spoken punctuation character.",
+                    "recommendation": "Change `<main class=\"arvrs-main\">` to `<div class=\"arvrs-main\">` (the styling is identical) and demote the template `<h1>`s to `<h2>` — or register a page template that suppresses the theme title. Add `aria-hidden=\"true\"` to `.arvrs-alert-mark` and `.arvrs-feature-mark`.",
+                    "effort": "S"
+                }
+            ]
+        },
+        {
+            "dimension": "Third-Party Integration Correctness & Claim Honesty",
+            "short": "Integration honesty",
+            "weight": 6,
+            "score": 66,
+            "confidence": "high",
+            "verdict": "The integration boundary is well-architected and unusually honest at the documentation level (explicit NOT-AVAILABLE table, forced demo mode until a credential passes a live test, `is_demo` revenue isolation, correct GPL/OFL claims), but real mode carries several provable defects that demo mode completely hides — non-idempotent POST retries, a cloud-server catalog that cannot price itself in real mode, unvalidated config forwarded upstream after payment, and zero test coverage of `ArvanClient`/`RealProvider`.",
+            "findings": [
+                {
+                    "severity": "critical",
+                    "title": "ArvanClient retries non-idempotent POSTs on timeout/5xx, defeating the documented single-invocation guarantee",
+                    "location": "src/Arvan/ArvanClient.php:64-104",
+                    "impact": "A response timeout on `POST /regions/{region}/servers` (cURL 28 after Arvan already accepted the create) causes a second and third identical create. The customer is billed for one server; the reseller's upstream account is billed for up to three, and only one `remote_id` is ever recorded — the orphans are invisible to the plugin and can only be found in the Arvan panel. The same applies to `POST /domains/dns-service` and `POST /buckets`. DemoProvider makes this unreachable in demo (`DemoProvider::create` is a local `update_option`, no HTTP, no retry), so the failure mode cannot surface in any demo or test.",
+                    "recommendation": "Restrict the retry loop to idempotent methods: retry only when `in_array($method, ['GET','HEAD','DELETE','PUT'], true)`, and for POST either fail fast to the job runner or add a pre-flight GET (list servers by the generated `name`, list domains, HEAD bucket) before re-issuing.",
+                    "effort": "S"
+                },
+                {
+                    "severity": "high",
+                    "title": "Real-mode cloud-server plans are keyed by upstream flavor IDs, but BaseCosts is seeded only with demo plan IDs — the headline product is unsellable in real mode",
+                    "location": "src/Pricing/BaseCosts.php:59-63 vs src/Arvan/RealProvider.php:67-75",
+                    "impact": "The moment an operator switches to real mode, every cloud-server plan whose upstream ID is not literally `g1-1-1-25`-style disappears from the storefront; the product page renders an empty plan list and the storefront card shows `from = null`. CDN and Object Storage survive only because RealProvider hardcodes the same IDs the seed uses. This is exactly the drift the demo hides, and it is not listed in the README's \"Known limitations\" — which says base costs are \"seeded from the public pricing page\" without noting the seeded keys only match the demo catalog.",
+                    "recommendation": "Either key cloud-server plans on `$size['name']` (which matches the `g1-*` naming the seed uses) with a documented fallback, or surface unpriced-but-live upstream plans in the admin Pricing screen as a \"needs a base cost\" list so the operator is told what to fill in instead of silently losing the catalog.",
+                    "effort": "M"
+                },
+                {
+                    "severity": "high",
+                    "title": "Inline provisioning with up to 15 s of sleep() in the payment callback can strand an order in `provisioning` with a live upstream resource",
+                    "location": "src/Payments/PaymentService.php:91-97, src/Arvan/RealProvider.php:199-218, src/Provisioning/Provisioner.php:44-46",
+                    "impact": "If PHP's max_execution_time (commonly 30 s) kills the request after `POST /servers` succeeded but before `Services::create_for_order`, the order is permanently stuck in `provisioning`: the queued job returns \"not claimable\", which `JobRunner::execute` (JobRunner.php:113-116) explicitly treats as job success, and the admin's `retry_provision` action (Admin/Actions.php:268-271) routes through the same unclaimable path. Result: customer paid, server exists and bills upstream, no service row, no admin recovery short of SQL. DemoProvider returns instantly with no network and no sleep, so neither the e2e script nor any demo can reach this state.",
+                    "recommendation": "Drop the inline call in real mode (or drop the `sleep()` poll and return status `creating`, letting `status()` complete it), and add a reaper that moves `provisioning` orders older than N minutes back to `provision_failed` after checking for an existing remote resource.",
+                    "effort": "M"
+                },
+                {
+                    "severity": "high",
+                    "title": "Customer-supplied region/image are never validated against the offered catalog, and flavor IDs are region-scoped",
+                    "location": "src/Orders/OrderService.php:36-39 vs src/Arvan/RealProvider.php:64, 153",
+                    "impact": "A customer can legitimately select a region other than the one the flavor list came from, pay, and only then have `POST /regions/{B}/servers` rejected because `flavor_id` belongs to region A — landing in `provision_failed` after money changed hands. A forged/mangled `image` id does the same. Neither is reachable in demo mode: `DemoProvider::create` writes `$config['image']`/`$config['region']` into the connection blob without validating anything, so every combination \"works\".",
+                    "recommendation": "Validate `region` and `image` against `Catalog::options($product)` in `sanitize_config` (reject unknown values before creating the order), and either scope the region selector to the region the plan list was fetched from or fetch sizes per selected region.",
+                    "effort": "S"
+                },
+                {
+                    "severity": "medium",
+                    "title": "Object Storage region choice is advertised by RealProvider but silently discarded before it reaches the API",
+                    "location": "src/Arvan/RealProvider.php:128-132, 261 vs src/Orders/OrderService.php:46-52",
+                    "impact": "Every real bucket is created in `ir-central1` regardless of what the catalog advertises, and the customer's connection info always shows the `s3.ir-thr-at1` endpoint. It is a silent wrong-answer path, not an error, and the demo/real `options()` shape drift means UI built or reviewed against DemoProvider never renders the region field at all.",
+                    "recommendation": "Add `region` to the `object_storage` branch of `sanitize_config` with an allowlist, and make DemoProvider return the same `regions` array so the two providers are shape-identical as `ProviderInterface` claims.",
+                    "effort": "S"
+                },
+                {
+                    "severity": "medium",
+                    "title": "Zero test coverage of the real integration path — every test runs through DemoProvider",
+                    "location": "tests/ (repo-wide)",
+                    "impact": "The retry loop, the 401 auth-prefix flip, the 429 `Retry-After` branch, status→kind normalization, and every upstream response parser in RealProvider are entirely unexercised. The layer with the most external uncertainty is the only one with no test, and the passing test suite therefore says nothing about real mode.",
+                    "recommendation": "Add unit tests that stub `wp_remote_request` (the codebase already runs unit tests without a WP install) and assert: 5xx → bounded retries, timeout → kind `timeout`, 401 → single prefix flip then `auth`, and that a truncated/unexpected `data` shape yields a ProviderError rather than a PHP warning.",
+                    "effort": "M"
+                },
+                {
+                    "severity": "medium",
+                    "title": "docs/API_INTEGRATION.md claims 402 error semantics are handled; ArvanClient has no 402 branch and classifies it as retryable",
+                    "location": "docs/API_INTEGRATION.md:28 vs src/Arvan/ArvanClient.php:123-132",
+                    "impact": "A 402 (reseller's own Arvan wallet empty — a permanent condition until topped up) is retried with backoff until the job dies, and the admin notification says \"job dead\" rather than \"your upstream balance is empty\". The doc describes behavior the code does not implement, which is the kind of claim a judge would spot-check.",
+                    "recommendation": "Add an explicit `402` branch mapping to a non-retryable kind (e.g. `insufficient_upstream_funds`) with an admin-targeted message, or delete the claim from the doc.",
+                    "effort": "S"
+                },
+                {
+                    "severity": "medium",
+                    "title": "\"No endpoint in this plugin is invented\" is asserted absolutely but is unverifiable from the artifact, and at least one endpoint/field shape looks unusual",
+                    "location": "docs/API_INTEGRATION.md:3, 35 vs src/Arvan/RealProvider.php:171-176, 246",
+                    "impact": "The strongest honesty claim in the docs rests entirely on the author's word. If any path or field is off by a segment, real mode fails on the first create while every demo and test still passes — and a reviewer has no way to tell which. The `name`-holds-an-ID mapping is the sort of detail that is either exactly right or silently rejected upstream with a 422.",
+                    "recommendation": "Commit the relevant slices of the OpenAPI/Redoc specs (or a `docs/fixtures/` folder of recorded responses) and add shape assertions against them, so the \"nothing invented\" claim is checkable inside the repo rather than asserted.",
+                    "effort": "M"
+                },
+                {
+                    "severity": "low",
+                    "title": "Documented client behavior overstates two details: a 5 s connect timeout that WP ignores, and \"key-redacted request/response logging\" that does not exist",
+                    "location": "src/Arvan/ArvanClient.php:50-51, 106, 121 vs docs/API_INTEGRATION.md:50",
+                    "impact": "Two small, checkable claims in the integration doc that the code does not deliver. Individually cosmetic; together they weaken the credibility of the rest of the doc's assertions, which is precisely the currency this file trades in.",
+                    "recommendation": "Set the connect budget via a `http_api_curl` hook (or drop the claim), and reword the logging line to what is true: \"no request/response bodies are logged; audit detail arrays are key-redacted\".",
+                    "effort": "S"
+                },
+                {
+                    "severity": "low",
+                    "title": "The admin UI offers \"sync usage now\" in real mode, where it can only ever produce zero rows",
+                    "location": "templates/admin/health.php:20, 44 vs src/Arvan/RealProvider.php:317-320",
+                    "impact": "An operator running real mode clicks sync, sees the timestamp update, and reasonably concludes usage accounting is running. The limitation is honestly documented but not surfaced where the wrong belief is formed.",
+                    "recommendation": "When `!Plugin::demo_mode()`, replace the button with an inline notice stating that ArvanCloud publishes no usage API and that billing is package-based.",
+                    "effort": "S"
+                }
+            ]
+        },
+        {
+            "dimension": "Documentation & Developer Onboarding",
+            "short": "Documentation",
+            "weight": 6,
+            "score": 85,
+            "confidence": "high",
+            "verdict": "An unusually rigorous, verification-friendly documentation set whose deep technical claims survive line-by-line checking against the code — undermined by a headline test-count number that contradicts itself across nine documents and by a traceability matrix (the one artifact whose whole job is honesty) carrying three provable errors.",
+            "findings": [
+                {
+                    "severity": "high",
+                    "title": "The headline E2E check count is stated as two different numbers across nine documents, and neither matches the code",
+                    "location": "docs/REQUIREMENTS_TRACEABILITY.md:3, HACKATHON_READINESS.md:9 vs :53, TESTING.md:32, DEVELOPMENT.md:79, docs/CAPACITY_MODEL.md:47, docs/performance/README.md:12, CHANGELOG.md:22, README.md:9",
+                    "impact": "The most-cited evidence number in the submission is unverifiable: a reviewer who runs the script gets 53 and finds two competing published figures, which retroactively casts doubt on the other measured claims (158 assertions, 8s wall clock) that TESTING.md:3 promises \"was actually executed\". It is a self-inflicted credibility hit on documentation that is otherwise accurate.",
+                    "recommendation": "Count the calls programmatically, publish that one number, and replace the nine hardcoded literals with it. Better: have e2e.php print `TOTAL n CHECKS` at line 234 and quote that output verbatim in TESTING.md so the number cannot drift again.",
+                    "effort": "S"
+                },
+                {
+                    "severity": "high",
+                    "title": "Traceability matrix contains three provable errors, including a claim the code explicitly refutes",
+                    "location": "docs/REQUIREMENTS_TRACEABILITY.md:9,16,3",
+                    "impact": "This is the document a judge uses to spot-check honesty. Two of its cells are false and a third contradicts its own header, so the ✅ column stops being trustworthy exactly where trust is the deliverable — and the credit_limit row asserts an enforcement the code deliberately does not perform.",
+                    "recommendation": "Fix row 9 to 7 stages; rewrite row 16 as \"spending_limit enforced at checkout (`OrderService::create`); credit_limit governs the policy engine's grace→restricted band, not checkout\" — the code comment already contains the correct wording; reconcile the header count with the E: references.",
+                    "effort": "S"
+                },
+                {
+                    "severity": "medium",
+                    "title": "spec.md — the self-declared source of truth — has drifted from the code in five places",
+                    "location": "spec.md:97,102-103,131,147-148",
+                    "impact": "CONTRIBUTING.md:5 makes spec.md binding (\"Behavior changes update the spec in the same PR\"). A new engineer following it will grep for a `PricingProvider` that was never built, read the wrong ADR for pricing rationale, and get a ledger type list and REST table that are each one entry short of reality.",
+                    "recommendation": "Delete the `PricingProvider` reference (or say plainly: base costs are a table, swap point is `BaseCosts`), retarget the ADR citation, add `service_charge` to §7 and `/me/notifications` to §9, and rename the two provider classes to their real names.",
+                    "effort": "S"
+                },
+                {
+                    "severity": "medium",
+                    "title": "README's stack table and project tree name classes and modules that do not match src/",
+                    "location": "README.md:139, README.md:186-196",
+                    "impact": "README is the first file a new engineer greps. Two of its class names return zero hits, and its directory map is missing the module that implements the isolation primitive (`Services::get_owned`) the same README cites as the core security control on line 148.",
+                    "recommendation": "Correct the two class names and add the `Customers/` and `Services/` lines to the tree.",
+                    "effort": "S"
+                },
+                {
+                    "severity": "medium",
+                    "title": "No troubleshooting/runbook, and the E2E script's fresh-database requirement has no documented reset step",
+                    "location": "DEVELOPMENT.md:72-79, tests/integration/e2e.php:13",
+                    "impact": "The second run of the flagship E2E evidence fails with duplicate registrations and no documented way out — the exact wall a new engineer hits on day one after their first successful run. The named-but-unroutined failure modes (dead jobs, salt rotation, stuck paid orders) leave operators with a diagnosis and no procedure.",
+                    "recommendation": "Add the two-line reset to DEVELOPMENT.md (`php wp-cli.phar db reset --yes --path=wp && core install … && plugin activate …`), and add a short docs/RUNBOOK.md covering: dead job triage, salt-rotation credential re-entry, retry/refund of a stuck paid order, and demo-state reset.",
+                    "effort": "S"
+                },
+                {
+                    "severity": "low",
+                    "title": "Internal AI-agent tooling artifact leaked into a shipped engineering document",
+                    "location": "docs/DATA_MODEL.md:56",
+                    "impact": "A reader of the data model doc hits an undefined internal term and learns the docs were partly machine-authored without an editorial pass — cheap damage to an otherwise polished handbook.",
+                    "recommendation": "Rewrite as plain prose: \"top-up intents live in `wp_options` with autoload off; move to a table if top-up volume grows.\" Keep the source-code `ponytail:` marker if the debt-harvest tooling depends on it, but strip the convention from prose docs.",
+                    "effort": "S"
+                },
+                {
+                    "severity": "low",
+                    "title": "\"i18n-ready\" is claimed but no translation catalog or translator guidance ships",
+                    "location": "spec.md:156, arvan-reseller.php:11-12,51",
+                    "impact": "The declared Domain Path points at a directory that does not exist, and a contributor wanting to add English or Arabic has no documented starting point — despite the product being explicitly white-label and pitched at resellers.",
+                    "recommendation": "Ship `languages/arvan-reseller.pot` (generatable via `wp i18n make-pot .`) and add a five-line \"Translations\" section to CONTRIBUTING.md naming the command and the file layout.",
+                    "effort": "S"
+                },
+                {
+                    "severity": "low",
+                    "title": "The JS bundle size cited in the README badge and the stack decision matrix is overstated by ~45%",
+                    "location": "README.md:136, docs/STACK_EVALUATION.md:38",
+                    "impact": "A quantitative input to a published decision matrix is wrong. It happens to understate the project's own advantage, so no conclusion changes — but it is the kind of unchecked number that invites a reviewer to spot-check the other figures in that table.",
+                    "recommendation": "State the measured figure (\"6.2 KB, one file\") in both places, or drop the byte count and say \"one 6 KB script, no build step\".",
+                    "effort": "S"
+                }
+            ]
+        }
+    ]
+}
