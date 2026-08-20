@@ -6,7 +6,7 @@ defined('ABSPATH') || exit;
   <footer class="arvrs-footer">
     <div>
       <strong><?php echo esc_html($brand_name); ?></strong>
-      <?php if ($brand_desc) : ?><p class="arvrs-muted"><?php echo esc_html($brand_desc); ?></p><?php endif; ?>
+      <p class="arvrs-muted"><?php echo esc_html($brand_desc ?: __('زیرساخت ابری برای کسب‌وکار شما', 'arvan-reseller')); ?></p>
     </div>
     <div class="arvrs-footer-contact">
       <?php if ($support_email) : ?>

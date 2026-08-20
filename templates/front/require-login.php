@@ -4,7 +4,7 @@ defined('ABSPATH') || exit;
 
 include __DIR__ . '/partials/shell-top.php';
 ?>
-<div class="arvrs-auth-wrap">
+<div style="max-width:460px;margin:24px auto">
   <div class="arvrs-card arvrs-center">
     <?php if ($customer_id) : ?>
       <h1 class="arvrs-card-title"><?php esc_html_e('حساب شما فعال است', 'arvan-reseller'); ?></h1>

@@ -25,7 +25,7 @@ final class Options
         'brand_about'          => '',
         'support_email'        => '',
         'support_phone'        => '',
-        'brand_color'          => '#0c6960',
+        'brand_color'          => '#14bfb4',
         // Pricing
         'global_markup'        => 20.0,
         'product_markup'       => [],       // product => percent

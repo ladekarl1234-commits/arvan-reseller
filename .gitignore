@@ -5,3 +5,4 @@ vendor/
 .env
 .playwright-cli/
 composer.lock
+.phpunit.cache/

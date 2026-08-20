@@ -1,63 +1,129 @@
-/* Arvan Reseller — admin pages. Inherits WP admin chrome; adds card/stat/
-   table styling consistent with the storefront tokens. RTL-safe via logical
-   properties. */
+/**
+ * Arvan Reseller — admin pages (ابرآروان design system inside wp-admin).
+ * The WordPress admin menu stays; the plugin's content area adopts the teal
+ * cards / stats / pill tags / gradient accents from the design source.
+ */
 .arvrs-admin {
-  --arvrs-brand: #0c6960;
-  --arvrs-stroke: #e3e6eb;
-  --arvrs-fg-2: #5b6474;
-  --arvrs-success: #16a34a; --arvrs-success-bg: #ecfdf3;
-  --arvrs-warning: #b45309; --arvrs-warning-bg: #fffaeb;
-  --arvrs-danger: #dc2626;  --arvrs-danger-bg: #fef2f2;
-  --arvrs-info: #2563eb;    --arvrs-info-bg: #eff6ff;
+  --brand: #14bfb4;
+  --brand-2: #0a9e95;
+  --brand-ink: #0a7a72;
+  --ink: #0e2a29;
+  --muted: #5c7876;
+  --line: #dfeceb;
+  --line-2: #eef4f3;
+  --surface-2: #f3faf9;
+  --dark: #073231;
+  --coral: #e3305a;
+  --grad: linear-gradient(135deg, #2ad3c6, #0a9e95);
+  --grad-dark: linear-gradient(135deg, #0a4a47, #0c8a80);
+  --success: #12a150; --success-bg: #ecfdf3;
+  --warning: #b45309; --warning-bg: #fffaeb;
+  --danger: #e3305a;  --danger-bg: #fdeef2;
+  --info: #0e7fd1;    --info-bg: #e8f4fd;
   max-width: 1100px;
-  line-height: 1.7;
+  line-height: 1.8;
+  color: var(--ink);
+  font-family: Vazirmatn, -apple-system, "Segoe UI", Tahoma, sans-serif;
 }
-.arvrs-admin h1 { font-weight: 700; }
-.arvrs-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 12px; margin: 16px 0; }
+.arvrs-admin h1 { font-weight: 800; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.arvrs-admin h2 { font-weight: 800; }
+.arvrs-admin a { color: var(--brand-2); }
+
+/* stat cards */
+.arvrs-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 14px; margin: 18px 0; }
 .arvrs-acard {
-  background: #fff; border: 1px solid var(--arvrs-stroke); border-radius: 12px;
-  padding: 16px 20px; display: flex; flex-direction: column; gap: 2px;
+  background: #fff; border: 1px solid var(--line); border-radius: 16px;
+  padding: 18px 20px; display: flex; flex-direction: column; gap: 2px;
 }
-.arvrs-acard .label { color: var(--arvrs-fg-2); font-size: 12px; }
-.arvrs-acard .value { font-size: 20px; font-weight: 700; }
-.arvrs-acard .sub { font-size: 12px; color: var(--arvrs-fg-2); }
-.arvrs-acard.is-danger .value { color: var(--arvrs-danger); }
-.arvrs-acard.is-success .value { color: var(--arvrs-success); }
-.arvrs-panel { background: #fff; border: 1px solid var(--arvrs-stroke); border-radius: 12px; padding: 20px 24px; margin: 16px 0; }
-.arvrs-panel h2 { margin-top: 0; font-size: 15px; }
-.arvrs-admin table.widefat { border-radius: 8px; overflow: hidden; }
-.arvrs-admin .widefat th { font-weight: 600; }
-.arvrs-tag {
-  display: inline-flex; padding: 2px 10px; border-radius: 999px; font-size: 11px; font-weight: 600;
+.arvrs-acard .label { color: var(--muted); font-size: 12px; }
+.arvrs-acard .value { font-size: 20px; font-weight: 900; }
+.arvrs-acard .sub { font-size: 11.5px; color: var(--muted); }
+.arvrs-acard.is-danger .value { color: var(--danger); }
+.arvrs-acard.is-success .value { color: var(--success); }
+
+/* panels */
+.arvrs-panel { background: #fff; border: 1px solid var(--line); border-radius: 18px; padding: 24px; margin: 18px 0; }
+.arvrs-panel h2 { margin-top: 0; font-size: 15px; font-weight: 800; }
+.arvrs-panel.is-gradient {
+  background: var(--grad-dark); color: #fff; border-color: transparent;
+  display: flex; align-items: center; gap: 24px; flex-wrap: wrap;
 }
-.arvrs-tag-success { background: var(--arvrs-success-bg); color: var(--arvrs-success); }
-.arvrs-tag-warning { background: var(--arvrs-warning-bg); color: var(--arvrs-warning); }
-.arvrs-tag-danger  { background: var(--arvrs-danger-bg); color: var(--arvrs-danger); }
-.arvrs-tag-info    { background: var(--arvrs-info-bg); color: var(--arvrs-info); }
-.arvrs-tag-default { background: #f0f0f1; color: var(--arvrs-fg-2); }
+.arvrs-panel.is-gradient h2, .arvrs-panel.is-gradient strong { color: #fff; }
+.arvrs-panel.is-gradient .arvrs-help { color: rgba(255,255,255,.75); }
+
+/* tables */
+.arvrs-admin table.widefat { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; box-shadow: none; }
+.arvrs-admin .widefat th { font-weight: 700; color: var(--muted); font-size: 12px; background: var(--surface-2); }
+.arvrs-admin .widefat td { border-top-color: var(--line-2); }
+.arvrs-admin .widefat thead th { border-bottom: 1px solid var(--line); }
+
+/* pill tags */
+.arvrs-tag { display: inline-flex; padding: 3px 12px; border-radius: 999px; font-size: 11px; font-weight: 800; }
+.arvrs-tag-success { background: var(--success-bg); color: var(--success); }
+.arvrs-tag-warning { background: var(--warning-bg); color: var(--warning); }
+.arvrs-tag-danger  { background: var(--danger-bg); color: var(--danger); }
+.arvrs-tag-info    { background: var(--info-bg); color: var(--info); }
+.arvrs-tag-default { background: var(--line-2); color: var(--muted); }
+
+/* buttons — recolor the plugin's primary/hero buttons to the teal gradient */
+.arvrs-admin .button-primary,
+.arvrs-admin .button-hero.button-primary {
+  background: var(--grad); border: none; border-radius: 11px; color: #fff;
+  text-shadow: none; box-shadow: 0 8px 18px rgba(20,191,180,.3); font-weight: 800;
+  height: auto; padding: 8px 20px; line-height: 1.6;
+}
+.arvrs-admin .button-primary:hover { filter: brightness(1.06); background: var(--grad); }
+.arvrs-admin .button { border-radius: 10px; }
 .arvrs-inline-form { display: inline-block; margin: 0; }
 .arvrs-actions-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .arvrs-form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px 20px; }
-.arvrs-form-grid label, .arvrs-panel label.arvrs-lbl { display: block; font-weight: 600; font-size: 12px; margin-bottom: 4px; }
-.arvrs-form-grid input[type=text], .arvrs-form-grid input[type=email], .arvrs-form-grid input[type=number],
-.arvrs-form-grid input[type=password], .arvrs-form-grid select, .arvrs-form-grid textarea { width: 100%; }
-.arvrs-help { color: var(--arvrs-fg-2); font-size: 12px; margin-top: 4px; }
+.arvrs-form-grid label, .arvrs-panel label.arvrs-lbl, .arvrs-form-grid legend.arvrs-lbl { display: block; font-weight: 700; font-size: 12px; margin-bottom: 4px; }
+.arvrs-admin .arvrs-form-grid input[type=text], .arvrs-admin .arvrs-form-grid input[type=email],
+.arvrs-admin .arvrs-form-grid input[type=number], .arvrs-admin .arvrs-form-grid input[type=password],
+.arvrs-admin .arvrs-form-grid select, .arvrs-admin .arvrs-form-grid textarea {
+  width: 100%; border-radius: 10px; border: 1.5px solid var(--line);
+}
+.arvrs-admin input:focus, .arvrs-admin select:focus, .arvrs-admin textarea:focus { border-color: var(--brand); box-shadow: 0 0 0 1px var(--brand); outline: none; }
+.arvrs-help { color: var(--muted); font-size: 12px; margin-top: 4px; }
 .arvrs-check-list { display: flex; flex-direction: column; gap: 6px; }
+.arvrs-kv-detail { color: var(--muted); font-size: 12px; }
 
 /* Wizard */
 .arvrs-wizard { max-width: 720px; margin: 40px auto; }
-.arvrs-wizard-progress { display: flex; gap: 4px; margin-bottom: 20px; }
-.arvrs-wizard-progress .seg { height: 6px; flex: 1; border-radius: 999px; background: var(--arvrs-stroke); }
-.arvrs-wizard-progress .seg.is-done { background: var(--arvrs-brand); }
-.arvrs-wizard-card { background: #fff; border: 1px solid var(--arvrs-stroke); border-radius: 12px; padding: 32px; }
-.arvrs-wizard-card h1 { font-size: 22px; margin: 0 0 6px; }
-.arvrs-wizard-sub { color: var(--arvrs-fg-2); margin-bottom: 20px; }
-.arvrs-wizard-nav { display: flex; justify-content: space-between; gap: 12px; margin-top: 24px; }
+.arvrs-wizard-progress { display: flex; gap: 6px; margin-bottom: 10px; }
+.arvrs-wizard-progress .seg { height: 7px; flex: 1; border-radius: 999px; background: var(--line); }
+.arvrs-wizard-progress .seg.is-done { background: linear-gradient(90deg, #2ad3c6, #0a9e95); }
+.arvrs-wizard-card { background: #fff; border: 1px solid var(--line); border-radius: 24px; padding: 40px; box-shadow: 0 20px 50px rgba(10,74,71,.1); }
+.arvrs-wizard-card h1 { font-size: 24px; font-weight: 900; margin: 0 0 8px; }
+.arvrs-wizard-sub { color: var(--muted); margin-bottom: 22px; }
+.arvrs-wizard-nav { display: flex; justify-content: space-between; gap: 12px; margin-top: 30px; }
 .arvrs-wizard .arvrs-field { margin-bottom: 14px; }
-.arvrs-wizard .arvrs-field label { display: block; font-weight: 600; font-size: 13px; margin-bottom: 4px; }
+.arvrs-wizard .arvrs-field label { display: block; font-weight: 700; font-size: 13px; margin-bottom: 6px; }
 .arvrs-wizard .arvrs-field input[type=text], .arvrs-wizard .arvrs-field input[type=email],
-.arvrs-wizard .arvrs-field input[type=password], .arvrs-wizard .arvrs-field input[type=number] { width: 100%; }
-.arvrs-validation li { display: flex; gap: 8px; align-items: baseline; padding: 8px 0; border-bottom: 1px solid var(--arvrs-stroke); }
-.arvrs-validation .ok { color: var(--arvrs-success); font-weight: 700; }
-.arvrs-validation .fail { color: var(--arvrs-danger); font-weight: 700; }
-.arvrs-kv-detail { color: var(--arvrs-fg-2); font-size: 12px; }
+.arvrs-wizard .arvrs-field input[type=password], .arvrs-wizard .arvrs-field input[type=number],
+.arvrs-wizard .arvrs-field input[type=color] { width: 100%; border-radius: 12px; border: 1.5px solid var(--line); height: 46px; }
+.arvrs-wizard .arvrs-field input[type=color] { padding: 4px; cursor: pointer; }
+.arvrs-wizard-check {
+  display: flex; align-items: center; gap: 12px; background: var(--surface-2);
+  border-radius: 12px; padding: 12px 16px; font-size: 13.5px; font-weight: 600; margin-bottom: 10px;
+}
+.arvrs-wizard-check .num {
+  width: 26px; height: 26px; border-radius: 8px; background: #e6f8f6; color: var(--brand-2);
+  display: grid; place-items: center; font-weight: 900; flex-shrink: 0;
+}
+.arvrs-validation { list-style: none; padding: 0; margin: 0; }
+.arvrs-validation li { display: flex; gap: 10px; align-items: center; padding: 11px 4px; border-bottom: 1px solid var(--line-2); font-size: 13.5px; }
+/* status marker: circular dot, works for both `.ok/.fail` and `.dot.ok` markup */
+.arvrs-validation .ok, .arvrs-validation .fail, .arvrs-validation .dot {
+  width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center;
+  font-weight: 900; font-size: 13px; flex-shrink: 0;
+}
+.arvrs-validation .ok, .arvrs-validation .dot.ok { background: var(--success-bg); color: var(--success); }
+.arvrs-validation .dot.pending { background: var(--line-2); color: var(--muted); }
+.arvrs-validation .fail, .arvrs-validation .dot.fail { background: var(--danger-bg); color: var(--danger); }
+.arvrs-validation .detail, .arvrs-validation .arvrs-kv-detail { margin-inline-start: auto; color: var(--muted); font-size: 12.5px; }
+.arvrs-check-list { display: flex; flex-direction: column; gap: 8px; }
+.arvrs-check-list li { display: flex; align-items: center; gap: 10px; background: var(--surface-2); border-radius: 12px; padding: 11px 16px; font-size: 13.5px; font-weight: 600; }
+
+/* demo badge in admin H1 */
+.arvrs-admin .arvrs-tag-warning { vertical-align: middle; }
