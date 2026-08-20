@@ -1,0 +1,922 @@
+- generic [active] [ref=f8e1]:
+  - generic [ref=f8e2]:
+    - generic [ref=f8e5]:
+      - link "Arvancloud Logo" [ref=f8e7] [cursor=pointer]:
+        - /url: https://www.arvancloud.ir/fa
+        - img "Arvancloud Logo" [ref=f8e8]
+      - generic [ref=f8e9]:
+        - link "اتاق خبر" [ref=f8e10] [cursor=pointer]:
+          - /url: https://news.arvancloud.ir/fa/
+        - link "بلاگ" [ref=f8e11] [cursor=pointer]:
+          - /url: https://www.arvancloud.ir/blog/fa/
+        - link "تماس با ما" [ref=f8e12] [cursor=pointer]:
+          - /url: https://www.arvancloud.ir/fa/contact
+        - generic [ref=f8e15] [cursor=pointer]
+        - button "language" [ref=f8e18] [cursor=pointer]
+    - generic [ref=f8e27]:
+      - generic [ref=f8e30]:
+        - generic [ref=f8e32]:
+          - button "محصولات" [ref=f8e33] [cursor=pointer]
+          - button "راهکارها" [ref=f8e37] [cursor=pointer]
+          - button "قیمت‌گذاری" [ref=f8e41] [cursor=pointer]
+          - button "منابع دانش" [ref=f8e45] [cursor=pointer]
+          - link "قرارداد سازمانی" [ref=f8e49] [cursor=pointer]:
+            - /url: https://www.arvancloud.ir/fa/enterprise
+          - link "خدمات دواپس" [ref=f8e51] [cursor=pointer]:
+            - /url: https://www.arvancloud.ir/fa/devops
+        - generic [ref=f8e53]:
+          - link "ورود" [ref=f8e54] [cursor=pointer]:
+            - /url: https://accounts.arvancloud.ir/login?lang=fa
+          - link "ثبت‌نام" [ref=f8e55] [cursor=pointer]:
+            - /url: https://accounts.arvancloud.ir/register?lang=fa
+      - generic:
+        - generic:
+          - generic:
+            - generic:
+              - generic:
+                - generic [ref=f8e56]:
+                  - generic [ref=f8e57]: محصولات ویژه
+                  - generic:
+                    - link "سرور ابری arrow سرور ابری باقابلیت تنظیم دلخواه منابع" [ref=f8e58] [cursor=pointer]:
+                      - /url: https://www.arvancloud.ir/fa/products/cloud-server
+                      - generic [ref=f8e59]:
+                        - generic [ref=f8e60]:
+                          - generic [ref=f8e61]: سرور ابری
+                          - img "arrow" [ref=f8e62]
+                        - generic [ref=f8e63]: سرور ابری باقابلیت تنظیم دلخواه منابع
+                    - link "شبکه توزیع محتوا arrow افزایش سرعت و امنیت وب‌سایت‌ها" [ref=f8e64] [cursor=pointer]:
+                      - /url: https://www.arvancloud.ir/fa/products/cdn
+                      - generic [ref=f8e65]:
+                        - generic [ref=f8e66]:
+                          - generic [ref=f8e67]: شبکه توزیع محتوا
+                          - img "arrow" [ref=f8e68]
+                        - generic [ref=f8e69]: افزایش سرعت و امنیت وب‌سایت‌ها
+                    - link "میزبانی ویدیو arrow میزبانی و پخش فایل‌های صوتی و ویدویی" [ref=f8e70] [cursor=pointer]:
+                      - /url: https://www.arvancloud.ir/fa/products/video-platform
+                      - generic [ref=f8e71]:
+                        - generic [ref=f8e72]:
+                          - generic [ref=f8e73]: میزبانی ویدیو
+                          - img "arrow" [ref=f8e74]
+                        - generic [ref=f8e75]: میزبانی و پخش فایل‌های صوتی و ویدویی
+                    - link "فضای ابری arrow ذخیره‌سازی فایل‌ها در فضای نامحدود ابری" [ref=f8e76] [cursor=pointer]:
+                      - /url: https://www.arvancloud.ir/fa/products/cloud-storage
+                      - generic [ref=f8e77]:
+                        - generic [ref=f8e78]:
+                          - generic [ref=f8e79]: فضای ابری
+                          - img "arrow" [ref=f8e80]
+                        - generic [ref=f8e81]: ذخیره‌سازی فایل‌ها در فضای نامحدود ابری
+                    - link "پردازش لبه arrow اجرای سرویس در نزدیک‌ترین نقطه به کاربر" [ref=f8e82] [cursor=pointer]:
+                      - /url: https://www.arvancloud.ir/fa/products/edge-computing
+                      - generic [ref=f8e83]:
+                        - generic [ref=f8e84]:
+                          - generic [ref=f8e85]: پردازش لبه
+                          - img "arrow" [ref=f8e86]
+                        - generic [ref=f8e87]: اجرای سرویس در نزدیک‌ترین نقطه به کاربر
+                    - link "کانتینر ابری arrow استقرار سریع و آسان نرم‌افزارها بر بستر داکر و کوبرنتیز" [ref=f8e88] [cursor=pointer]:
+                      - /url: https://www.arvancloud.ir/fa/products/paas
+                      - generic [ref=f8e89]:
+                        - generic [ref=f8e90]:
+                          - generic [ref=f8e91]: کانتینر ابری
+                          - img "arrow" [ref=f8e92]
+                        - generic [ref=f8e93]: استقرار سریع و آسان نرم‌افزارها بر بستر داکر و کوبرنتیز
+                    - link "دیتابیس ابری arrow راه‌اندازی و مدیریت دیتابیس بر بستر ابر" [ref=f8e94] [cursor=pointer]:
+                      - /url: https://www.arvancloud.ir/fa/products/databases
+                      - generic [ref=f8e95]:
+                        - generic [ref=f8e96]:
+                          - generic [ref=f8e97]: دیتابیس ابری
+                          - img "arrow" [ref=f8e98]
+                        - generic [ref=f8e99]: راه‌اندازی و مدیریت دیتابیس بر بستر ابر
+                    - link "سرویس هوش مصنوعی arrow بستری امن و اختصاصی برای توسعه AI" [ref=f8e100] [cursor=pointer]:
+                      - /url: https://www.arvancloud.ir/fa/products/aiaas
+                      - generic [ref=f8e101]:
+                        - generic [ref=f8e102]:
+                          - generic [ref=f8e103]: سرویس هوش مصنوعی
+                          - img "arrow" [ref=f8e104]
+                        - generic [ref=f8e105]: بستری امن و اختصاصی برای توسعه AI
+                    - link "لاگ ابری arrow رصد و جست‌وجوی رویداد سرویس‌ها به‌شکل یکپارچه" [ref=f8e106] [cursor=pointer]:
+                      - /url: https://www.arvancloud.ir/fa/products/cloud-logs
+                      - generic [ref=f8e107]:
+                        - generic [ref=f8e108]:
+                          - generic [ref=f8e109]: لاگ ابری
+                          - img "arrow" [ref=f8e110]
+                        - generic [ref=f8e111]: رصد و جست‌وجوی رویداد سرویس‌ها به‌شکل یکپارچه
+                    - link "شبکه خصوصی ابری arrow شبکه‌ای ایزوله و منعطف برای یکپارچه‌سازی منابع ابری" [ref=f8e112] [cursor=pointer]:
+                      - /url: https://www.arvancloud.ir/fa/products/vpc
+                      - generic [ref=f8e113]:
+                        - generic [ref=f8e114]:
+                          - generic [ref=f8e115]: شبکه خصوصی ابری
+                          - img "arrow" [ref=f8e116]
+                        - generic [ref=f8e117]: شبکه‌ای ایزوله و منعطف برای یکپارچه‌سازی منابع ابری
+                - generic [ref=f8e118]:
+                  - generic [ref=f8e119]: دسته‌بندی براساس عملکرد
+                  - generic [ref=f8e121]:
+                    - generic [ref=f8e122]:
+                      - generic [ref=f8e124]:
+                        - generic [ref=f8e125]: عملکرد و پایداری
+                        - link "شبکه توزیع محتوا" [ref=f8e127] [cursor=pointer]:
+                          - /url: https://www.arvancloud.ir/fa/products/cdn
+                        - link "DNS ابری" [ref=f8e129] [cursor=pointer]:
+                          - /url: https://www.arvancloud.ir/fa/products/cdn/dns
+                        - link "توزیع بار وب" [ref=f8e131] [cursor=pointer]:
+                          - /url: https://www.arvancloud.ir/fa/products/cdn/load-balancing
+                        - link "شتاب‌دهی محتوا" [ref=f8e133] [cursor=pointer]:
+                          - /url: https://www.arvancloud.ir/fa/products/cdn/migmig
+                        - link "مسیریابی هوشمند" [ref=f8e135] [cursor=pointer]:
+                          - /url: https://www.arvancloud.ir/fa/products/cdn/smart-routing
+                      - generic [ref=f8e137]:
+                        - generic [ref=f8e138]: رایانش ابری
+                        - link "سرور ابری" [ref=f8e140] [cursor=pointer]:
+                          - /url: https://www.arvancloud.ir/fa/products/cloud-server
+                        - link "سرور اختصاصی" [ref=f8e142] [cursor=pointer]:
+                          - /url: https://www.arvancloud.ir/fa/products/dedicated-server
+                        - link "کانتینر ابری" [ref=f8e144] [cursor=pointer]:
+                          - /url: https://www.arvancloud.ir/fa/products/paas
+                    - generic [ref=f8e145]:
+                      - generic [ref=f8e147]:
+                        - generic [ref=f8e148]: امنیت
+                        - link "محافظت از DDoS" [ref=f8e150] [cursor=pointer]:
+                          - /url: https://www.arvancloud.ir/fa/products/cdn/ddos
+                        - link "دیواره آتش وب" [ref=f8e152] [cursor=pointer]:
+                          - /url: https://www.arvancloud.ir/fa/solutions/cloud-security#arvan-solution__tab-item-firewall
+                        - link "دیواره آتش" [ref=f8e154] [cursor=pointer]:
+                          - /url: https://www.arvancloud.ir/fa/solutions/cloud-security#arvan-solution__tab-item-waf
+                        - link "محدودیت درخواست" [ref=f8e156] [cursor=pointer]:
+                          - /url: https://www.arvancloud.ir/fa/products/cdn/rate-limit
+                        - link "گواهینامه SSL/TLS" [ref=f8e158] [cursor=pointer]:
+                          - /url: https://www.arvancloud.ir/fa/products/cdn/ssl
+                      - generic [ref=f8e160]:
+                        - generic [ref=f8e161]: ذخیره‌سازی
+                        - link "آبجکت استورج" [ref=f8e163] [cursor=pointer]:
+                          - /url: https://www.arvancloud.ir/fa/products/cloud-storage
+                        - link "بلاک استورج" [ref=f8e165] [cursor=pointer]:
+                          - /url: https://www.arvancloud.ir/fa/products/cloud-server/block-storage
+                        - link "آروان درایو" [ref=f8e167] [cursor=pointer]:
+                          - /url: https://www.arvancloud.ir/fa/products/drive
+                        - link "درگاه ذخیره‌سازی" [ref=f8e169] [cursor=pointer]:
+                          - /url: https://www.arvancloud.ir/fa/products/storage-gateway
+                    - generic [ref=f8e170]:
+                      - generic [ref=f8e172]:
+                        - generic [ref=f8e173]: پلتفرم ویدیو
+                        - link "میزبانی ویدیو" [ref=f8e175] [cursor=pointer]:
+                          - /url: https://www.arvancloud.ir/fa/products/video-platform
+                        - link "پخش زنده" [ref=f8e177] [cursor=pointer]:
+                          - /url: https://www.arvancloud.ir/fa/products/video-platform/live-streaming
+                        - link "میزبانی صدا" [ref=f8e179] [cursor=pointer]:
+                          - /url: https://www.arvancloud.ir/fa/products/video-platform#aod
+                        - link "پلیر ویدیو" [ref=f8e181] [cursor=pointer]:
+                          - /url: https://www.arvancloud.ir/fa/products/video-platform/video-player
+                        - link "تبلیغات ویدیویی" [ref=f8e183] [cursor=pointer]:
+                          - /url: https://www.arvancloud.ir/fa/products/video-platform/ads
+                      - generic [ref=f8e185]:
+                        - generic [ref=f8e186]: شبکه
+                        - link "پروکسی لایه ۴" [ref=f8e188] [cursor=pointer]:
+                          - /url: https://www.arvancloud.ir/fa/products/cdn/l4-proxy
+                        - link "دیواره آتش شبکه" [ref=f8e190] [cursor=pointer]:
+                          - /url: https://www.arvancloud.ir/fa/products/cloud-server#firewall
+                        - link "IP شناور" [ref=f8e192] [cursor=pointer]:
+                          - /url: https://www.arvancloud.ir/fa/products/cloud-server#floating-ip
+                    - generic [ref=f8e193]:
+                      - generic [ref=f8e195]:
+                        - generic [ref=f8e196]: ابزار و سرویس ها
+                        - link "API" [ref=f8e198] [cursor=pointer]:
+                          - /url: https://www.arvancloud.ir/fa/dev/api
+                        - link "CLI" [ref=f8e200] [cursor=pointer]:
+                          - /url: https://www.arvancloud.ir/fa/dev/cli
+                        - link "SDK" [ref=f8e202] [cursor=pointer]:
+                          - /url: https://www.arvancloud.ir/fa/dev/sdk
+                        - link "Shell ابری" [ref=f8e204] [cursor=pointer]:
+                          - /url: https://www.arvancloud.ir/fa/dev/cloud-shell
+                        - link "ترافرم" [ref=f8e206] [cursor=pointer]:
+                          - /url: https://www.arvancloud.ir/fa/dev/terraform
+                        - link "کتابخانه CDN" [ref=f8e208] [cursor=pointer]:
+                          - /url: https://lib.arvancloud.ir/
+                        - link "مخزن ایمیج‌های داکر" [ref=f8e210] [cursor=pointer]:
+                          - /url: https://www.arvancloud.ir/fa/dev/docker
+                        - link "مخزن نرم‌افزاری لینوکس" [ref=f8e212] [cursor=pointer]:
+                          - /url: https://www.arvancloud.ir/fa/dev/linux-repository
+                      - generic [ref=f8e214]:
+                        - generic [ref=f8e215]: بینش
+                        - link "رادار" [ref=f8e217] [cursor=pointer]:
+                          - /url: https://radar.arvancloud.ir
+                        - link "ارسال لاگ" [ref=f8e219] [cursor=pointer]:
+                          - /url: https://www.arvancloud.ir/fa/products/cdn/log-forwarding
+                        - link "Looking Glass جدید" [ref=f8e221] [cursor=pointer]:
+                          - /url: https://lg.arvancloud.ir/
+              - link "همه محصولات" [ref=f8e224] [cursor=pointer]:
+                - /url: https://www.arvancloud.ir/fa/products
+          - generic:
+            - generic:
+              - generic:
+                - generic [ref=f8e227]:
+                  - generic [ref=f8e228]: راهکارهای ویژه
+                  - generic [ref=f8e229]:
+                    - link "خدمات دواپس arrow طراحی، توسعه و نگه‌داری زیرساخت کسب‌وکارها" [ref=f8e230] [cursor=pointer]:
+                      - /url: https://www.arvancloud.ir/fa/devops
+                      - generic [ref=f8e231]:
+                        - generic [ref=f8e232]:
+                          - generic [ref=f8e233]: خدمات دواپس
+                          - img "arrow" [ref=f8e234]
+                        - generic [ref=f8e235]: طراحی، توسعه و نگه‌داری زیرساخت کسب‌وکارها
+                    - link "شرکای آروان‌کلاد arrow پیوستن به شبکه‌ی شرکای تجاری و فنی" [ref=f8e236] [cursor=pointer]:
+                      - /url: https://www.arvancloud.ir/fa/partners
+                      - generic [ref=f8e237]:
+                        - generic [ref=f8e238]:
+                          - generic [ref=f8e239]: شرکای آروان‌کلاد
+                          - img "arrow" [ref=f8e240]
+                        - generic [ref=f8e241]: پیوستن به شبکه‌ی شرکای تجاری و فنی
+                - generic [ref=f8e242]:
+                  - generic [ref=f8e243]:
+                    - generic [ref=f8e244]: بر اساس صنعت
+                    - generic [ref=f8e246]: بر اساس اندازه شرکت
+                    - generic [ref=f8e248]: بر اساس کاربرد
+                  - generic:
+                    - generic [ref=f8e250]:
+                      - link "خدمات مالی arrow راهکاری امن برای نرم‌افزارهای خدمات مالی" [ref=f8e251] [cursor=pointer]:
+                        - /url: https://www.arvancloud.ir/fa/solutions/financial-services
+                        - generic [ref=f8e252]:
+                          - generic [ref=f8e253]:
+                            - generic [ref=f8e254]: خدمات مالی
+                            - img "arrow" [ref=f8e255]
+                          - generic [ref=f8e256]: راهکاری امن برای نرم‌افزارهای خدمات مالی
+                      - link "ارز دیجیتال arrow راهکاری کارآمد برای صرافی‌های ارز دیجیتال" [ref=f8e257] [cursor=pointer]:
+                        - /url: https://www.arvancloud.ir/fa/solutions/cryptocurrency
+                        - generic [ref=f8e258]:
+                          - generic [ref=f8e259]:
+                            - generic [ref=f8e260]: ارز دیجیتال
+                            - img "arrow" [ref=f8e261]
+                          - generic [ref=f8e262]: راهکاری کارآمد برای صرافی‌های ارز دیجیتال
+                      - link "فروشگاه آنلاین arrow راهکاری یکپارچه برای فروشگاه‌های اینترنتی" [ref=f8e263] [cursor=pointer]:
+                        - /url: https://www.arvancloud.ir/fa/solutions/retail
+                        - generic [ref=f8e264]:
+                          - generic [ref=f8e265]:
+                            - generic [ref=f8e266]: فروشگاه آنلاین
+                            - img "arrow" [ref=f8e267]
+                          - generic [ref=f8e268]: راهکاری یکپارچه برای فروشگاه‌های اینترنتی
+                      - link "آموزش آنلاین arrow راهکاری دردسترس برای خدمات آموزشی" [ref=f8e269] [cursor=pointer]:
+                        - /url: https://www.arvancloud.ir/fa/solutions/education
+                        - generic [ref=f8e270]:
+                          - generic [ref=f8e271]:
+                            - generic [ref=f8e272]: آموزش آنلاین
+                            - img "arrow" [ref=f8e273]
+                          - generic [ref=f8e274]: راهکاری دردسترس برای خدمات آموزشی
+                      - link "حمل‌ونقل و خودرو arrow راهکاری پایدار برای صنعت حمل‌ونقل" [ref=f8e275] [cursor=pointer]:
+                        - /url: https://www.arvancloud.ir/fa/solutions/automotive
+                        - generic [ref=f8e276]:
+                          - generic [ref=f8e277]:
+                            - generic [ref=f8e278]: حمل‌ونقل و خودرو
+                            - img "arrow" [ref=f8e279]
+                          - generic [ref=f8e280]: راهکاری پایدار برای صنعت حمل‌ونقل
+                      - link "بازی‌های آنلاین arrow راهکاری برای اجرای بی‌وقفه‌ی بازی‌های آنلاین" [ref=f8e281] [cursor=pointer]:
+                        - /url: https://www.arvancloud.ir/fa/solutions/gaming
+                        - generic [ref=f8e282]:
+                          - generic [ref=f8e283]:
+                            - generic [ref=f8e284]: بازی‌های آنلاین
+                            - img "arrow" [ref=f8e285]
+                          - generic [ref=f8e286]: راهکاری برای اجرای بی‌وقفه‌ی بازی‌های آنلاین
+                      - link "پزشکی و سلامت arrow راهکاری برای سرویس‌های سلامت‌محور" [ref=f8e287] [cursor=pointer]:
+                        - /url: https://www.arvancloud.ir/fa/solutions/healthcare
+                        - generic [ref=f8e288]:
+                          - generic [ref=f8e289]:
+                            - generic [ref=f8e290]: پزشکی و سلامت
+                            - img "arrow" [ref=f8e291]
+                          - generic [ref=f8e292]: راهکاری برای سرویس‌های سلامت‌محور
+                      - link "گردشگری و سفر arrow راهکاری برای کسب‌وکارهای گردشگری با مخاطبان جهان" [ref=f8e293] [cursor=pointer]:
+                        - /url: https://www.arvancloud.ir/fa/solutions/tourism
+                        - generic [ref=f8e294]:
+                          - generic [ref=f8e295]:
+                            - generic [ref=f8e296]: گردشگری و سفر
+                            - img "arrow" [ref=f8e297]
+                          - generic [ref=f8e298]: راهکاری برای کسب‌وکارهای گردشگری با مخاطبان جهان
+                      - link "رسانه و سرگرمی arrow راهکاری برای سایت‌های خبری و سرویس‌های پخش فیلم" [ref=f8e299] [cursor=pointer]:
+                        - /url: https://www.arvancloud.ir/fa/solutions/media-entertainment
+                        - generic [ref=f8e300]:
+                          - generic [ref=f8e301]:
+                            - generic [ref=f8e302]: رسانه و سرگرمی
+                            - img "arrow" [ref=f8e303]
+                          - generic [ref=f8e304]: راهکاری برای سایت‌های خبری و سرویس‌های پخش فیلم
+                    - generic [ref=f8e305]:
+                      - link "استارت‌آپ‌ها arrow رفع نیازهای زیرساختی متنوع استارت‌آپ‌ها" [ref=f8e306] [cursor=pointer]:
+                        - /url: https://www.arvancloud.ir/fa/solutions/startups
+                        - generic [ref=f8e307]:
+                          - generic [ref=f8e308]:
+                            - generic [ref=f8e309]: استارت‌آپ‌ها
+                            - img "arrow" [ref=f8e310]
+                          - generic [ref=f8e311]: رفع نیازهای زیرساختی متنوع استارت‌آپ‌ها
+                      - link "سازمان‌های بزرگ arrow نسل جدید فناوری ابری ویژه‌ی سازمان‌های بزرگ" [ref=f8e312] [cursor=pointer]:
+                        - /url: https://www.arvancloud.ir/fa/solutions/enterprise
+                        - generic [ref=f8e313]:
+                          - generic [ref=f8e314]:
+                            - generic [ref=f8e315]: سازمان‌های بزرگ
+                            - img "arrow" [ref=f8e316]
+                          - generic [ref=f8e317]: نسل جدید فناوری ابری ویژه‌ی سازمان‌های بزرگ
+                    - generic [ref=f8e318]:
+                      - link "کوچ ابری arrow مهاجرت به زیرساخت ابری به کمک متخصصان آروان" [ref=f8e319] [cursor=pointer]:
+                        - /url: https://www.arvancloud.ir/fa/solutions/cloud-migration
+                        - generic [ref=f8e320]:
+                          - generic [ref=f8e321]:
+                            - generic [ref=f8e322]: کوچ ابری
+                            - img "arrow" [ref=f8e323]
+                          - generic [ref=f8e324]: مهاجرت به زیرساخت ابری به کمک متخصصان آروان
+                      - link "بازیابی پس از دیزستر arrow راهکاری قابل اتکا برای بازیابی اطلاعات پس از بحران" [ref=f8e325] [cursor=pointer]:
+                        - /url: https://www.arvancloud.ir/fa/solutions/disaster-recovery
+                        - generic [ref=f8e326]:
+                          - generic [ref=f8e327]:
+                            - generic [ref=f8e328]: بازیابی پس از دیزستر
+                            - img "arrow" [ref=f8e329]
+                          - generic [ref=f8e330]: راهکاری قابل اتکا برای بازیابی اطلاعات پس از بحران
+                      - link "CDN بانکی arrow راهکاری امن برای شبکه‌ی بانکی ایران" [ref=f8e331] [cursor=pointer]:
+                        - /url: https://www.arvancloud.ir/fa/solutions/banking-cdn
+                        - generic [ref=f8e332]:
+                          - generic [ref=f8e333]:
+                            - generic [ref=f8e334]: CDN بانکی
+                            - img "arrow" [ref=f8e335]
+                          - generic [ref=f8e336]: راهکاری امن برای شبکه‌ی بانکی ایران
+                      - link "امنیت ابری arrow تامین کامل امنیت وب‌سایت‌ها و کسب‌وکارها" [ref=f8e337] [cursor=pointer]:
+                        - /url: https://www.arvancloud.ir/fa/solutions/cloud-security
+                        - generic [ref=f8e338]:
+                          - generic [ref=f8e339]:
+                            - generic [ref=f8e340]: امنیت ابری
+                            - img "arrow" [ref=f8e341]
+                          - generic [ref=f8e342]: تامین کامل امنیت وب‌سایت‌ها و کسب‌وکارها
+                      - link "ابر خصوصی arrow راهکاری پایدار برای پیاده‌سازی زیرساختی اختصاصی" [ref=f8e343] [cursor=pointer]:
+                        - /url: https://www.arvancloud.ir/fa/solutions/private-cloud
+                        - generic [ref=f8e344]:
+                          - generic [ref=f8e345]:
+                            - generic [ref=f8e346]: ابر خصوصی
+                            - img "arrow" [ref=f8e347]
+                          - generic [ref=f8e348]: راهکاری پایدار برای پیاده‌سازی زیرساختی اختصاصی
+                      - link "استراتژی ابری arrow طراحی و اجرای نقشه‌راه ابری برای صنایع و سازمان‌ها" [ref=f8e349] [cursor=pointer]:
+                        - /url: https://www.arvancloud.ir/fa/solutions/cloud-strategy
+                        - generic [ref=f8e350]:
+                          - generic [ref=f8e351]:
+                            - generic [ref=f8e352]: استراتژی ابری
+                            - img "arrow" [ref=f8e353]
+                          - generic [ref=f8e354]: طراحی و اجرای نقشه‌راه ابری برای صنایع و سازمان‌ها
+                      - link "کوبرنتیز اختصاصی arrow راه‌اندازی کوبرنتیز اختصاصی متناسب با نیاز کسب‌وکارها" [ref=f8e355] [cursor=pointer]:
+                        - /url: https://www.arvancloud.ir/fa/solutions/private-kubernetes
+                        - generic [ref=f8e356]:
+                          - generic [ref=f8e357]:
+                            - generic [ref=f8e358]: کوبرنتیز اختصاصی
+                            - img "arrow" [ref=f8e359]
+                          - generic [ref=f8e360]: راه‌اندازی کوبرنتیز اختصاصی متناسب با نیاز کسب‌وکارها
+              - link "همه راهکارها" [ref=f8e363] [cursor=pointer]:
+                - /url: https://www.arvancloud.ir/fa/solutions
+          - generic:
+            - generic:
+              - generic:
+                - generic [ref=f8e366]:
+                  - generic [ref=f8e367]: محاسبه هزینه
+                  - generic:
+                    - link "شیوه قیمت‌گذاری arrow جزییات قیمت‌گذاری و محاسبه‌ی هزینه‌ی محصولات" [ref=f8e368] [cursor=pointer]:
+                      - /url: https://www.arvancloud.ir/fa/pricing
+                      - generic [ref=f8e369]:
+                        - generic [ref=f8e370]:
+                          - generic [ref=f8e371]: شیوه قیمت‌گذاری
+                          - img "arrow" [ref=f8e372]
+                        - generic [ref=f8e373]: جزییات قیمت‌گذاری و محاسبه‌ی هزینه‌ی محصولات
+                    - link "خدمات رایگان ابری arrow جزییات محصولات و خدمات همیشه رایگان ابر آروان" [ref=f8e374] [cursor=pointer]:
+                      - /url: https://www.arvancloud.ir/fa/pricing/free
+                      - generic [ref=f8e375]:
+                        - generic [ref=f8e376]:
+                          - generic [ref=f8e377]: خدمات رایگان ابری
+                          - img "arrow" [ref=f8e378]
+                        - generic [ref=f8e379]: جزییات محصولات و خدمات همیشه رایگان ابر آروان
+                    - link "ماشین حساب قیمت arrow محاسبه‌ی قیمت محصولات به‌شکل PAYG" [ref=f8e380] [cursor=pointer]:
+                      - /url: https://panel.arvancloud.ir/calculator
+                      - generic [ref=f8e381]:
+                        - generic [ref=f8e382]:
+                          - generic [ref=f8e383]: ماشین حساب قیمت
+                          - img "arrow" [ref=f8e384]
+                        - generic [ref=f8e385]: محاسبه‌ی قیمت محصولات به‌شکل PAYG
+                - generic [ref=f8e386]:
+                  - generic [ref=f8e387]: قیمت محصولات
+                  - generic [ref=f8e389]:
+                    - link "سرور ابری arrow محاسبه‌ی هزینه‌ی سرور ابری با توجه به منابع انتخابی کاربر و به‌شکل ساعتی و ماهانه" [ref=f8e390] [cursor=pointer]:
+                      - /url: https://www.arvancloud.ir/fa/pricing/cloud-server
+                      - generic [ref=f8e391]:
+                        - generic [ref=f8e392]:
+                          - generic [ref=f8e393]: سرور ابری
+                          - img "arrow" [ref=f8e394]
+                        - generic [ref=f8e395]: محاسبه‌ی هزینه‌ی سرور ابری با توجه به منابع انتخابی کاربر و به‌شکل ساعتی و ماهانه
+                    - link "شبکه توزیع محتوا arrow محاسبه‌ی قیمت بسته‌های شبکه‌ توزیع محتوا بر اساس ترافیک و استفاده از امکانات مختلف" [ref=f8e396] [cursor=pointer]:
+                      - /url: https://www.arvancloud.ir/fa/pricing/cdn
+                      - generic [ref=f8e397]:
+                        - generic [ref=f8e398]:
+                          - generic [ref=f8e399]: شبکه توزیع محتوا
+                          - img "arrow" [ref=f8e400]
+                        - generic [ref=f8e401]: محاسبه‌ی قیمت بسته‌های شبکه‌ توزیع محتوا بر اساس ترافیک و استفاده از امکانات مختلف
+                    - link "فضای ابری arrow محاسبه‌ی قیمت بسته‌های آبجکت استورج بر اساس میزان فضای ذخیره‌سازی و ترافیک مصرفی" [ref=f8e402] [cursor=pointer]:
+                      - /url: https://www.arvancloud.ir/fa/pricing/cloud-storage
+                      - generic [ref=f8e403]:
+                        - generic [ref=f8e404]:
+                          - generic [ref=f8e405]: فضای ابری
+                          - img "arrow" [ref=f8e406]
+                        - generic [ref=f8e407]: محاسبه‌ی قیمت بسته‌های آبجکت استورج بر اساس میزان فضای ذخیره‌سازی و ترافیک مصرفی
+                    - link "پلتفرم ویدیو arrow محاسبه‌ی قیمت بسته‌های پلتفرم ویدیو بر اساس ساعت تماشا، ساعت پخش زنده و ساعت ویدیو" [ref=f8e408] [cursor=pointer]:
+                      - /url: https://www.arvancloud.ir/fa/pricing/video-platform
+                      - generic [ref=f8e409]:
+                        - generic [ref=f8e410]:
+                          - generic [ref=f8e411]: پلتفرم ویدیو
+                          - img "arrow" [ref=f8e412]
+                        - generic [ref=f8e413]: محاسبه‌ی قیمت بسته‌های پلتفرم ویدیو بر اساس ساعت تماشا، ساعت پخش زنده و ساعت ویدیو
+                    - link "کانتینر ابری arrow محاسبه‌ی هزینه‌ی کانتینر ابری با توجه منابع پردازشی، حافظه، فضای ذخیره‌سازی و IP اینترنتی" [ref=f8e414] [cursor=pointer]:
+                      - /url: https://www.arvancloud.ir/fa/pricing/paas
+                      - generic [ref=f8e415]:
+                        - generic [ref=f8e416]:
+                          - generic [ref=f8e417]: کانتینر ابری
+                          - img "arrow" [ref=f8e418]
+                        - generic [ref=f8e419]: محاسبه‌ی هزینه‌ی کانتینر ابری با توجه منابع پردازشی، حافظه، فضای ذخیره‌سازی و IP اینترنتی
+                    - link "دیتابیس ابری arrow محاسبه‌ی هزینه‌ی دیتابیس ابری با توجه به منابع انتخاب‌شده و میزان مصرف" [ref=f8e420] [cursor=pointer]:
+                      - /url: https://www.arvancloud.ir/fa/pricing/databases
+                      - generic [ref=f8e421]:
+                        - generic [ref=f8e422]:
+                          - generic [ref=f8e423]: دیتابیس ابری
+                          - img "arrow" [ref=f8e424]
+                        - generic [ref=f8e425]: محاسبه‌ی هزینه‌ی دیتابیس ابری با توجه به منابع انتخاب‌شده و میزان مصرف
+                    - link "سرویس هوش مصنوعی arrow محاسبه‌ی هزینه‌ی AIaaS براساس توکن‌های ورودی و خروجی و منابع ذخیره‌سازی پایگاه دانش" [ref=f8e426] [cursor=pointer]:
+                      - /url: https://www.arvancloud.ir/fa/pricing/aiaas
+                      - generic [ref=f8e427]:
+                        - generic [ref=f8e428]:
+                          - generic [ref=f8e429]: سرویس هوش مصنوعی
+                          - img "arrow" [ref=f8e430]
+                        - generic [ref=f8e431]: محاسبه‌ی هزینه‌ی AIaaS براساس توکن‌های ورودی و خروجی و منابع ذخیره‌سازی پایگاه دانش
+                    - link "آروان درایو arrow محاسبه‌ی هزینه‌ی فضای ابری سازمان با توجه به میزان فضای ذخیره‌سازی ویژگی‌های متنوع" [ref=f8e432] [cursor=pointer]:
+                      - /url: https://www.arvancloud.ir/fa/pricing/drive
+                      - generic [ref=f8e433]:
+                        - generic [ref=f8e434]:
+                          - generic [ref=f8e435]: آروان درایو
+                          - img "arrow" [ref=f8e436]
+                        - generic [ref=f8e437]: محاسبه‌ی هزینه‌ی فضای ابری سازمان با توجه به میزان فضای ذخیره‌سازی ویژگی‌های متنوع
+                    - link "پردازش لبه arrow محاسبه هزینه‌ی پردازش لبه آروان‌کلاد با توجه به منابع مصرفی شما" [ref=f8e438] [cursor=pointer]:
+                      - /url: https://www.arvancloud.ir/fa/pricing/edge-computing
+                      - generic [ref=f8e439]:
+                        - generic [ref=f8e440]:
+                          - generic [ref=f8e441]: پردازش لبه
+                          - img "arrow" [ref=f8e442]
+                        - generic [ref=f8e443]: محاسبه هزینه‌ی پردازش لبه آروان‌کلاد با توجه به منابع مصرفی شما
+                    - link "لاگ ابری arrow محاسبه‌ی هزینه‌ی لاگ ابری با توجه به حجم جمع‌آوری و ذخیره‌ی لاگ" [ref=f8e444] [cursor=pointer]:
+                      - /url: https://www.arvancloud.ir/fa/pricing/cloud-logs
+                      - generic [ref=f8e445]:
+                        - generic [ref=f8e446]:
+                          - generic [ref=f8e447]: لاگ ابری
+                          - img "arrow" [ref=f8e448]
+                        - generic [ref=f8e449]: محاسبه‌ی هزینه‌ی لاگ ابری با توجه به حجم جمع‌آوری و ذخیره‌ی لاگ
+                    - link "خدمات پشتیبانی arrow هزینه‌ی خدمات پشتیبانی و امکانات و ویژگی‌های هر یک از بسته‌ها" [ref=f8e450] [cursor=pointer]:
+                      - /url: https://www.arvancloud.ir/fa/pricing/support
+                      - generic [ref=f8e451]:
+                        - generic [ref=f8e452]:
+                          - generic [ref=f8e453]: خدمات پشتیبانی
+                          - img "arrow" [ref=f8e454]
+                        - generic [ref=f8e455]: هزینه‌ی خدمات پشتیبانی و امکانات و ویژگی‌های هر یک از بسته‌ها
+              - link "قیمت همه محصولات" [ref=f8e458] [cursor=pointer]:
+                - /url: https://www.arvancloud.ir/fa/pricing/all
+          - generic:
+            - generic:
+              - generic:
+                - generic [ref=f8e461]:
+                  - generic [ref=f8e462]: مستندات فنی
+                  - generic:
+                    - link "مستندات محصولات arrow راهنمای کامل کار با محصولات ابر آروان" [ref=f8e463] [cursor=pointer]:
+                      - /url: https://docs.arvancloud.ir/fa
+                      - generic [ref=f8e464]:
+                        - generic [ref=f8e465]:
+                          - generic [ref=f8e466]: مستندات محصولات
+                          - img "arrow" [ref=f8e467]
+                        - generic [ref=f8e468]: راهنمای کامل کار با محصولات ابر آروان
+                    - link "راهنمای فنی arrow راه‌حل مشکلات شما در استفاده از زیرساخت ابری" [ref=f8e469] [cursor=pointer]:
+                      - /url: https://www.arvancloud.ir/help/fa/
+                      - generic [ref=f8e470]:
+                        - generic [ref=f8e471]:
+                          - generic [ref=f8e472]: راهنمای فنی
+                          - img "arrow" [ref=f8e473]
+                        - generic [ref=f8e474]: راه‌حل مشکلات شما در استفاده از زیرساخت ابری
+                    - link "انجمن آروان arrow گفت‌وگو و تبادل نظر درباره‌ی محصولات ابری" [ref=f8e475] [cursor=pointer]:
+                      - /url: https://community.arvancloud.ir/
+                      - generic [ref=f8e476]:
+                        - generic [ref=f8e477]:
+                          - generic [ref=f8e478]: انجمن آروان
+                          - img "arrow" [ref=f8e479]
+                        - generic [ref=f8e480]: گفت‌وگو و تبادل نظر درباره‌ی محصولات ابری
+                    - link "وبلاگ آروان‌کلاد arrow گزارش‌ها، مقالات و یادداشت‌هایی درباره‌‌ی کلاد" [ref=f8e481] [cursor=pointer]:
+                      - /url: https://www.arvancloud.ir/blog/fa/
+                      - generic [ref=f8e482]:
+                        - generic [ref=f8e483]:
+                          - generic [ref=f8e484]: وبلاگ آروان‌کلاد
+                          - img "arrow" [ref=f8e485]
+                        - generic [ref=f8e486]: گزارش‌ها، مقالات و یادداشت‌هایی درباره‌‌ی کلاد
+                    - link "آروان‌تک arrow یادداشت‌های فنی متخصصان آروانی" [ref=f8e487] [cursor=pointer]:
+                      - /url: https://tech.arvancloud.ir
+                      - generic [ref=f8e488]:
+                        - generic [ref=f8e489]:
+                          - generic [ref=f8e490]: آروان‌تک
+                          - img "arrow" [ref=f8e491]
+                        - generic [ref=f8e492]: یادداشت‌های فنی متخصصان آروانی
+                    - link "پرسش‌های رایج arrow پاسخ‌هایی مستقیم و کوتاه به رایج‌ترین پرسش‌ها" [ref=f8e493] [cursor=pointer]:
+                      - /url: https://www.arvancloud.ir/fa/faq
+                      - generic [ref=f8e494]:
+                        - generic [ref=f8e495]:
+                          - generic [ref=f8e496]: پرسش‌های رایج
+                          - img "arrow" [ref=f8e497]
+                        - generic [ref=f8e498]: پاسخ‌هایی مستقیم و کوتاه به رایج‌ترین پرسش‌ها
+                - generic [ref=f8e499]:
+                  - generic [ref=f8e500]:
+                    - generic [ref=f8e501]: سایر منابع
+                    - generic [ref=f8e503]: دوره‌های آروان آکادمی
+                  - generic:
+                    - generic [ref=f8e505]:
+                      - link "آروان آکادمی arrow ویژه arrow بستری رایگان برای یادگیری دانش ابری" [ref=f8e506] [cursor=pointer]:
+                        - /url: https://academy.arvancloud.ir/
+                        - generic [ref=f8e507]:
+                          - generic [ref=f8e508]:
+                            - generic [ref=f8e509]:
+                              - text: آروان آکادمی
+                              - generic [ref=f8e510]:
+                                - img "arrow" [ref=f8e511]
+                                - text: ویژه
+                            - img "arrow" [ref=f8e512]
+                          - generic [ref=f8e513]: بستری رایگان برای یادگیری دانش ابری
+                      - link "رویدادها و وبینارها arrow رویدادها و وبینارهای مرتبط با زیرساخت ابری" [ref=f8e514] [cursor=pointer]:
+                        - /url: https://www.arvancloud.ir/fa/events
+                        - generic [ref=f8e515]:
+                          - generic [ref=f8e516]:
+                            - generic [ref=f8e517]: رویدادها و وبینارها
+                            - img "arrow" [ref=f8e518]
+                          - generic [ref=f8e519]: رویدادها و وبینارهای مرتبط با زیرساخت ابری
+                      - link "گزارش تغییرات arrow گزارشی ماهانه از بهبودهای مستمر محصولات" [ref=f8e520] [cursor=pointer]:
+                        - /url: https://roadmap.arvancloud.ir/changelog
+                        - generic [ref=f8e521]:
+                          - generic [ref=f8e522]:
+                            - generic [ref=f8e523]: گزارش تغییرات
+                            - img "arrow" [ref=f8e524]
+                          - generic [ref=f8e525]: گزارشی ماهانه از بهبودهای مستمر محصولات
+                      - link "API arrow مستندات کار با API محصولات ابر آروان" [ref=f8e526] [cursor=pointer]:
+                        - /url: https://www.arvancloud.ir/fa/dev/api
+                        - generic [ref=f8e527]:
+                          - generic [ref=f8e528]:
+                            - generic [ref=f8e529]: API
+                            - img "arrow" [ref=f8e530]
+                          - generic [ref=f8e531]: مستندات کار با API محصولات ابر آروان
+                      - link "مستندات بازارچه arrow راهنمای نصب نرم‌افزارهای بازارچه‌ی ابری آروان" [ref=f8e532] [cursor=pointer]:
+                        - /url: https://marketplace.arvancloud.ir/docs/
+                        - generic [ref=f8e533]:
+                          - generic [ref=f8e534]:
+                            - generic [ref=f8e535]: مستندات بازارچه
+                            - img "arrow" [ref=f8e536]
+                          - generic [ref=f8e537]: راهنمای نصب نرم‌افزارهای بازارچه‌ی ابری آروان
+                    - generic [ref=f8e539]:
+                      - link "آموزش پردازش ابری آموزش پردازش ابری ۲۲ ساعت یادگیری رایگان یادگیری رایگان" [ref=f8e540] [cursor=pointer]:
+                        - /url: https://academy.arvancloud.ir/courses/foundational-cloud-practitioner/
+                        - img "آموزش پردازش ابری" [ref=f8e541]
+                        - generic [ref=f8e542]:
+                          - paragraph [ref=f8e543]: آموزش پردازش ابری
+                          - generic [ref=f8e544]:
+                            - generic [ref=f8e545]: ۲۲ ساعت
+                            - generic [ref=f8e546]:
+                              - text: یادگیری رایگان
+                              - img "یادگیری رایگان" [ref=f8e547]
+                      - link "آموزش دواپس آموزش دواپس ۱۷ ساعت یادگیری رایگان یادگیری رایگان" [ref=f8e548] [cursor=pointer]:
+                        - /url: https://academy.arvancloud.ir/courses/associate-devops-engineer/
+                        - img "آموزش دواپس" [ref=f8e549]
+                        - generic [ref=f8e550]:
+                          - paragraph [ref=f8e551]: آموزش دواپس
+                          - generic [ref=f8e552]:
+                            - generic [ref=f8e553]: ۱۷ ساعت
+                            - generic [ref=f8e554]:
+                              - text: یادگیری رایگان
+                              - img "یادگیری رایگان" [ref=f8e555]
+              - link "همه منابع" [ref=f8e558] [cursor=pointer]:
+                - /url: https://www.arvancloud.ir/fa/resources
+  - generic [ref=f8e564]:
+    - generic [ref=f8e565]: دیتاسنتر جدید
+    - link "سرورهای نسل پرمیوم دیتاسنتر قیصر را با ۲۰٪ تخفیف بسازید!" [ref=f8e566] [cursor=pointer]:
+      - /url: https://panel.arvancloud.ir/ecc/create
+    - img "arrow" [ref=f8e567]
+  - main [ref=f8e568]:
+    - generic [ref=f8e571]:
+      - generic [ref=f8e572]:
+        - heading "مستندات API" [level=1] [ref=f8e573]
+        - paragraph [ref=f8e574]: به کمک مستندات API آروان‌کلاد، منابع و سرویس‌های ابری خود را از طریق درخواست‌های HTTP و بدون نیاز به پنل کاربری مدیریت کنید.
+      - generic [ref=f8e575]:
+        - img "blur-sm" [ref=f8e576]
+        - img "مستندات API" [ref=f8e578]
+    - generic [ref=f8e580]:
+      - generic [ref=f8e581]: ابزار توسعه
+      - heading "API محصولات" [level=2] [ref=f8e582]
+      - generic [ref=f8e583]:
+        - link [ref=f8e584] [cursor=pointer]:
+          - /url: https://www.arvancloud.ir/api/cdn/4.0
+          - generic [ref=f8e585]:
+            - generic [ref=f8e586]:
+              - img "شبکه توزیع محتوا" [ref=f8e587]
+              - img "شبکه توزیع محتوا" [ref=f8e588]
+            - heading "شبکه توزیع محتوا" [level=3] [ref=f8e589]
+            - paragraph [ref=f8e591]: پیکربندی CDN، DNS و تنظیمات امنیتی دامنه
+        - generic [ref=f8e592] [cursor=pointer]:
+          - generic [ref=f8e593]:
+            - img "سرور ابری" [ref=f8e594]
+            - img "سرور ابری" [ref=f8e596]
+          - generic [ref=f8e597]:
+            - heading "سرور ابری" [level=3] [ref=f8e598]
+            - button "انتخاب نسخه" [ref=f8e600]
+          - paragraph [ref=f8e604]: پیکربندی و کنترل منابع پردازشی و شبکه‌ها
+        - link [ref=f8e605] [cursor=pointer]:
+          - /url: https://www.arvancloud.ir/api/storage/1.0.0
+          - generic [ref=f8e606]:
+            - generic [ref=f8e607]:
+              - img "فضای ابری" [ref=f8e608]
+              - img "فضای ابری" [ref=f8e609]
+            - heading "فضای ابری" [level=3] [ref=f8e610]
+            - paragraph [ref=f8e612]: کار با صندوقچه‌ها، Objectها و سطح دسترسی‌ها
+        - link [ref=f8e613] [cursor=pointer]:
+          - /url: https://www.arvancloud.ir/api/paas/1.25
+          - generic [ref=f8e614]:
+            - generic [ref=f8e615]:
+              - img "کانتینر ابری" [ref=f8e616]
+              - img "کانتینر ابری" [ref=f8e617]
+            - heading "کانتینر ابری" [level=3] [ref=f8e618]
+            - paragraph [ref=f8e620]: ساخت، مدیریت و مقیاس‌دهی کانتینرها
+        - link [ref=f8e621] [cursor=pointer]:
+          - /url: https://www.arvancloud.ir/api/vod/2.0
+          - generic [ref=f8e622]:
+            - generic [ref=f8e623]:
+              - img "میزبانی ویدیو" [ref=f8e624]
+              - img "میزبانی ویدیو" [ref=f8e625]
+            - heading "میزبانی ویدیو" [level=3] [ref=f8e626]
+            - paragraph [ref=f8e628]: بارگذاری، ذخیره‌سازی و انتشار محتوای ویدیویی
+        - link [ref=f8e629] [cursor=pointer]:
+          - /url: https://www.arvancloud.ir/api/vads/2.0
+          - generic [ref=f8e630]:
+            - generic [ref=f8e631]:
+              - img "تبلیغات ویدیویی" [ref=f8e632]
+              - img "تبلیغات ویدیویی" [ref=f8e633]
+            - heading "تبلیغات ویدیویی" [level=3] [ref=f8e634]
+            - paragraph [ref=f8e636]: ایجاد و بهینه‌سازی کمپین‌های تبلیغاتی ویدیویی
+        - link [ref=f8e637] [cursor=pointer]:
+          - /url: https://www.arvancloud.ir/api/live/2.0
+          - generic [ref=f8e638]:
+            - generic [ref=f8e639]:
+              - img "پخش زنده" [ref=f8e640]
+              - img "پخش زنده" [ref=f8e641]
+            - heading "پخش زنده" [level=3] [ref=f8e642]
+            - paragraph [ref=f8e644]: پیکربندی و استریم رویدادهای زنده
+        - link [ref=f8e645] [cursor=pointer]:
+          - /url: https://www.arvancloud.ir/api/ec/1.0
+          - generic [ref=f8e646]:
+            - generic [ref=f8e647]:
+              - img "پردازش لبه" [ref=f8e648]
+              - img "پردازش لبه" [ref=f8e649]
+            - heading "پردازش لبه" [level=3] [ref=f8e650]
+            - paragraph [ref=f8e652]: اجرای کدها و توابع و مدیریت Edge Compute
+        - link [ref=f8e653] [cursor=pointer]:
+          - /url: https://www.arvancloud.ir/api/aiaas/1.0
+          - generic [ref=f8e654]:
+            - generic [ref=f8e655]:
+              - img "هوش مصنوعی" [ref=f8e656]
+              - img "هوش مصنوعی" [ref=f8e657]
+            - heading "هوش مصنوعی" [level=3] [ref=f8e658]
+            - paragraph [ref=f8e660]: اتصال به مدل‌های متنوع AIaaS آروان‌کلاد
+    - generic [ref=f8e661]:
+      - generic [ref=f8e663]:
+        - generic [ref=f8e664]: راهکارها
+        - heading "کنترل پایدار و مقیاس‌پذیر منابع" [level=2] [ref=f8e665]
+      - generic [ref=f8e666]:
+        - generic [ref=f8e669]:
+          - heading "خودکارسازی عملیات زیرساختی" [level=3] [ref=f8e670] [cursor=pointer]
+          - heading "یکپارچگی با فرآیندهای توسعه" [level=3] [ref=f8e671] [cursor=pointer]
+          - heading "مدیریت منابع بدون نیاز به پنل" [level=3] [ref=f8e672] [cursor=pointer]
+        - generic [ref=f8e674]:
+          - img "مدیریت منابع بدون نیاز به پنل"
+          - generic [ref=f8e676]:
+            - generic [ref=f8e677]:
+              - img "خودکارسازی عملیات زیرساختی" [ref=f8e679]
+              - paragraph [ref=f8e680]: فرآیندهایی مانند ساخت، ویرایش و حذف منابع ابری را خودکار کنید تا خطاهای انسانی کاهش یابد و مدیریت زیرساخت در مقیاس بزرگ ساده‌تر انجام شود. با اجرای خودکار وظایف تکراری، تمرکز تیم خود را روی توسعه و بهبود سرویس‌ها بگذارید.
+              - list [ref=f8e681]:
+                - listitem [ref=f8e682]:
+                  - img "check point" [ref=f8e683]
+                  - text: مدیریت چرخه‌ منابع
+                - listitem [ref=f8e684]:
+                  - img "check point" [ref=f8e685]
+                  - text: اجرای اسکریپت‌ها
+                - listitem [ref=f8e686]:
+                  - img "check point" [ref=f8e687]
+                  - text: کاهش زمان راه‌اندازی
+            - generic [ref=f8e689]:
+              - generic [ref=f8e690]:
+                - generic [ref=f8e691]:
+                  - img "terminal" [ref=f8e692]
+                  - generic [ref=f8e693]: bash
+                - button "Copy code" [ref=f8e694] [cursor=pointer]
+              - generic [ref=f8e701]:
+                - generic [ref=f8e702]:
+                  - generic [ref=f8e703]: "1"
+                  - generic [ref=f8e704]: "2"
+                  - generic [ref=f8e705]: "3"
+                  - generic [ref=f8e706]: "4"
+                  - generic [ref=f8e707]: "5"
+                  - generic [ref=f8e708]: "6"
+                  - generic [ref=f8e709]: "7"
+                  - generic [ref=f8e710]: "8"
+                  - generic [ref=f8e711]: "9"
+                  - generic [ref=f8e712]: "10"
+                  - generic [ref=f8e713]: "11"
+                  - generic [ref=f8e714]: "12"
+                  - generic [ref=f8e715]: "13"
+                  - generic [ref=f8e716]: "14"
+                  - generic [ref=f8e717]: "15"
+                  - generic [ref=f8e718]: "16"
+                  - generic [ref=f8e719]: "17"
+                  - generic [ref=f8e720]: "18"
+                  - generic [ref=f8e721]: "19"
+                  - generic [ref=f8e722]: "20"
+                - code [ref=f8e724]: "curl -X POST \"https://napi.arvancloud.ir/ecc/v1/regions/ir-thr-at1/servers\" \\ -H \"Authorization: Apikey $ARVAN_API_KEY\" \\ -H \"Content-Type: application/json\" \\ -H \"Accept: application/json\" \\ --silent \\ --show-error \\ --fail \\ -d '{ \"name\": \"auto-provisioned-node\", \"image_id\": \"ubuntu-22-04\", \"flavor_id\": \"g1-2-2-0\", \"disk_size\": 50, \"networks\": [ { \"network_id\": \"public\", \"gateway\": \"gateway\" } ] }'"
+    - generic [ref=f8e726]:
+      - generic [ref=f8e727]: پرسش‌های رایج
+      - generic [ref=f8e729]:
+        - button [ref=f8e732] [cursor=pointer]:
+          - heading "آیا برای استفاده از API آروان‌کلاد به احراز هویت نیاز دارم؟" [level=2] [ref=f8e733]
+          - generic [ref=f8e734]: +
+        - button [ref=f8e738] [cursor=pointer]:
+          - heading "مهم‌ترین کاربرد RESTful API چیست؟" [level=2] [ref=f8e739]
+          - generic [ref=f8e740]: +
+        - button [ref=f8e744] [cursor=pointer]:
+          - heading "آیا برای استفاده از API به اپلیکیشن یا فریم‌ورک خاصی نیاز است؟" [level=2] [ref=f8e745]
+          - generic [ref=f8e746]: +
+    - generic [ref=f8e748]:
+      - img "آروان"
+      - generic [ref=f8e751]:
+        - heading "توسعه بدون محدودیت" [level=2] [ref=f8e752]
+        - paragraph [ref=f8e753]: با API آروان‌کلاد، منابع ابری را متناسب با نیاز سرویس‌های‌تان مدیریت کنید و پایداری سرویس‌ها را با مدیریت خودکار افزایش دهید.
+  - contentinfo [ref=f8e754]:
+    - generic [ref=f8e757]:
+      - generic [ref=f8e758]:
+        - generic [ref=f8e759]: محصولات
+        - generic [ref=f8e760]:
+          - link "سرور ابری" [ref=f8e762] [cursor=pointer]:
+            - /url: https://www.arvancloud.ir/fa/products/cloud-server
+          - link "شبکه توزیع محتوا" [ref=f8e764] [cursor=pointer]:
+            - /url: https://www.arvancloud.ir/fa/products/cdn
+          - link "سرویس میزبانی ویدیو" [ref=f8e766] [cursor=pointer]:
+            - /url: https://www.arvancloud.ir/fa/products/video-platform
+          - link "فضای ابری" [ref=f8e768] [cursor=pointer]:
+            - /url: https://www.arvancloud.ir/fa/products/cloud-storage
+          - link "کانتینر ابری" [ref=f8e770] [cursor=pointer]:
+            - /url: https://www.arvancloud.ir/fa/products/paas
+          - link "دیتابیس ابری" [ref=f8e772] [cursor=pointer]:
+            - /url: https://www.arvancloud.ir/fa/products/databases
+          - generic [ref=f8e773]:
+            - link "سرویس هوش مصنوعی" [ref=f8e774] [cursor=pointer]:
+              - /url: https://www.arvancloud.ir/fa/products/aiaas
+            - generic [ref=f8e775]: جدید
+          - link "پردازش لبه" [ref=f8e777] [cursor=pointer]:
+            - /url: https://www.arvancloud.ir/fa/products/edge-computing
+          - link "سرور اختصاصی" [ref=f8e779] [cursor=pointer]:
+            - /url: https://www.arvancloud.ir/fa/products/dedicated-server
+          - link "سرور مجازی" [ref=f8e781] [cursor=pointer]:
+            - /url: https://www.arvancloud.ir/fa/products/vps
+          - link "گواهینامه SSL رایگان" [ref=f8e783] [cursor=pointer]:
+            - /url: https://www.arvancloud.ir/fa/products/cdn/ssl
+          - link "سرویس پخش زنده" [ref=f8e785] [cursor=pointer]:
+            - /url: https://www.arvancloud.ir/fa/products/video-platform/live-streaming
+          - link "هاست بکاپ" [ref=f8e787] [cursor=pointer]:
+            - /url: https://www.arvancloud.ir/fa/products/cloud-storage/backup
+          - link "هاست دانلود" [ref=f8e789] [cursor=pointer]:
+            - /url: https://www.arvancloud.ir/fa/products/cloud-storage/file-hosting
+          - link "Shell ابری" [ref=f8e791] [cursor=pointer]:
+            - /url: https://www.arvancloud.ir/fa/dev/cloud-shell
+      - generic [ref=f8e792]:
+        - generic [ref=f8e793]: راهکارها
+        - generic [ref=f8e794]:
+          - link "خدمات دواپس" [ref=f8e796] [cursor=pointer]:
+            - /url: https://www.arvancloud.ir/fa/devops
+          - link "خدمات سازمانی" [ref=f8e798] [cursor=pointer]:
+            - /url: https://www.arvancloud.ir/fa/enterprise
+          - link "CDN بانکی" [ref=f8e800] [cursor=pointer]:
+            - /url: https://www.arvancloud.ir/fa/solutions/banking-cdn
+          - link "امنیت ابری" [ref=f8e802] [cursor=pointer]:
+            - /url: https://www.arvancloud.ir/fa/solutions/cloud-security
+          - link "خدمات مالی" [ref=f8e804] [cursor=pointer]:
+            - /url: https://www.arvancloud.ir/fa/solutions/financial-services
+          - link "ارز دیجیتال" [ref=f8e806] [cursor=pointer]:
+            - /url: https://www.arvancloud.ir/fa/solutions/cryptocurrency
+          - link "کوچ ابری" [ref=f8e808] [cursor=pointer]:
+            - /url: https://www.arvancloud.ir/fa/solutions/cloud-migration
+          - link "آموزش آنلاین" [ref=f8e810] [cursor=pointer]:
+            - /url: https://www.arvancloud.ir/fa/solutions/education
+          - link "بازیابی پس از دیزستر" [ref=f8e812] [cursor=pointer]:
+            - /url: https://www.arvancloud.ir/fa/solutions/disaster-recovery
+          - link "فروشگاه آنلاین" [ref=f8e814] [cursor=pointer]:
+            - /url: https://www.arvancloud.ir/fa/solutions/retail
+          - link "استارت‌‌آپ‌ها" [ref=f8e816] [cursor=pointer]:
+            - /url: https://www.arvancloud.ir/fa/solutions/startups
+          - link "ابر خصوصی" [ref=f8e818] [cursor=pointer]:
+            - /url: https://www.arvancloud.ir/fa/solutions/private-cloud
+          - link "سازمان‌های بزرگ" [ref=f8e820] [cursor=pointer]:
+            - /url: https://www.arvancloud.ir/fa/solutions/enterprise
+      - generic [ref=f8e821]:
+        - generic [ref=f8e822]: منابع
+        - generic [ref=f8e823]:
+          - link "مستندات محصولات" [ref=f8e825] [cursor=pointer]:
+            - /url: https://docs.arvancloud.ir/fa
+          - link "راهنمای فنی" [ref=f8e827] [cursor=pointer]:
+            - /url: https://www.arvancloud.ir/help/fa/
+          - link "مستندات API" [ref=f8e829] [cursor=pointer]:
+            - /url: https://www.arvancloud.ir/fa/dev/api
+          - link "گزارش تغییرات" [ref=f8e831] [cursor=pointer]:
+            - /url: https://roadmap.arvancloud.ir/changelog
+          - link "نقشه شبکه" [ref=f8e833] [cursor=pointer]:
+            - /url: https://www.arvancloud.ir/fa/products/cdn/network
+          - link "ﭘﺮﺳﺶ‌ﻫﺎی راﯾﺞ" [ref=f8e835] [cursor=pointer]:
+            - /url: https://www.arvancloud.ir/fa/faq
+          - link "وضعیت سرویس" [ref=f8e837] [cursor=pointer]:
+            - /url: https://www.arvancloudstatus.ir/
+          - link "آروان آکادمی" [ref=f8e839] [cursor=pointer]:
+            - /url: https://academy.arvancloud.ir/
+          - link "رادار ابر آروان" [ref=f8e841] [cursor=pointer]:
+            - /url: https://radar.arvancloud.ir
+          - link "Looking Glass" [ref=f8e843] [cursor=pointer]:
+            - /url: https://lg.arvancloud.ir/
+          - link "نشانی‌های IP" [ref=f8e845] [cursor=pointer]:
+            - /url: https://www.arvancloud.ir/fa/dev/ips
+      - generic [ref=f8e846]:
+        - generic [ref=f8e847]: آروان
+        - generic [ref=f8e848]:
+          - link "درباره آروان" [ref=f8e850] [cursor=pointer]:
+            - /url: https://www.arvancloud.ir/fa/about
+          - link "مسوولیت اجتماعی" [ref=f8e852] [cursor=pointer]:
+            - /url: https://www.arvancloud.ir/fa/csr
+          - link "دغدغه‌ اجتماعی" [ref=f8e854] [cursor=pointer]:
+            - /url: https://www.arvancloud.ir/fa/csr/impact
+          - link "کاریز" [ref=f8e856] [cursor=pointer]:
+            - /url: https://www.arvancloud.ir/fa/csr/kariz
+          - link "حقوق شفاف" [ref=f8e858] [cursor=pointer]:
+            - /url: https://www.arvancloud.ir/fa/culture/transparent-salary
+          - generic [ref=f8e859]:
+            - link "فرصت‌های شغلی" [ref=f8e860] [cursor=pointer]:
+              - /url: https://www.arvancloud.ir/fa/jobs
+            - generic [ref=f8e861]: در حال جذب
+          - link "ساختار سازمانی" [ref=f8e863] [cursor=pointer]:
+            - /url: https://www.arvancloud.ir/fa/culture/structure
+          - link "قصه‌ی آروان" [ref=f8e865] [cursor=pointer]:
+            - /url: https://www.arvancloud.ir/fa/about/story
+          - link "مسیر رشد در آروان" [ref=f8e867] [cursor=pointer]:
+            - /url: https://www.arvancloud.ir/fa/culture/growth-path
+          - link "چشم‌انداز" [ref=f8e869] [cursor=pointer]:
+            - /url: https://www.arvancloud.ir/fa/about/vision
+          - link "دیزاین‌سیستم سرخآب" [ref=f8e871] [cursor=pointer]:
+            - /url: https://sorkhab.arvancloud.ir/
+          - link "آروانی نوشتن" [ref=f8e873] [cursor=pointer]:
+            - /url: https://www.arvancloud.ir/fa/culture/orthography
+          - link "گزارش شفافیت" [ref=f8e875] [cursor=pointer]:
+            - /url: https://www.arvancloud.ir/fa/legal/transparency-report
+      - generic [ref=f8e876]:
+        - generic [ref=f8e877]: ارتباطات
+        - generic [ref=f8e878]:
+          - link "تماس با ما" [ref=f8e880] [cursor=pointer]:
+            - /url: https://www.arvancloud.ir/fa/contact
+          - link "انجمن کاربری" [ref=f8e882] [cursor=pointer]:
+            - /url: https://community.arvancloud.ir/
+          - link "اتاق خبر" [ref=f8e884] [cursor=pointer]:
+            - /url: https://news.arvancloud.ir/fa/
+          - link "وبلاگ" [ref=f8e886] [cursor=pointer]:
+            - /url: https://www.arvancloud.ir/blog/fa/
+          - link "آروان‌تک" [ref=f8e888] [cursor=pointer]:
+            - /url: https://tech.arvancloud.ir
+          - link "در رسانه‌ها" [ref=f8e890] [cursor=pointer]:
+            - /url: https://www.arvancloud.ir/fa/press
+          - link "رویدادهای ابری" [ref=f8e892] [cursor=pointer]:
+            - /url: https://www.arvancloud.ir/fa/events
+          - link "حمایت از استارت‌آپ‌ها" [ref=f8e894] [cursor=pointer]:
+            - /url: https://www.arvancloud.ir/fa/csr/startup-grants
+          - link "حمایت‌های آموزشی" [ref=f8e896] [cursor=pointer]:
+            - /url: https://www.arvancloud.ir/fa/csr/educational-support
+          - link "مسابقه کشف باگ" [ref=f8e898] [cursor=pointer]:
+            - /url: https://www.arvancloud.ir/fa/landing/bug-bounty
+    - generic [ref=f8e900]:
+      - generic [ref=f8e901]:
+        - generic [ref=f8e903]:
+          - link "Arvancloud Twitter Link" [ref=f8e904] [cursor=pointer]:
+            - /url: https://twitter.com/ArvanCloud_fa
+          - link "Arvancloud Instagram Link" [ref=f8e908] [cursor=pointer]:
+            - /url: https://instagram.com/arvancloud
+          - link "Arvancloud Telegram Link" [ref=f8e911] [cursor=pointer]:
+            - /url: https://t.me/arvancloud
+          - link "Arvancloud Linkdin Link" [ref=f8e915] [cursor=pointer]:
+            - /url: https://www.linkedin.com/company/arvancloud-fa
+          - link "Arvancloud Instagram Link" [ref=f8e920] [cursor=pointer]:
+            - /url: https://git.arvancloud.ir/arvancloud/
+        - generic [ref=f8e924]:
+          - link "شرایط استفاده از خدمات" [ref=f8e925] [cursor=pointer]:
+            - /url: https://www.arvancloud.ir/fa/legal/terms
+          - link "توافق‌نامه‌ سطح خدمات" [ref=f8e927] [cursor=pointer]:
+            - /url: https://www.arvancloud.ir/fa/legal/sla
+          - link "سیاست حفظ حریم خصوصی" [ref=f8e929] [cursor=pointer]:
+            - /url: https://www.arvancloud.ir/fa/legal/privacy-policy
+      - generic [ref=f8e930]:
+        - generic [ref=f8e931]:
+          - button "فارسی" [ref=f8e933] [cursor=pointer]
+          - img "logo-samandehi" [ref=f8e942] [cursor=pointer]
+          - link [ref=f8e945] [cursor=pointer]:
+            - /url: https://trustseal.enamad.ir/?id=325157&Code=FkeNFeETFHL1L4r8g5x6
+            - img "لوگوی اینماد" [ref=f8e946]
+        - link "Arvancloud Logo" [ref=f8e948] [cursor=pointer]:
+          - /url: https://www.arvancloud.ir/fa

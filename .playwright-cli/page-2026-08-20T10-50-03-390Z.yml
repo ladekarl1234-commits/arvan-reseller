@@ -1,0 +1,61 @@
+- generic [ref=f19e3]:
+  - link "پرش به محتوا" [ref=f19e4] [cursor=pointer]:
+    - /url: "#main"
+  - generic [ref=f19e5]:
+    - generic [ref=f19e6]:
+      - generic [ref=f19e7]:
+        - generic [ref=f19e8]: ز
+        - generic [ref=f19e9]:
+          - text: زرین‌بین
+          - generic [ref=f19e10]: مرکز کنترل و عملیات
+      - tablist "انتخاب فضای کاری" [ref=f19e11]:
+        - tab "فضای پذیرنده" [ref=f19e12] [cursor=pointer]
+        - tab "مرکز کنترل" [selected] [ref=f19e13] [cursor=pointer]
+      - generic [ref=f19e14]:
+        - generic [ref=f19e15]: بازه
+        - combobox "بازه" [ref=f19e16]:
+          - option "کل دوره (۶ ماه)" [selected]
+          - option "۹۰ روز آخر"
+          - option "۳۰ روز آخر"
+    - navigation "بخش‌ها" [ref=f19e17]:
+      - generic [ref=f19e18]:
+        - button "نمای پلتفرم" [ref=f19e19] [cursor=pointer]
+        - button "کارایی" [ref=f19e20] [cursor=pointer]
+        - button "هوش مصنوعی" [ref=f19e21] [cursor=pointer]
+        - button "منابع داده" [ref=f19e22] [cursor=pointer]
+        - button "دستیار عملیات" [ref=f19e23] [cursor=pointer]
+  - main [ref=f19e24]:
+    - generic [ref=f19e25]:
+      - heading "دستیار عملیات" [level=2] [ref=f19e26]
+      - paragraph [ref=f19e27]: از سلامت خودِ محصول بپرسید. پاسخ‌ها از تله‌متری واقعی می‌آیند؛ هیچ رخداد، هزینه یا خطایی ساخته نمی‌شود.
+      - generic [ref=f19e49]:
+        - generic [ref=f19e50]: وضعیت کل سیستم چطوره؟
+        - generic [ref=f19e51]:
+          - text: "وضعیت کلی: ۳۴۳ پذیرندهٔ فعال، ۲،۰۶۲،۸۳۹ جلسهٔ پرداخت، فروش موفق ۵٫۱۷ هزار میلیارد ریال، نرخ تبدیل ۴۹٫۷٪؛ تأخیر API p95 برابر ۲۶۰ میلی‌ثانیه و نرخ خطا ۰٫۰٪؛ هوش مصنوعی: ۱۰۰٫۰٪ مستند، fallback ۰٫۰٪."
+          - generic [ref=f19e52]:
+            - generic [ref=f19e53]: موتور تحلیلی قطعی
+            - generic [ref=f19e54]: اطمینان بالا
+          - generic [ref=f19e55]:
+            - button "نحوه محاسبه پاسخ دستیار" [ref=f19e56] [cursor=pointer]: این اعداد از کجا آمدند؟
+            - group "آیا این پاسخ کمک کرد؟" [ref=f19e59]:
+              - button "👍" [ref=f19e60] [cursor=pointer]
+              - button "👎" [ref=f19e61] [cursor=pointer]
+      - generic [ref=f19e31]:
+        - button "وضعیت کل سیستم چطوره؟" [active] [ref=f19e32] [cursor=pointer]
+        - button "AI امروز چطور عمل کرده؟" [ref=f19e33] [cursor=pointer]
+        - button "چند درصد جواب‌ها مستند بوده؟" [ref=f19e34] [cursor=pointer]
+        - button "چرا fallback زیاد شده؟" [ref=f19e35] [cursor=pointer]
+        - button "کدام مدل بیشتر استفاده شده؟" [ref=f19e36] [cursor=pointer]
+        - button "هزینه AI چقدر شده؟" [ref=f19e37] [cursor=pointer]
+        - button "کدام endpoint کند است؟" [ref=f19e38] [cursor=pointer]
+        - button "کدام منبع sync نشده؟" [ref=f19e39] [cursor=pointer]
+        - button "چه مشکلاتی نیاز به توجه دارند؟" [ref=f19e40] [cursor=pointer]
+      - generic [ref=f19e41]:
+        - button "صحبت کنید" [ref=f19e42] [cursor=pointer]
+        - textbox "پرسش از دستیار" [ref=f19e45]:
+          - /placeholder: "مثلاً: چرا fallback زیاد شده؟"
+        - button "بپرس" [disabled] [ref=f19e46]
+  - paragraph [ref=f19e47]:
+    - text: "همه مبالغ به ریال است. داده: دیتاست چالش زرین‌پال، ۱۱ دی ۱۴۰۴ تا ۹ تیر ۱۴۰۵ ·"
+    - button "منابع داده" [ref=f19e48] [cursor=pointer]
+    - text: · زرین‌بین

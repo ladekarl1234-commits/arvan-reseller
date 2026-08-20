@@ -1,0 +1,61 @@
+- generic [ref=f22e3]:
+  - link "پرش به محتوا" [ref=f22e4] [cursor=pointer]:
+    - /url: "#main"
+  - generic [ref=f22e5]:
+    - generic [ref=f22e6]:
+      - generic [ref=f22e7]:
+        - generic [ref=f22e8]: ز
+        - generic [ref=f22e9]:
+          - text: زرین‌بین
+          - generic [ref=f22e10]: مرکز کنترل و عملیات
+      - tablist "انتخاب فضای کاری" [ref=f22e11]:
+        - tab "فضای پذیرنده" [ref=f22e12] [cursor=pointer]
+        - tab "مرکز کنترل" [selected] [ref=f22e13] [cursor=pointer]
+      - generic [ref=f22e14]:
+        - generic [ref=f22e15]: بازه
+        - combobox "بازه" [ref=f22e16]:
+          - option "کل دوره (۶ ماه)" [selected]
+          - option "۹۰ روز آخر"
+          - option "۳۰ روز آخر"
+    - navigation "بخش‌ها" [ref=f22e17]:
+      - generic [ref=f22e18]:
+        - button "نمای پلتفرم" [ref=f22e19] [cursor=pointer]
+        - button "کارایی" [ref=f22e20] [cursor=pointer]
+        - button "هوش مصنوعی" [ref=f22e21] [cursor=pointer]
+        - button "منابع داده" [ref=f22e22] [cursor=pointer]
+        - button "دستیار عملیات" [ref=f22e23] [cursor=pointer]
+  - main [ref=f22e24]:
+    - generic [ref=f22e31]:
+      - heading "دستیار عملیات" [level=2] [ref=f22e32]
+      - paragraph [ref=f22e33]: از سلامت خودِ محصول بپرسید. پاسخ‌ها از تله‌متری واقعی می‌آیند؛ هیچ رخداد، هزینه یا خطایی ساخته نمی‌شود.
+      - generic [ref=f22e53]:
+        - generic [ref=f22e54]: هزینه AI چقدر شده؟
+        - generic [ref=f22e55]:
+          - text: هزینهٔ کل هوش مصنوعی ۰ دلار برای ۰ درخواست مدل (۰ دلار به‌ازای هر درخواست). سیاست فقط-رایگان فعال است، پس انتظار هزینهٔ صفر می‌رود.
+          - generic [ref=f22e56]:
+            - generic [ref=f22e57]: موتور تحلیلی قطعی
+            - generic [ref=f22e58]: اطمینان بالا
+          - generic [ref=f22e59]:
+            - button "نحوه محاسبه پاسخ دستیار" [ref=f22e60] [cursor=pointer]: این اعداد از کجا آمدند؟
+            - group "آیا این پاسخ کمک کرد؟" [ref=f22e63]:
+              - button "👍" [ref=f22e64] [cursor=pointer]
+              - button "👎" [ref=f22e65] [cursor=pointer]
+      - generic [ref=f22e37]:
+        - button "وضعیت کل سیستم چطوره؟" [ref=f22e38] [cursor=pointer]
+        - button "AI امروز چطور عمل کرده؟" [ref=f22e39] [cursor=pointer]
+        - button "چند درصد جواب‌ها مستند بوده؟" [ref=f22e40] [cursor=pointer]
+        - button "چرا fallback زیاد شده؟" [ref=f22e41] [cursor=pointer]
+        - button "کدام مدل بیشتر استفاده شده؟" [ref=f22e42] [cursor=pointer]
+        - button "هزینه AI چقدر شده؟" [active] [ref=f22e43] [cursor=pointer]
+        - button "کدام endpoint کند است؟" [ref=f22e44] [cursor=pointer]
+        - button "کدام منبع sync نشده؟" [ref=f22e45] [cursor=pointer]
+        - button "چه مشکلاتی نیاز به توجه دارند؟" [ref=f22e46] [cursor=pointer]
+      - generic [ref=f22e47]:
+        - button "صحبت کنید" [ref=f22e48] [cursor=pointer]
+        - textbox "پرسش از دستیار" [ref=f22e51]:
+          - /placeholder: "مثلاً: چرا fallback زیاد شده؟"
+        - button "بپرس" [disabled] [ref=f22e52]
+  - paragraph [ref=f22e29]:
+    - text: "همه مبالغ به ریال است. داده: دیتاست چالش زرین‌پال، ۱۱ دی ۱۴۰۴ تا ۹ تیر ۱۴۰۵ ·"
+    - button "منابع داده" [ref=f22e30] [cursor=pointer]
+    - text: · زرین‌بین

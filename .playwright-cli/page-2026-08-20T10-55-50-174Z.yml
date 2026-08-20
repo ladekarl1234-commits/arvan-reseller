@@ -1,0 +1,32 @@
+- generic [active] [ref=f19e1]:
+  - generic [ref=f19e3]:
+    - link "پرش به محتوا" [ref=f19e4] [cursor=pointer]:
+      - /url: "#main"
+    - generic [ref=f19e6]:
+      - generic [ref=f19e7]:
+        - generic [ref=f19e8]: ز
+        - generic [ref=f19e9]:
+          - text: زرین‌بین
+          - generic [ref=f19e10]: مرکز کنترل و عملیات
+      - tablist "انتخاب فضای کاری" [ref=f19e11]:
+        - tab "فضای پذیرنده" [ref=f19e12] [cursor=pointer]
+        - tab "مرکز کنترل" [selected] [ref=f19e13] [cursor=pointer]
+      - generic [ref=f19e14]:
+        - generic [ref=f19e15]: بازه
+        - combobox "بازه" [ref=f19e16]:
+          - option "کل دوره (۶ ماه)" [selected]
+          - option "۹۰ روز آخر"
+          - option "۳۰ روز آخر"
+    - main [ref=f19e24]:
+      - generic "در حال بارگذاری" [ref=f19e112]
+    - paragraph [ref=f19e47]:
+      - text: "همه مبالغ به ریال است. داده: دیتاست چالش زرین‌پال، ۱۱ دی ۱۴۰۴ تا ۹ تیر ۱۴۰۵ ·"
+      - button "منابع داده" [ref=f19e116] [cursor=pointer]
+      - text: · زرین‌بین
+    - navigation "ناوبری موبایل" [ref=f19e93]:
+      - button "پلتفرم" [ref=f19e117] [cursor=pointer]
+      - button "کارایی" [ref=f19e120] [cursor=pointer]
+      - button "AI" [ref=f19e123] [cursor=pointer]
+      - button "منابع" [ref=f19e126] [cursor=pointer]
+      - button "دستیار" [ref=f19e129] [cursor=pointer]
+  - generic [ref=f19e130]: ۰
