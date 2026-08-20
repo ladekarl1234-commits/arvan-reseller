@@ -6,7 +6,7 @@
 ![PHP](https://img.shields.io/badge/PHP-7.4%2B-777bb3)
 ![WordPress](https://img.shields.io/badge/WordPress-6.2%2B-21759b)
 ![License](https://img.shields.io/badge/license-GPL--2.0-blue)
-![Tests](https://img.shields.io/badge/unit_tests-46_passing-16a34a)
+![Tests](https://img.shields.io/badge/tests-46_unit_·_54_e2e-16a34a)
 
 ## Why this exists
 

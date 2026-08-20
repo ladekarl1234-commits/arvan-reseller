@@ -19,5 +19,6 @@ First complete release for the ArvanCloud reseller hackathon.
 - Append-only wallet ledger with derived balances, top-ups and admin reconciliation
 - Usage engine: idempotent per-period ingestion → ledger debits → configurable credit-policy staging with cooldown-aware notifications
 - Customer dashboard (services/orders/wallet/usage/inbox) and 10-section admin experience incl. System Health with Sync-now and an audit log
-- 46 unit tests + 42-check end-to-end scenario on a real WordPress; CI (lint 7.4/8.2/8.3, tests, secret scan)
+- 46 unit tests + 54-check end-to-end scenario on a real WordPress; CI (lint 7.4/8.2/8.3, tests, secret scan)
+- Hardened across three adversarial review rounds (panel → verification → convergence), every finding fixed and re-tested
 - Engineering handbook: spec, 11 ADRs, threat model, stack evaluation, scalability/capacity models, API integration reference, demo script (fa) and checklist
