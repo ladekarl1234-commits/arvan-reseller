@@ -41,6 +41,21 @@ Customer pays on reseller site  →  order claimed atomically  →  Arvan API pr
 - Demo checklist (laptop + 390 px mobile): [`docs/demo-checklist.md`](docs/demo-checklist.md)
 - Demo activation token & seed instructions: [`DEVELOPMENT.md`](DEVELOPMENT.md)
 
+| Storefront | Customer dashboard (live E2E data) | Admin dashboard |
+|---|---|---|
+| ![Storefront](docs/screenshots/storefront.png) | ![Dashboard](docs/screenshots/dashboard-services.png) | ![Admin](docs/screenshots/admin-dashboard.png) |
+
+<details>
+<summary>More screenshots (wizard, product config, wallet, mobile 390px…)</summary>
+
+| | |
+|---|---|
+| ![Wizard](docs/screenshots/wizard.png) | ![Product](docs/screenshots/product-cloud-server.png) |
+| ![Wallet](docs/screenshots/dashboard-wallet.png) | ![Health](docs/screenshots/admin-health.png) |
+| ![Mobile dashboard](docs/screenshots/mobile-dashboard.png) | ![Mobile product](docs/screenshots/mobile-product.png) |
+
+</details>
+
 ## Architecture
 
 ```mermaid

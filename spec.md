@@ -125,9 +125,10 @@ Derived figures: `available = credits − debits − open reservations`; also ex
 | `/me/summary` | GET | customer | balance, services, orders overview |
 | `/me/orders`, `/me/services`, `/me/ledger`, `/me/usage` | GET | customer | paginated, owner-scoped |
 | `/me/topup` | POST | customer + nonce | start wallet top-up (payment provider) |
-| `/admin/*` | * | manage_options + nonce | credentials, pricing, customers, orders, services, policies, jobs, sync-now, health |
+| `/me/notifications/{id}/read` | POST | customer | owner-scoped mark-read |
 
 All routes: `permission_callback` + `args` schema validation.
+Admin operations intentionally use `admin-post.php` handlers (capability + per-action nonce) instead of REST — equivalent protection, no-JS-required forms (ADR-0002/0005).
 
 ## 10. Data model (custom tables, prefix `{$wpdb->prefix}arvrs_`)
 
