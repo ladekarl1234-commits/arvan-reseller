@@ -12,7 +12,7 @@ Realistic next steps, ordered by commercial value. Nothing here blocks the hacka
 ## v1.2 — reseller operations
 - Wallet-first checkout: pay orders from available credit (reservation → release flow — ledger types already exist)
 - Notification email digests + per-customer channel preferences
-- Customer-group pricing (spec MAY item)
+- Customer-group pricing tier (spec §6 optional item; resolution chain already reserves the slot)
 - CSV export for ledger/orders; monthly statement per customer
 
 ## v1.3 — upstream depth

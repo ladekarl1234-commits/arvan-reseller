@@ -94,7 +94,20 @@ final class UsageSync
             $row->quantity, $row->unit, $row->cost, Helpers::now()
         ));
         if ((int) $wpdb->rows_affected === 0) {
-            return ['ingested' => 0, 'debited' => 0]; // period already ingested (portable duplicate signal)
+            // Period already ingested. But if a crash happened between the
+            // usage INSERT and its ledger debit on a prior run, the debit is
+            // missing — back-fill it now so usage is never permanently lost.
+            // Ledger's UNIQUE(ref) makes the retry safe if it wasn't missing.
+            $existing_id = (int) $wpdb->get_var($wpdb->prepare(
+                'SELECT id FROM ' . self::table() . ' WHERE service_id = %d AND period_start = %s AND period_end = %s',
+                $service_id, $row->period_start, $row->period_end
+            ));
+            if ($existing_id) {
+                $backfill = Ledger::append($customer_id, 'usage_debit', max(0, $row->cost), 'usage', (string) $existing_id,
+                    sprintf(__('مصرف سرویس #%1$d (%2$s تا %3$s)', 'arvan-reseller'), $service_id, $row->period_start, $row->period_end));
+                return ['ingested' => 0, 'debited' => $backfill ? 1 : 0];
+            }
+            return ['ingested' => 0, 'debited' => 0];
         }
         $usage_id = (int) $wpdb->insert_id;
         $debit_id = Ledger::append($customer_id, 'usage_debit', max(0, $row->cost), 'usage', (string) $usage_id,
@@ -106,14 +119,26 @@ final class UsageSync
     public static function apply_policy(int $customer_id): string
     {
         $balance = Ledger::balance($customer_id);
+        // Per-customer grace period overrides the global default when set.
+        $rule       = \ArvanReseller\Customers\Rules::get($customer_id);
+        $grace_days = ($rule && $rule['grace_days'] !== null)
+            ? (int) $rule['grace_days']
+            : (int) Options::get('policy_grace_days', 3);
         $stage   = PolicyEngine::stage(
             $balance['available'],
             (int) Options::get('policy_warning', 500000),
             (int) Options::get('policy_critical', 100000),
-            (int) Options::get('policy_grace_days', 3),
+            $grace_days,
             Ledger::negative_since_days($customer_id)
         );
+        $previous_stage = (string) get_user_meta($customer_id, 'arvrs_policy_stage', true);
         update_user_meta($customer_id, 'arvrs_policy_stage', $stage);
+
+        // Only act when the stage actually WORSENED — re-running apply_policy
+        // hourly at a steady stage must not re-notify (admin flood fix). Rank
+        // by severity order.
+        $rank = [PolicyEngine::HEALTHY => 0, PolicyEngine::WARNING => 1, PolicyEngine::CRITICAL => 2, PolicyEngine::GRACE => 3, PolicyEngine::RESTRICTED => 4];
+        $worsened = ($rank[$stage] ?? 0) > ($rank[$previous_stage] ?? 0);
 
         $actions = PolicyEngine::actions_for($stage, (array) Options::get('policy_actions', []));
         if (in_array('notify_customer', $actions, true)) {
@@ -128,9 +153,9 @@ final class UsageSync
                 Notifier::customer($customer_id, $type, $title, $body);
             }
         }
-        if (in_array('notify_admin', $actions, true)) {
+        if (in_array('notify_admin', $actions, true) && $worsened) {
             Notifier::admin('customer_at_risk', __('اعتبار مشتری در وضعیت هشدار', 'arvan-reseller'),
-                sprintf(__('مشتری #%1$d در وضعیت «%2$s» قرار گرفت.', 'arvan-reseller'), $customer_id, $stage));
+                sprintf(__('مشتری #%1$d به وضعیت «%2$s» رسید.', 'arvan-reseller'), $customer_id, $stage));
         }
         if (in_array('mark_at_risk', $actions, true)) {
             global $wpdb;
@@ -139,9 +164,26 @@ final class UsageSync
                 Helpers::now(), $customer_id
             ));
         }
-        // 'block_purchases' is enforced at checkout via stage lookup;
-        // 'suspend_service' only ever runs through a documented API operation
-        // and is left to explicit admin action (spec: never auto-destroy).
+        if (in_array('suspend_service', $actions, true)) {
+            // Non-destructive local suspension only: the service is flagged
+            // 'suspended' (reversible, disappears from active sync) — the
+            // plugin never deletes or powers off a remote resource on a local
+            // balance calculation (spec §5.5). Reactivates automatically when
+            // apply_policy runs again above the restricted threshold.
+            global $wpdb;
+            $wpdb->query($wpdb->prepare(
+                'UPDATE ' . Services::table() . " SET status = 'suspended', updated_at = %s WHERE customer_id = %d AND status IN ('active','at_risk')",
+                Helpers::now(), $customer_id
+            ));
+        } elseif ($stage === PolicyEngine::HEALTHY || $stage === PolicyEngine::WARNING) {
+            // Recovered: lift any local suspension/at-risk flag.
+            global $wpdb;
+            $wpdb->query($wpdb->prepare(
+                'UPDATE ' . Services::table() . " SET status = 'active', updated_at = %s WHERE customer_id = %d AND status IN ('suspended','at_risk')",
+                Helpers::now(), $customer_id
+            ));
+        }
+        // 'block_purchases' is enforced at checkout via the stage lookup.
         return $stage;
     }
 

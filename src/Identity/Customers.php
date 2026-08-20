@@ -37,7 +37,12 @@ final class Customers
 
     public static function block_wp_admin(): void
     {
-        if (wp_doing_ajax() || !self::is_customer()) {
+        // admin_init also fires on admin-post.php / admin-ajax.php BEFORE the
+        // admin_post_{action} hook dispatches. Redirecting here would swallow
+        // the customer's own form posts (logout, etc.) — only block real
+        // wp-admin page loads.
+        global $pagenow;
+        if (wp_doing_ajax() || in_array($pagenow, ['admin-post.php', 'admin-ajax.php'], true) || !self::is_customer()) {
             return;
         }
         wp_safe_redirect(\ArvanReseller\Install\PageFactory::url('dashboard'));

@@ -78,6 +78,20 @@ final class OrderService
         }
 
         $quote = Pricing::quote($product, $plan_id, (int) $plan['base_cost'], $customer_id);
+        $price = (int) $quote['customer_price'];
+
+        // Enforce per-customer commercial limits (spec §customer rules).
+        $rule = \ArvanReseller\Customers\Rules::get($customer_id);
+        if ($rule) {
+            $balance = \ArvanReseller\Wallet\Ledger::balance($customer_id);
+            if ($rule['spending_limit'] !== null && ($balance['consumed'] + $price) > (int) $rule['spending_limit']) {
+                return new \WP_Error('spending_limit', __('این خرید از سقف مجاز حساب شما عبور می‌کند. با پشتیبانی تماس بگیرید.', 'arvan-reseller'));
+            }
+            // credit_limit = how far the wallet may go negative on purchase.
+            if ($rule['credit_limit'] !== null && ($balance['available'] - $price) < -((int) $rule['credit_limit'])) {
+                return new \WP_Error('credit_limit', __('اعتبار کافی نیست. لطفاً ابتدا کیف پول را شارژ کنید.', 'arvan-reseller'));
+            }
+        }
 
         global $wpdb;
         $ref = 'ARV-' . strtoupper(bin2hex(random_bytes(6)));
@@ -152,6 +166,11 @@ final class OrderService
     {
         global $wpdb;
         $payable = StateMachine::payable();
+        // Capture the true prior status for an accurate event record (the
+        // claim UPDATE below still enforces the payable-state guard atomically).
+        $prior = (string) $wpdb->get_var($wpdb->prepare(
+            'SELECT status FROM ' . self::table() . ' WHERE payment_ref = %s', $payment_ref
+        ));
         $in      = implode(',', array_fill(0, count($payable), '%s'));
         $params  = array_merge(
             [StateMachine::PAID, Helpers::now(), $payment_ref, $verified_amount],
@@ -164,7 +183,8 @@ final class OrderService
         ));
         $order = self::by_ref($payment_ref);
         if ($updated === 1 && $order) {
-            self::record_event((int) $order['id'], StateMachine::PENDING_PAYMENT, StateMachine::PAID, 'payment', 'tx:' . $transaction_id);
+            $from = in_array($prior, $payable, true) ? $prior : StateMachine::PENDING_PAYMENT;
+            self::record_event((int) $order['id'], $from, StateMachine::PAID, 'payment', 'tx:' . $transaction_id);
             return $order;
         }
         return null; // replay or mismatch — caller answers idempotently

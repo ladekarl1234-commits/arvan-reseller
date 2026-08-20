@@ -50,12 +50,19 @@ final class Ledger
             $customer_id, $type, $direction, $amount, 'IRT',
             $ref_type, $ref_id, $description, $actor, Helpers::now()
         );
+        $wpdb->last_error = '';
         $wpdb->query($sql);
         // rows_affected (not insert_id) is the portable duplicate signal:
         // MySQL leaves insert_id stale-or-zero after an ignored insert and the
         // SQLite integration layer leaves it stale — affected rows is 0 on
         // both when the unique key already existed.
         if ((int) $wpdb->rows_affected === 0) {
+            // Distinguish an ignored duplicate (safe replay → 0) from a real
+            // DB failure (deadlock, disk full) that must NOT be reported as a
+            // benign replay — a dropped credit is silent money loss.
+            if ($wpdb->last_error !== '') {
+                throw new \RuntimeException('Ledger append failed: ' . $wpdb->last_error);
+            }
             return 0; // replay — the business event was already ledgered
         }
         return (int) $wpdb->insert_id;
@@ -151,6 +158,26 @@ final class Ledger
              FROM ' . self::table() . ' WHERE customer_id = %d ORDER BY id DESC LIMIT %d OFFSET %d',
             $customer_id, $per_page, $offset
         ), ARRAY_A) ?: [];
+    }
+
+    /**
+     * Admin reconciliation per credential (spec §7): how much provisioned
+     * spend each upstream Arvan account backs. Joins services→usage since the
+     * ledger itself is customer-dimensioned, not credential-dimensioned.
+     */
+    public static function reconciliation_by_credential(): array
+    {
+        global $wpdb;
+        $services = $wpdb->prefix . 'arvrs_services';
+        $usage    = $wpdb->prefix . 'arvrs_usage_records';
+        return $wpdb->get_results(
+            "SELECT s.credential_id,
+                    COUNT(DISTINCT s.id) AS services,
+                    COALESCE(SUM(u.cost),0) AS usage_cost
+             FROM $services s LEFT JOIN $usage u ON u.service_id = s.id
+             GROUP BY s.credential_id ORDER BY usage_cost DESC",
+            ARRAY_A
+        ) ?: [];
     }
 
     /** Admin reconciliation: totals per customer. */

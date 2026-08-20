@@ -1,8 +1,14 @@
 <?php
-/** @var array $credentials @var bool $crypto_ok */
+/** @var array $credentials @var bool $crypto_ok @var array $reconciliation */
 defined('ABSPATH') || exit;
 
 use ArvanReseller\Arvan\Catalog;
+use ArvanReseller\Support\Helpers;
+
+$cred_names = [];
+foreach ($credentials as $c) {
+    $cred_names[(int) $c['id']] = $c['name'];
+}
 ?>
 <div class="wrap arvrs-admin" dir="rtl">
   <h1><?php esc_html_e('اتصال‌های ArvanCloud', 'arvan-reseller'); ?></h1>
@@ -45,6 +51,24 @@ use ArvanReseller\Arvan\Catalog;
               <button class="button button-link-delete"><?php esc_html_e('حذف', 'arvan-reseller'); ?></button>
             </form>
           </td>
+        </tr>
+      <?php endforeach; ?>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="arvrs-panel">
+    <h2><?php esc_html_e('تطبیق حساب — مصرف به تفکیک اتصال', 'arvan-reseller'); ?></h2>
+    <p class="arvrs-help"><?php esc_html_e('مجموع هزینه مصرف سرویس‌های ساخته‌شده روی هر اعتبار ArvanCloud (spec §۷).', 'arvan-reseller'); ?></p>
+    <table class="widefat striped">
+      <thead><tr><th><?php esc_html_e('اتصال', 'arvan-reseller'); ?></th><th><?php esc_html_e('سرویس‌ها', 'arvan-reseller'); ?></th><th><?php esc_html_e('مجموع مصرف', 'arvan-reseller'); ?></th></tr></thead>
+      <tbody>
+      <?php if (empty($reconciliation)) : ?><tr><td colspan="3"><?php esc_html_e('هنوز مصرفی ثبت نشده است.', 'arvan-reseller'); ?></td></tr><?php endif; ?>
+      <?php foreach ($reconciliation as $row) : $cid = (int) $row['credential_id']; ?>
+        <tr>
+          <td><?php echo esc_html($cid ? ($cred_names[$cid] ?? ('#' . $cid)) : __('بدون اتصال (حالت دمو)', 'arvan-reseller')); ?></td>
+          <td><?php echo esc_html(Helpers::fa_digits((string) $row['services'])); ?></td>
+          <td><?php echo esc_html(Helpers::money((int) $row['usage_cost'])); ?></td>
         </tr>
       <?php endforeach; ?>
       </tbody>

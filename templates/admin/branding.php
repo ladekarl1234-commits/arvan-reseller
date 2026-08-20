@@ -61,6 +61,12 @@ defined('ABSPATH') || exit;
       <?php if ($license['active']) : ?>
         <p><span class="arvrs-tag arvrs-tag-success"><?php esc_html_e('فعال', 'arvan-reseller'); ?></span>
           <span class="arvrs-kv-detail"><?php echo esc_html(sprintf(__('اثر انگشت توکن: %1$s — تاریخ فعال‌سازی: %2$s', 'arvan-reseller'), $license['fingerprint'], $license['activated_at'])); ?></span></p>
+        <p>
+          <button type="submit" form="arvrs-license-reset" class="button button-secondary"
+                  onclick="return confirm('<?php echo esc_js(__('فعال‌سازی افزونه بازنشانی شود؟ فروش تا ورود دوباره توکن متوقف می‌شود.', 'arvan-reseller')); ?>')">
+            <?php esc_html_e('بازنشانی فعال‌سازی', 'arvan-reseller'); ?>
+          </button>
+        </p>
       <?php else : ?>
         <p><span class="arvrs-tag arvrs-tag-danger"><?php esc_html_e('غیرفعال', 'arvan-reseller'); ?></span>
           <a href="<?php echo esc_url(admin_url('admin.php?page=arvan-reseller-setup')); ?>"><?php esc_html_e('اجرای راه‌اندازی', 'arvan-reseller'); ?></a></p>
@@ -69,4 +75,11 @@ defined('ABSPATH') || exit;
 
     <p><button class="button button-primary button-hero"><?php esc_html_e('ذخیره تنظیمات', 'arvan-reseller'); ?></button></p>
   </form>
+
+  <?php if ($license['active']) : ?>
+    <form id="arvrs-license-reset" method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+      <input type="hidden" name="action" value="arvrs_license_reset" />
+      <?php wp_nonce_field('arvrs_license_reset', 'arvrs_nonce'); ?>
+    </form>
+  <?php endif; ?>
 </div>

@@ -41,6 +41,7 @@ final class Shortcodes
             'brand_name' => (string) Options::get('brand_name', get_bloginfo('name')),
             'brand_logo' => ($id = (int) Options::get('brand_logo_id', 0)) ? wp_get_attachment_image_url($id, 'medium') : '',
             'brand_desc' => (string) Options::get('brand_description', ''),
+            'brand_about' => (string) Options::get('brand_about', ''),
             'support_email' => (string) Options::get('support_email', ''),
             'support_phone' => (string) Options::get('support_phone', ''),
             'customer_id' => $uid,
@@ -90,8 +91,8 @@ final class Shortcodes
         $uid   = Customers::is_customer() ? get_current_user_id() : 0;
         $plans = [];
         foreach (Catalog::plans($product) as $plan) {
-            if ((int) $plan['base_cost'] <= 0 && $product !== 'cdn') {
-                continue; // unpriced plans are not sellable
+            if ((int) $plan['base_cost'] <= 0) {
+                continue; // unpriced plans are not sellable — never advertise them
             }
             $quote = Pricing::quote($product, $plan['id'], (int) $plan['base_cost'], $uid);
             $plan['price']       = $quote['customer_price'];

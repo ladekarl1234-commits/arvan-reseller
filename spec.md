@@ -62,6 +62,11 @@ active → cancelled (service termination)
 paid|active → refunded (admin action)
 ```
 
+> `payment_processing` is a reserved state for future asynchronous PSP adapters
+> (bank-redirect gateways that report an interim state). The shipped sandbox
+> settles synchronously, so 1.0 orders move `pending_payment → paid` directly;
+> the claim logic already treats both as payable.
+
 Transitions outside this table are rejected and logged. Every transition writes an
 `order_events` row `(order_id, from, to, actor, note, created_at)`.
 
@@ -87,7 +92,7 @@ Cron (hourly) + admin **Sync now**: for each active service, the provider's usag
 ## 6. Pricing
 
 - `PricingEngine::quote(product, plan, customer)` returns a **PriceQuote**: base cost, applied rule, margin, customer price, currency (IRT), version, timestamp.
-- Rule resolution order (first match wins): customer override → customer-group → product rule → global rule.
+- Rule resolution order (first match wins): customer override → product rule → global rule. **Customer-group pricing is an optional tier not implemented in 1.0** (the resolution chain is designed to accept it; see ROADMAP) — the shipped engine covers global, per-product and per-customer, which subsumes the group case for the hackathon scope.
 - Rule shape: `markup_percent` (float ≥ −100), `fixed_adjustment` (signed IRT), optional `discount_percent`.
 - Base costs: no official pricing API exists ⇒ admin-maintained base-cost table seeded from the public pricing page, with source + last-updated stamps (`PricingProvider` abstraction keeps a future API swap cheap). Documented in ADR-0007.
 - Orders persist the full quote as an immutable JSON snapshot.

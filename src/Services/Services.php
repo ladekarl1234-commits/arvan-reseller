@@ -84,6 +84,9 @@ final class Services
     public static function active_for_sync(): array
     {
         global $wpdb;
+        // Suspended services still accrue no NEW usage but remain mapped;
+        // include at_risk (still running) and active. Suspended are excluded
+        // from usage sync since the resource is administratively held.
         return $wpdb->get_results(
             'SELECT id, customer_id, product, plan_id, remote_id, is_demo FROM ' . self::table() .
             " WHERE status IN ('active','at_risk') ORDER BY id ASC",

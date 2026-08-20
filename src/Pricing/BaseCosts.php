@@ -62,8 +62,10 @@ final class BaseCosts
             ['cloud_server', 'g1-2-2-25',  2100000],
             ['cloud_server', 'g1-4-4-50',  4400000],
             ['cloud_server', 'g1-8-8-100', 8800000],
-            // CDN — monthly plan tiers
-            ['cdn', 'cdn-basic',    0],
+            // CDN — monthly plan tiers (cdn-basic carries a small reseller
+            // management fee; a zero base cost would render as buyable but be
+            // rejected at checkout, so no seeded plan is ever priced at 0)
+            ['cdn', 'cdn-basic',    200000],
             ['cdn', 'cdn-growth',   1500000],
             ['cdn', 'cdn-pro',      6500000],
             // Object Storage — monthly packages
@@ -71,11 +73,14 @@ final class BaseCosts
             ['object_storage', 'os-500gb', 2000000],
             ['object_storage', 'os-1tb',   3800000],
         ];
+        global $wpdb;
         foreach ($rows as [$product, $plan, $cost]) {
-            if (self::get($product, $plan) === 0 && $cost > 0) {
+            // Seed only if the row is absent; never clobber an admin-edited price.
+            $exists = (int) $wpdb->get_var($wpdb->prepare(
+                'SELECT COUNT(*) FROM ' . self::table() . ' WHERE product = %s AND plan_id = %s', $product, $plan
+            ));
+            if (!$exists) {
                 self::set($product, $plan, $cost, $source);
-            } elseif ($cost === 0 && self::get($product, $plan) === 0) {
-                self::set($product, $plan, 0, $source);
             }
         }
     }

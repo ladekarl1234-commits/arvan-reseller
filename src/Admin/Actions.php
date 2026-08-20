@@ -29,6 +29,7 @@ final class Actions
         'arvrs_credential_save', 'arvrs_credential_delete', 'arvrs_credential_test',
         'arvrs_rules_save', 'arvrs_wallet_adjust', 'arvrs_order_action',
         'arvrs_job_retry', 'arvrs_run_jobs', 'arvrs_sync_now', 'arvrs_flush_catalog',
+        'arvrs_license_reset',
     ];
 
     public static function register_hooks(): void
@@ -315,5 +316,13 @@ final class Actions
         self::guard('arvrs_flush_catalog');
         Catalog::flush();
         self::back(__('کش کاتالوگ خالی شد.', 'arvan-reseller'));
+    }
+
+    public static function license_reset(): void
+    {
+        self::guard('arvrs_license_reset');
+        \ArvanReseller\Licensing\License::deactivate();
+        Audit::log(0, 'license.reset', 'license', '', [], 'audit');
+        self::back(__('فعال‌سازی افزونه بازنشانی شد. برای فروش دوباره، توکن دسترسی را وارد کنید.', 'arvan-reseller'));
     }
 }

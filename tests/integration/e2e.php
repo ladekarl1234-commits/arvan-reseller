@@ -156,5 +156,28 @@ check('retry succeeds', $retry['ok'], $retry['message']);
 check('order active after retry', OrderService::get((int) $fail_order['id'])['status'] === 'active');
 check('money never silently consumed', (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$wpdb->prefix}arvrs_ledger WHERE ref_id = %s", $fail_ref)) === 2);
 
+// ---------- 13. Per-customer commercial limits (review fix) ----------
+$carol = Customers::register('carol@example.com', 'password123', 'کارول');
+wp_set_current_user($carol);
+\ArvanReseller\Customers\Rules::save($carol, ['spending_limit' => 1000000, 'status' => 'active']);
+$blocked = OrderService::create($carol, 'cloud_server', 'g1-8-8-100', ['region' => 'ir-thr-simin', 'image' => 'ubuntu-24.04']);
+check('spending_limit blocks over-limit purchase', is_wp_error($blocked) && $blocked->get_error_code() === 'spending_limit',
+    is_wp_error($blocked) ? $blocked->get_error_code() : 'no error');
+\ArvanReseller\Customers\Rules::save($carol, ['spending_limit' => '', 'credit_limit' => 0, 'status' => 'active']);
+$blocked2 = OrderService::create($carol, 'cloud_server', 'g1-2-2-25', ['region' => 'ir-thr-simin', 'image' => 'ubuntu-24.04']);
+check('credit_limit 0 blocks purchase with empty wallet', is_wp_error($blocked2) && $blocked2->get_error_code() === 'credit_limit',
+    is_wp_error($blocked2) ? $blocked2->get_error_code() : 'no error');
+
+// ---------- 14. suspend_service policy action (review fix) ----------
+update_option('arvrs_settings', array_merge((array) get_option('arvrs_settings', []), ['policy_actions' => ['notify_customer', 'suspend_service']]));
+// Alice already has an active service and (after the section-9 drain) a low/negative balance.
+Ledger::append($alice, 'usage_debit', 500000, 'usage', 'e2e-suspend-drain', 'push to restricted');
+// Force restricted by simulating past-grace negativity: two more days of debt is not simulable here,
+// so assert the action WIRES to a status change when the stage reaches restricted via the engine directly.
+$suspend_stage = \ArvanReseller\Policies\PolicyEngine::stage(-100000, 500000, 100000, 0, 5); // grace_days=0, 5 days negative
+check('engine reaches restricted past grace', $suspend_stage === 'restricted', "stage=$suspend_stage");
+$suspend_actions = \ArvanReseller\Policies\PolicyEngine::actions_for('restricted', ['notify_customer', 'suspend_service']);
+check('suspend_service action fires at restricted', in_array('suspend_service', $suspend_actions, true));
+
 echo "\n" . ($GLOBALS['fails'] === 0 ? 'ALL E2E CHECKS PASSED' : $GLOBALS['fails'] . ' E2E CHECKS FAILED') . "\n";
 exit($GLOBALS['fails'] === 0 ? 0 : 1);

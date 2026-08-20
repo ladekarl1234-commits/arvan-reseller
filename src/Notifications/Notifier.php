@@ -14,6 +14,9 @@ defined('ABSPATH') || exit;
 final class Notifier
 {
     /** Types that repeat and therefore respect the cooldown window. */
+    // Repeating, customer-scoped warnings that must not flood. Per-event
+    // admin alerts (provision_failed, job_dead) are deliberately NOT here —
+    // each names a distinct order/job and must always surface.
     private const COOLDOWN_TYPES = ['low_balance', 'critical_balance', 'suspension_warning', 'credential_failed', 'usage_sync_failed'];
 
     public static function table(): string

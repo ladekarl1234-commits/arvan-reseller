@@ -36,6 +36,13 @@ $descriptions = [
   <?php endforeach; ?>
 </section>
 
+<?php if (!empty($brand_about)) : ?>
+<section class="arvrs-card arvrs-about">
+  <h2 class="arvrs-card-title"><?php echo esc_html(sprintf(__('درباره %s', 'arvan-reseller'), $brand_name)); ?></h2>
+  <p class="arvrs-muted"><?php echo nl2br(esc_html($brand_about)); ?></p>
+</section>
+<?php endif; ?>
+
 <section class="arvrs-features">
   <div class="arvrs-feature"><strong><?php esc_html_e('تحویل آنی', 'arvan-reseller'); ?></strong><span class="arvrs-muted"><?php esc_html_e('سرویس بلافاصله پس از پرداخت ساخته می‌شود.', 'arvan-reseller'); ?></span></div>
   <div class="arvrs-feature"><strong><?php esc_html_e('پرداخت ریالی', 'arvan-reseller'); ?></strong><span class="arvrs-muted"><?php esc_html_e('بدون نیاز به ارز و کارت بین‌المللی.', 'arvan-reseller'); ?></span></div>
