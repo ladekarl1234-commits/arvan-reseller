@@ -31,10 +31,11 @@ final class Services
             (string) $order['config'], wp_json_encode($connection),
             (int) $order['is_demo'], Helpers::now(), Helpers::now()
         ));
-        if ($wpdb->insert_id) {
+        if ((int) $wpdb->rows_affected > 0) {
             return (int) $wpdb->insert_id;
         }
         // Row already existed (idempotent retry) — return the existing ID.
+        // rows_affected, not insert_id, is the portable duplicate signal.
         return (int) $wpdb->get_var($wpdb->prepare(
             'SELECT id FROM ' . self::table() . ' WHERE order_id = %d', (int) $order['id']
         ));

@@ -74,7 +74,17 @@ final class DemoProvider implements ProviderInterface
 
     public function create(string $product, string $plan_id, array $config, string $idempotency_key): RemoteResource
     {
-        // Simulate a short provisioning delay so the UX flow is visible.
+        // Deterministic failure trigger for demos/tests: a cloud server named
+        // "demo-fail" fails exactly once, then succeeds on retry — proving the
+        // provision_failed → retry → active path live (spec §13.5).
+        if (($config['name'] ?? '') === 'demo-fail') {
+            $failed_once = get_option('arvrs_demo_failed_once', []);
+            if (empty($failed_once[$idempotency_key])) {
+                $failed_once[$idempotency_key] = 1;
+                update_option('arvrs_demo_failed_once', $failed_once, false);
+                throw new ProviderError('unavailable', 'Demo: simulated transient provisioning failure');
+            }
+        }
         $remote_id = 'demo-' . $product . '-' . substr(md5($idempotency_key), 0, 10);
 
         $connection = [];

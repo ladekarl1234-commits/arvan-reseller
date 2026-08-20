@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  lint:
+    name: Syntax lint (PHP ${{ matrix.php }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php: ['7.4', '8.2', '8.3'] # 7.4 = minimum supported runtime
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+      - name: Syntax lint every PHP file
+        run: |
+          set -e
+          find . -name '*.php' -not -path './vendor/*' -print0 | xargs -0 -n1 php -l > /dev/null
+          echo "All PHP files lint clean"
+
+  test:
+    name: Unit tests (PHP ${{ matrix.php }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php: ['8.2', '8.3'] # PHPUnit 11/12 needs 8.2+; runtime stays 7.4-compatible via the lint job
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: sodium, mbstring
+          coverage: none
+      - name: Install dev dependencies
+        run: composer install --no-interaction --no-progress
+      - name: Run unit tests
+        run: vendor/bin/phpunit --no-coverage
+
+  secrets:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fail on committed secrets
+        run: |
+          set -e
+          # Plaintext plugin access tokens must never be committed (hashes only).
+          ! grep -rInE 'ARVRS-[0-9A-F]{32}' --include='*.php' --exclude-dir=vendor . || (echo 'Plaintext access token found' && exit 1)
+          # Arvan machine-user keys are UUIDs in Authorization headers.
+          ! grep -rInE 'Apikey [0-9a-f]{8}-[0-9a-f]{4}' --include='*.php' --exclude-dir=vendor . || (echo 'API key literal found' && exit 1)
+          echo "No secrets detected"

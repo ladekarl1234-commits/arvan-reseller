@@ -51,7 +51,14 @@ final class Ledger
             $ref_type, $ref_id, $description, $actor, Helpers::now()
         );
         $wpdb->query($sql);
-        return (int) $wpdb->insert_id; // 0 on duplicate → caller treats as replay
+        // rows_affected (not insert_id) is the portable duplicate signal:
+        // MySQL leaves insert_id stale-or-zero after an ignored insert and the
+        // SQLite integration layer leaves it stale — affected rows is 0 on
+        // both when the unique key already existed.
+        if ((int) $wpdb->rows_affected === 0) {
+            return 0; // replay — the business event was already ledgered
+        }
+        return (int) $wpdb->insert_id;
     }
 
     public static function direction_of(string $type): ?string

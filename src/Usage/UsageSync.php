@@ -93,8 +93,8 @@ final class UsageSync
             $service_id, $customer_id, $row->period_start, $row->period_end,
             $row->quantity, $row->unit, $row->cost, Helpers::now()
         ));
-        if (!$wpdb->insert_id) {
-            return ['ingested' => 0, 'debited' => 0]; // period already ingested
+        if ((int) $wpdb->rows_affected === 0) {
+            return ['ingested' => 0, 'debited' => 0]; // period already ingested (portable duplicate signal)
         }
         $usage_id = (int) $wpdb->insert_id;
         $debit_id = Ledger::append($customer_id, 'usage_debit', max(0, $row->cost), 'usage', (string) $usage_id,
