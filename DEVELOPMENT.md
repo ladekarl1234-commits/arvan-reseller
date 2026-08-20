@@ -72,7 +72,8 @@ php -r '$t="ARVRS-".strtoupper(bin2hex(random_bytes(16)));echo $t,"\n",password_
 ## Seed demo data / run the E2E scenario
 
 ```bash
-php wp-cli.phar eval-file /path/to/arvan-reseller/tests/integration/e2e.php --path=wp
+ARVRS_DEMO_TOKEN=ARVRS-0845499FB98AB18F8984F7D1F2F84581 \
+  php wp-cli.phar eval-file /path/to/arvan-reseller/tests/integration/e2e.php --path=wp
 ```
 
 Fresh install required (it registers `alice@example.com` / `bob@example.com`, both `password123`, buys and provisions services, syncs usage, exercises replay safety — 42 checks). Log in as alice on the front-end afterwards to browse a fully populated customer dashboard.

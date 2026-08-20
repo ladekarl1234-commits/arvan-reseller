@@ -35,7 +35,13 @@ function check(string $name, bool $ok, string $detail = ''): void
     }
 }
 
-$demo_token = getenv('ARVRS_DEMO_TOKEN') ?: 'ARVRS-0845499FB98AB18F8984F7D1F2F84581';
+// The token is deliberately NOT embedded in source (spec: no plaintext
+// activation tokens in code). The demo token lives in DEVELOPMENT.md.
+$demo_token = (string) getenv('ARVRS_DEMO_TOKEN');
+if ($demo_token === '') {
+    echo "SET ARVRS_DEMO_TOKEN first, e.g.:\n  ARVRS_DEMO_TOKEN=<demo token from DEVELOPMENT.md> wp eval-file tests/integration/e2e.php\n";
+    exit(2);
+}
 
 // ---------- 1. Licensing ----------
 check('invalid PAT rejected', !License::activate('WRONG-TOKEN'));
