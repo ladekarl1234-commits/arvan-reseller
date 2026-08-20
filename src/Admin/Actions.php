@@ -244,8 +244,13 @@ final class Actions
         if (!$customer_id || $amount <= 0 || !in_array($kind, ['promo_credit', 'adjustment', 'refund'], true)) {
             self::back('', __('مقادیر واردشده معتبر نیست.', 'arvan-reseller'));
         }
-        Ledger::append($customer_id, $kind, $amount, 'admin', 'adj-' . bin2hex(random_bytes(6)),
-            $note ?: __('اصلاح دستی توسط مدیر', 'arvan-reseller'), 'admin:' . get_current_user_id());
+        try {
+            Ledger::append($customer_id, $kind, $amount, 'admin', 'adj-' . bin2hex(random_bytes(6)),
+                $note ?: __('اصلاح دستی توسط مدیر', 'arvan-reseller'), 'admin:' . get_current_user_id());
+        } catch (\Throwable $e) {
+            Audit::error('wallet.adjust_failed', ['customer' => $customer_id, 'error' => $e->getMessage()]);
+            self::back('', __('خطای موقت در ثبت تراکنش. دوباره تلاش کنید.', 'arvan-reseller'));
+        }
         UsageSync::apply_policy($customer_id);
         Audit::log(0, 'wallet.adjusted', 'user', (string) $customer_id, ['kind' => $kind, 'amount' => $amount]);
         self::back(__('تراکنش ثبت شد.', 'arvan-reseller'));
@@ -271,11 +276,21 @@ final class Actions
         }
         if ($do === 'refund') {
             $from = (string) $order['status'];
-            if (!OrderService::transition($order_id, $from, StateMachine::REFUNDED, 'admin:' . get_current_user_id(), 'manual refund')) {
+            if (!StateMachine::can($from, StateMachine::REFUNDED)) {
                 self::back('', __('بازپرداخت از این وضعیت مجاز نیست.', 'arvan-reseller'));
             }
-            Ledger::append((int) $order['customer_id'], 'refund', (int) $order['amount'], 'order_refund', (string) $order['payment_ref'],
-                sprintf(__('بازپرداخت سفارش #%d', 'arvan-reseller'), $order_id), 'admin:' . get_current_user_id());
+            // Credit the wallet FIRST: if the ledger write fails, the order
+            // stays in its prior (refundable) state so the admin can retry —
+            // never REFUNDED-without-credit. The unique ledger ref makes a
+            // retry idempotent.
+            try {
+                Ledger::append((int) $order['customer_id'], 'refund', (int) $order['amount'], 'order_refund', (string) $order['payment_ref'],
+                    sprintf(__('بازپرداخت سفارش #%d', 'arvan-reseller'), $order_id), 'admin:' . get_current_user_id());
+            } catch (\Throwable $e) {
+                Audit::error('order.refund_failed', ['order' => $order_id, 'error' => $e->getMessage()]);
+                self::back('', __('خطای موقت در ثبت بازپرداخت. سفارش تغییری نکرد؛ دوباره تلاش کنید.', 'arvan-reseller'));
+            }
+            OrderService::transition($order_id, $from, StateMachine::REFUNDED, 'admin:' . get_current_user_id(), 'manual refund');
             Audit::log(0, 'order.refunded', 'order', (string) $order_id, ['amount' => (int) $order['amount']]);
             self::back(__('سفارش بازپرداخت شد و مبلغ به کیف پول مشتری برگشت.', 'arvan-reseller'));
         }

@@ -200,7 +200,34 @@ $sus_after = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$wpdb->p
 check('top-up lifts suspension', $sus_after === 0, "suspended_after=$sus_after");
 check('purchases unblocked after top-up', !UsageSync::purchases_blocked($dave));
 
-// ---------- 15. demo ledger rows carry is_demo (reconciliation isolation) ----------
+// ---------- 15. partial top-up into CRITICAL band still lifts suspension ----------
+// (convergence-review fix: lift must fire at any non-restricted stage, not
+//  only HEALTHY/WARNING).
+$erin = Customers::register('erin@example.com', 'password123', 'ایرین');
+$wpdb->insert("{$wpdb->prefix}arvrs_services", [
+    'order_id' => 999002, 'customer_id' => $erin, 'credential_id' => 0, 'product' => 'cloud_server',
+    'plan_id' => 'g1-1-1-25', 'remote_id' => 'demo-seed-erin', 'status' => 'active',
+    'config' => '{}', 'connection' => '{}', 'is_demo' => 1,
+    'created_at' => gmdate('Y-m-d H:i:s'), 'updated_at' => gmdate('Y-m-d H:i:s'),
+]);
+$wpdb->insert("{$wpdb->prefix}arvrs_ledger", [
+    'customer_id' => $erin, 'type' => 'usage_debit', 'direction' => 'debit', 'amount' => 400000,
+    'currency' => 'IRT', 'ref_type' => 'usage', 'ref_id' => 'erin-old-debt', 'description' => 'aged debt',
+    'actor' => 'system', 'is_demo' => 1, 'created_at' => gmdate('Y-m-d H:i:s', time() - 6 * 86400),
+]);
+UsageSync::apply_policy($erin); // restricted → suspended
+$erin_sus = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$wpdb->prefix}arvrs_services WHERE customer_id = %d AND status = 'suspended'", $erin));
+check('erin suspended at restricted', $erin_sus === 1, "suspended=$erin_sus");
+// Partial top-up: balance goes -400000 → +50000, which is <= critical (100000) → CRITICAL stage.
+$partial_ref = 'TOP-PARTIAL1';
+add_option('arvrs_topup_' . $partial_ref, ['customer_id' => $erin, 'amount' => 450000, 'at' => time()], '', false);
+PaymentService::handle_topup_callback($partial_ref, ['sandbox_proof' => SandboxProvider::proof($partial_ref, 450000, 'topup'), 'type' => 'topup']);
+$erin_stage = get_user_meta($erin, 'arvrs_policy_stage', true);
+$erin_sus2  = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$wpdb->prefix}arvrs_services WHERE customer_id = %d AND status = 'suspended'", $erin));
+check('partial top-up lands in critical band', $erin_stage === 'critical', "stage=$erin_stage");
+check('suspension lifted even in critical band', $erin_sus2 === 0, "suspended_after=$erin_sus2");
+
+// ---------- 16. demo ledger rows carry is_demo (reconciliation isolation) ----------
 $demo_ledger = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}arvrs_ledger WHERE is_demo = 1");
 check('demo-mode ledger rows are is_demo stamped', $demo_ledger > 0, "demo_rows=$demo_ledger");
 

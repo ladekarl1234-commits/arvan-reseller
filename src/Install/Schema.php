@@ -22,6 +22,7 @@ final class Schema
         global $wpdb;
         require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 
+        $from_version = (int) get_option('arvrs_schema_version', 0);
         $p       = $wpdb->prefix . 'arvrs_';
         $charset = $wpdb->get_charset_collate();
 
@@ -210,6 +211,19 @@ final class Schema
 
         foreach ($tables as $sql) {
             dbDelta($sql);
+        }
+
+        // v3→v4 added ledger.is_demo (DEFAULT 0). New rows are stamped at
+        // write time, but historical rows all default to 0. If the site is
+        // still in demo mode when it crosses into v4, its entire ledger
+        // history is demo — back-stamp it so demo money never counts as real
+        // once the reseller goes live. A site already live keeps 0 (correct).
+        if ($from_version > 0 && $from_version < 4) {
+            $settings = get_option('arvrs_settings', []);
+            $in_demo  = !is_array($settings) || !array_key_exists('demo_mode', $settings) || !empty($settings['demo_mode']);
+            if ($in_demo) {
+                $wpdb->query('UPDATE ' . $p . 'ledger SET is_demo = 1'); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+            }
         }
 
         update_option('arvrs_schema_version', ARVRS_SCHEMA_VERSION);

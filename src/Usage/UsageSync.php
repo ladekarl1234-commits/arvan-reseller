@@ -174,24 +174,33 @@ final class UsageSync
                 Helpers::now(), $customer_id
             ));
         }
+        global $wpdb;
         if (in_array('suspend_service', $actions, true)) {
             // Non-destructive local suspension only: the service is flagged
             // 'suspended' (reversible, disappears from active sync) — the
             // plugin never deletes or powers off a remote resource on a local
-            // balance calculation (spec §5.5). Reactivates automatically when
-            // apply_policy runs again above the restricted threshold.
-            global $wpdb;
+            // balance calculation (spec §5.5).
             $wpdb->query($wpdb->prepare(
                 'UPDATE ' . Services::table() . " SET status = 'suspended', updated_at = %s WHERE customer_id = %d AND status IN ('active','at_risk')",
                 Helpers::now(), $customer_id
             ));
-        } elseif ($stage === PolicyEngine::HEALTHY || $stage === PolicyEngine::WARNING) {
-            // Recovered: lift any local suspension/at-risk flag.
-            global $wpdb;
+        } else {
+            // Any stage whose actions no longer include suspend_service (i.e.
+            // anything short of RESTRICTED — including CRITICAL/GRACE reached by
+            // a partial top-up) lifts a prior local hold. Gating on the action
+            // set, not a HEALTHY/WARNING whitelist, is what makes a partial
+            // top-up actually reactivate the customer.
             $wpdb->query($wpdb->prepare(
-                'UPDATE ' . Services::table() . " SET status = 'active', updated_at = %s WHERE customer_id = %d AND status IN ('suspended','at_risk')",
+                'UPDATE ' . Services::table() . " SET status = 'active', updated_at = %s WHERE customer_id = %d AND status = 'suspended'",
                 Helpers::now(), $customer_id
             ));
+            // Clear the at-risk flag only once genuinely recovered.
+            if ($stage === PolicyEngine::HEALTHY || $stage === PolicyEngine::WARNING) {
+                $wpdb->query($wpdb->prepare(
+                    'UPDATE ' . Services::table() . " SET status = 'active', updated_at = %s WHERE customer_id = %d AND status = 'at_risk'",
+                    Helpers::now(), $customer_id
+                ));
+            }
         }
         // 'block_purchases' is enforced at checkout via the stage lookup.
         return $stage;

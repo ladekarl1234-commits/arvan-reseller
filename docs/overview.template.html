@@ -1,0 +1,413 @@
+<title>Arvan Reseller Platform</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Arabic:wght@400;600&display=swap">
+<style>
+  :root {
+    /* teal is the plugin's own brand accent; neutrals biased toward it */
+    --accent: #0c6960;
+    --accent-bright: #12897c;
+    --arvan: #e11d2e;            /* upstream ArvanCloud red, used sparingly */
+    --bg: #f5f7f7;
+    --surface: #ffffff;
+    --surface-2: #eef2f1;
+    --ink: #16211f;
+    --ink-2: #55635f;
+    --line: #dbe3e1;
+    --good: #16794f;
+    --good-bg: #e6f4ec;
+    --warn: #9a5b00;
+    --warn-bg: #fbf0dc;
+    --crit: #b42318;
+    --crit-bg: #fbe9e7;
+    --shadow: 0 1px 2px rgba(16,33,31,.05), 0 8px 28px rgba(16,33,31,.06);
+    --radius: 14px;
+    --maxw: 1080px;
+    --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+    --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --fa: "IBM Plex Sans Arabic", var(--sans);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --accent: #2bb3a3;
+      --accent-bright: #3ecaba;
+      --arvan: #ff5a66;
+      --bg: #0c1211;
+      --surface: #121b19;
+      --surface-2: #17221f;
+      --ink: #e9f1ee;
+      --ink-2: #93a6a0;
+      --line: #26332f;
+      --good: #4ecb8c;
+      --good-bg: #10241b;
+      --warn: #e5a95a;
+      --warn-bg: #241a0c;
+      --crit: #ff7a70;
+      --crit-bg: #24130f;
+      --shadow: 0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="dark"] {
+    --accent: #2bb3a3;
+    --accent-bright: #3ecaba;
+    --arvan: #ff5a66;
+    --bg: #0c1211;
+    --surface: #121b19;
+    --surface-2: #17221f;
+    --ink: #e9f1ee;
+    --ink-2: #93a6a0;
+    --line: #26332f;
+    --good: #4ecb8c;
+    --good-bg: #10241b;
+    --warn: #e5a95a;
+    --warn-bg: #241a0c;
+    --crit: #ff7a70;
+    --crit-bg: #24130f;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.35);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: var(--maxw); margin-inline: auto; padding: 0 24px; }
+  a { color: var(--accent-bright); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  h1, h2, h3 { text-wrap: balance; line-height: 1.2; margin: 0; }
+  code, .mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  .fa { font-family: var(--fa); direction: rtl; }
+
+  /* ---- hero ---- */
+  header.hero {
+    border-bottom: 1px solid var(--line);
+    background:
+      radial-gradient(120% 140% at 90% -20%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 60%),
+      var(--surface);
+  }
+  .hero-inner { padding: 56px 0 44px; }
+  .eyebrow {
+    font-family: var(--mono); font-size: 12px; font-weight: 500;
+    letter-spacing: .14em; text-transform: uppercase; color: var(--accent-bright);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .eyebrow::before {
+    content: ""; width: 26px; height: 2px; background: var(--accent-bright); display: inline-block;
+  }
+  h1.title { font-size: clamp(2.1rem, 5vw, 3.3rem); font-weight: 700; letter-spacing: -.02em; margin: 16px 0 0; }
+  .lede { font-size: clamp(1.05rem, 2.2vw, 1.3rem); color: var(--ink-2); max-width: 62ch; margin: 16px 0 0; }
+  .chips { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 26px; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-size: 13px; font-weight: 500; padding: 6px 12px; border-radius: 999px;
+    background: var(--surface-2); border: 1px solid var(--line); color: var(--ink);
+  }
+  .chip .dot { width: 8px; height: 8px; border-radius: 50%; }
+  .chip.good { background: var(--good-bg); border-color: transparent; color: var(--good); }
+  .chip.good .dot { background: var(--good); }
+  .chip .mono { font-size: 12px; color: inherit; }
+
+  /* ---- sections ---- */
+  section { padding: 52px 0; border-bottom: 1px solid var(--line); }
+  .kicker {
+    font-family: var(--mono); font-size: 12px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--ink-2); margin-bottom: 10px;
+  }
+  h2 { font-size: clamp(1.5rem, 3vw, 2rem); font-weight: 700; letter-spacing: -.01em; }
+  .section-lede { color: var(--ink-2); max-width: 68ch; margin: 12px 0 0; }
+
+  /* problem -> solution flow */
+  .flow { display: grid; grid-template-columns: 1fr auto 1fr; gap: 18px; align-items: stretch; margin-top: 28px; }
+  .flow .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px; box-shadow: var(--shadow); }
+  .flow .card h3 { font-size: 1.05rem; margin-bottom: 8px; }
+  .flow .card.problem h3 { color: var(--crit); }
+  .flow .card.solution h3 { color: var(--good); }
+  .flow .card p { color: var(--ink-2); margin: 0; font-size: .95rem; }
+  .flow .arrow { display: flex; align-items: center; justify-content: center; color: var(--accent-bright); font-size: 1.6rem; }
+  .steps { list-style: none; padding: 0; margin: 10px 0 0; display: grid; gap: 7px; }
+  .steps li { position: relative; padding-inline-start: 22px; color: var(--ink-2); font-size: .92rem; }
+  .steps li::before { content: "→"; position: absolute; inset-inline-start: 0; color: var(--accent-bright); }
+
+  /* feature grid */
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 28px; }
+  .feat { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); }
+  .feat .ico { width: 34px; height: 34px; color: var(--accent-bright); margin-bottom: 12px; }
+  .feat h3 { font-size: 1rem; margin-bottom: 6px; }
+  .feat p { margin: 0; color: var(--ink-2); font-size: .9rem; }
+
+  /* stat row */
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-top: 28px; }
+  .stat { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px 20px; box-shadow: var(--shadow); }
+  .stat .n { font-size: 1.9rem; font-weight: 700; font-family: var(--mono); font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+  .stat .l { color: var(--ink-2); font-size: .82rem; margin-top: 2px; }
+  .stat.good .n { color: var(--good); }
+
+  /* diagram */
+  .diagram { margin-top: 26px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); overflow-x: auto; }
+  pre.mermaid { margin: 0; background: transparent; text-align: center; min-width: 520px; }
+
+  /* security list */
+  .sec-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-top: 26px; }
+  .sec { display: flex; gap: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; }
+  .sec .badge { flex: none; width: 28px; height: 28px; border-radius: 8px; background: var(--good-bg); color: var(--good); display: grid; place-items: center; font-weight: 700; }
+  .sec h3 { font-size: .95rem; margin-bottom: 3px; }
+  .sec p { margin: 0; color: var(--ink-2); font-size: .86rem; }
+  .sec code { font-size: .8rem; color: var(--accent-bright); }
+
+  /* test table */
+  .tbl-wrap { overflow-x: auto; margin-top: 24px; border: 1px solid var(--line); border-radius: var(--radius); }
+  table { width: 100%; border-collapse: collapse; font-size: .9rem; min-width: 560px; }
+  th, td { text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--line); }
+  thead th { background: var(--surface-2); font-size: .78rem; letter-spacing: .04em; text-transform: uppercase; color: var(--ink-2); font-weight: 600; }
+  tbody tr:last-child td { border-bottom: none; }
+  td .pill { font-family: var(--mono); font-size: .8rem; font-weight: 600; color: var(--good); }
+  td.mono { font-variant-numeric: tabular-nums; }
+
+  /* screenshots */
+  .shots { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; margin-top: 28px; }
+  .shot { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); }
+  .shot img { display: block; width: 100%; height: auto; border-bottom: 1px solid var(--line); }
+  .shot .cap { padding: 12px 16px; font-size: .85rem; color: var(--ink-2); }
+  .shot .cap b { color: var(--ink); font-weight: 600; }
+  .shot.tall { grid-row: span 1; }
+  .shot.mobile img { max-width: 300px; margin: 18px auto 0; border: 1px solid var(--line); border-radius: 12px; }
+  .shot.mobile { display: flex; flex-direction: column; }
+  .mobile-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+  .mobile-pair img { border-right: 1px solid var(--line); }
+
+  /* demo timeline */
+  .timeline { margin-top: 26px; display: grid; gap: 0; }
+  .tl { display: grid; grid-template-columns: 68px 1fr; gap: 18px; padding: 14px 0; border-bottom: 1px dashed var(--line); }
+  .tl:last-child { border-bottom: none; }
+  .tl .t { font-family: var(--mono); font-size: .85rem; color: var(--accent-bright); font-weight: 600; padding-top: 2px; }
+  .tl h3 { font-size: .98rem; margin-bottom: 3px; }
+  .tl p { margin: 0; color: var(--ink-2); font-size: .88rem; }
+
+  /* limitations */
+  .limits { margin-top: 24px; display: grid; gap: 12px; }
+  .limit { background: var(--warn-bg); border: 1px solid color-mix(in srgb, var(--warn) 30%, transparent); border-radius: 12px; padding: 14px 18px; }
+  .limit h3 { font-size: .92rem; color: var(--warn); margin-bottom: 3px; }
+  .limit p { margin: 0; color: var(--ink-2); font-size: .86rem; }
+
+  footer { padding: 40px 0 64px; color: var(--ink-2); font-size: .86rem; }
+  footer .repo { font-family: var(--mono); }
+
+  @media (max-width: 860px) {
+    .flow { grid-template-columns: 1fr; }
+    .flow .arrow { transform: rotate(90deg); }
+    .grid, .sec-grid, .stats, .shots { grid-template-columns: 1fr; }
+    .stats { grid-template-columns: 1fr 1fr; }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .feat, .stat, .shot { transition: transform .18s ease, box-shadow .18s ease; }
+    .feat:hover, .shot:hover { transform: translateY(-2px); }
+  }
+</style>
+
+<header class="hero">
+  <div class="wrap hero-inner">
+    <div class="eyebrow">White-label cloud reselling · WordPress</div>
+    <h1 class="title">Arvan Reseller Platform</h1>
+    <p class="lede">Turn any WordPress site into a white-label ArvanCloud storefront. Customers buy Cloud&nbsp;Server, CDN and Object&nbsp;Storage on <em>your</em> site, pay in your currency, and the resource is provisioned automatically — no panel round-trips, no copy-pasted credentials.</p>
+    <div class="chips">
+      <span class="chip good"><span class="dot"></span>CI green</span>
+      <span class="chip"><span class="dot" style="background:var(--accent-bright)"></span>46 unit + 51 E2E checks</span>
+      <span class="chip"><span class="mono">PHP 7.4+</span></span>
+      <span class="chip"><span class="mono">WordPress 6.2+</span></span>
+      <span class="chip">Zero runtime deps</span>
+      <span class="chip">Persian-first · RTL</span>
+    </div>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <div class="kicker">The problem it removes</div>
+    <h2>A sale used to mean a human logging into the ArvanCloud panel</h2>
+    <div class="flow">
+      <div class="card problem">
+        <h3>Today — manual</h3>
+        <p>Order arrives on the reseller's site → they log into the ArvanCloud panel, create the server by hand, copy the IP and password, and email it back. Minutes of work per sale; every step mistypeable; the customer waits.</p>
+      </div>
+      <div class="arrow" aria-hidden="true">→</div>
+      <div class="card solution">
+        <h3>With the plugin — automatic</h3>
+        <ul class="steps">
+          <li>Customer pays on the reseller site</li>
+          <li>Order claimed atomically, verified server-side</li>
+          <li>ArvanCloud API provisions the resource</li>
+          <li>Service appears in the customer dashboard</li>
+          <li>Usage syncs, wallet debits, policy watches credit</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="kicker">What it does</div>
+    <h2>A complete reseller operating system</h2>
+    <div class="grid">
+      <div class="feat">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><circle cx="7.5" cy="7.5" r="1"/><circle cx="7.5" cy="16.5" r="1"/></svg>
+        <h3>Three storefronts</h3>
+        <p>Cloud Server, CDN and Object Storage — real plan configuration, created idempotently by the setup wizard, working under any theme.</p>
+      </div>
+      <div class="feat">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 2v20M2 12h20"/><circle cx="12" cy="12" r="9"/></svg>
+        <h3>Pricing engine</h3>
+        <p>Global / per-product / per-customer markup, discounts, fixed adjustments — always server-side, with an immutable pricing snapshot per order.</p>
+      </div>
+      <div class="feat">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20 6L9 17l-5-5"/></svg>
+        <h3>Replay-safe payments</h3>
+        <p>Provider interface + a working sandbox gateway. Callbacks are verified, amount-bound and idempotent — a duplicate never double-charges or double-provisions.</p>
+      </div>
+      <div class="feat">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M13 2L3 14h7l-1 8 10-12h-7z"/></svg>
+        <h3>Instant provisioning</h3>
+        <p>Three-layer idempotency (atomic claim + unique keys) and durable retry jobs. A refresh, replay or retried job can't spawn a second remote resource.</p>
+      </div>
+      <div class="feat">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M7 15h4"/></svg>
+        <h3>Wallet ledger &amp; usage</h3>
+        <p>Append-only ledger — no mutable balance column. Usage ingests once per period, debits the ledger, and a policy engine stages credit health.</p>
+      </div>
+      <div class="feat">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z"/></svg>
+        <h3>Security as a feature</h3>
+        <p>Encrypted credentials, object-level authz, prepared SQL throughout, nonces, an audit log — plus a threat model and a demo that proves replay-safety live.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="kicker">Proven, not described</div>
+    <h2>Verified on a real WordPress</h2>
+    <p class="section-lede">Every number here was produced by running the suite — unit tests with no WordPress, then a full end-to-end scenario inside a real install.</p>
+    <div class="stats">
+      <div class="stat good"><div class="n">46</div><div class="l">unit tests · 158 assertions</div></div>
+      <div class="stat good"><div class="n">51</div><div class="l">end-to-end checks, all passing</div></div>
+      <div class="stat"><div class="n">11</div><div class="l">custom DB tables, indexed</div></div>
+      <div class="stat"><div class="n">0</div><div class="l">runtime Composer / Node deps</div></div>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Required scenario</th><th>What is asserted</th><th>Result</th></tr></thead>
+        <tbody>
+          <tr><td>Successful purchase</td><td>register → buy → pay → provision → service visible</td><td><span class="pill">PASS</span></td></tr>
+          <tr><td>Duplicate callback</td><td>same callback twice → one ledger payment, one service</td><td><span class="pill">PASS</span></td></tr>
+          <tr><td>Provisioning failure</td><td>pay → fail → recoverable → retry → active, money never lost</td><td><span class="pill">PASS</span></td></tr>
+          <tr><td>Low balance</td><td>usage crosses threshold → single warning (cooldown held)</td><td><span class="pill">PASS</span></td></tr>
+          <tr><td>Customer isolation</td><td>B can't read A's rows — directly or via REST</td><td><span class="pill">PASS</span></td></tr>
+          <tr><td>Suspend &amp; recover</td><td>restricted → services held → top-up → reactivated</td><td><span class="pill">PASS</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="kicker">How a purchase works</div>
+    <h2>The critical path, end to end</h2>
+    <div class="diagram">
+      <pre class="mermaid">
+sequenceDiagram
+    actor C as Customer
+    participant O as OrderService
+    participant G as Gateway
+    participant P as PaymentService
+    participant V as Provisioner
+    participant A as ArvanCloud
+    C->>O: configure plan, buy (server-side price)
+    O-->>C: redirect to gateway (payment_ref)
+    C->>G: pay
+    G->>P: callback (proof)
+    P->>P: verify(proof, amount) server-side
+    P->>O: atomic claim WHERE payable AND amount matches
+    Note over P: duplicate → 0 rows → idempotent replay
+    P->>V: provision(order)
+    V->>A: create resource (documented endpoint)
+    A-->>V: remote_id + connection info
+    V-->>C: «سرویس شما آماده است»
+      </pre>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="kicker">Security engineering</div>
+    <h2>Controls with a code address, not a promise</h2>
+    <div class="sec-grid">
+      <div class="sec"><div class="badge">✓</div><div><h3>Payment integrity</h3><p>Price recomputed server-side; callback proof is an HMAC over <code>ref|amount|type</code>; a single atomic <code>UPDATE</code> kills replays and races.</p></div></div>
+      <div class="sec"><div class="badge">✓</div><div><h3>Customer isolation</h3><p>Every <code>/me/*</code> query is scoped by the session user id — IDs never come from the request. Verified by test.</p></div></div>
+      <div class="sec"><div class="badge">✓</div><div><h3>Secrets at rest</h3><p>Arvan tokens sealed with libsodium <code>secretbox</code>, keyed from WordPress salts; masked in UI, never in REST or logs.</p></div></div>
+      <div class="sec"><div class="badge">✓</div><div><h3>Provisioning idempotency</h3><p>Service-row check, state-machine claim, and a <code>UNIQUE(order_id)</code> — three independent layers.</p></div></div>
+      <div class="sec"><div class="badge">✓</div><div><h3>Injection &amp; CSRF</h3><p>100% <code>$wpdb-&gt;prepare()</code>, escape-at-sink templates, a nonce on every state change.</p></div></div>
+      <div class="sec"><div class="badge">✓</div><div><h3>Auditability</h3><p>Credential, pricing, refund and license events land in an append-only audit log with IP.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="kicker">The product, running</div>
+    <h2>Persian-first, RTL, responsive</h2>
+    <p class="section-lede">Captured live from the running plugin — the storefront a customer sees, their dashboard after a real purchase, and the reseller's admin console.</p>
+    <div class="shots">
+      <div class="shot"><img src="IMG_STOREFRONT" alt="Reseller storefront with three product cards" loading="lazy"><div class="cap"><b>Storefront</b> — three products, live server-side pricing, the reseller's brand.</div></div>
+      <div class="shot"><img src="IMG_DASHBOARD" alt="Customer dashboard showing an active cloud server" loading="lazy"><div class="cap"><b>Customer dashboard</b> — active service with connection details, wallet, usage, credit warnings.</div></div>
+      <div class="shot"><img src="IMG_ADMIN" alt="Admin dashboard with revenue and margin tiles" loading="lazy"><div class="cap"><b>Admin console</b> — revenue, base cost, gross margin, failed jobs, live audit feed.</div></div>
+      <div class="shot"><img src="IMG_WIZARD" alt="Onboarding wizard step" loading="lazy"><div class="cap"><b>Onboarding wizard</b> — token → brand → Arvan API → pricing → auto-created pages → validation.</div></div>
+    </div>
+    <div class="shots" style="margin-top:18px">
+      <div class="shot mobile"><img src="IMG_MOBILE" alt="Customer dashboard at 390px width" loading="lazy"><div class="cap"><b>Mobile, 390px</b> — every critical flow works at a phone width, not just wrapped cards.</div></div>
+      <div class="shot"><img src="IMG_PRODUCT" alt="Cloud server product configuration page" loading="lazy"><div class="cap"><b>Product configuration</b> — plan, region and image selection with an instant price update.</div></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="kicker">Demo, 6–8 minutes</div>
+    <h2>One coherent story for the judges</h2>
+    <div class="timeline">
+      <div class="tl"><div class="t">0:00</div><div><h3>The problem</h3><p>Why manual reselling costs minutes and mistakes on every sale.</p></div></div>
+      <div class="tl"><div class="t">0:30</div><div><h3>Install &amp; activate</h3><p>Wrong token → clear error; valid token → the wizard launches.</p></div></div>
+      <div class="tl"><div class="t">1:30</div><div><h3>Brand &amp; Arvan API</h3><p>Storefront identity, then the connection test — or skip for Demo Mode.</p></div></div>
+      <div class="tl"><div class="t">3:15</div><div><h3>Register, buy, pay</h3><p>Sandbox gateway → «service ready». Then the replay button proves duplicate-callback safety live.</p></div></div>
+      <div class="tl"><div class="t">5:00</div><div><h3>Failure &amp; policy</h3><p>A <code>demo-fail</code> order → retry → active. Usage sync twice → second run ingests nothing.</p></div></div>
+      <div class="tl"><div class="t">6:00</div><div><h3>Admin &amp; mobile</h3><p>Margin, per-customer rules, multi-credential health, audit log — then the whole flow at 390px.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="kicker">Honest by design</div>
+    <h2>What is a real limitation, and its fallback</h2>
+    <div class="limits">
+      <div class="limit"><h3>No public Arvan billing/usage API (verified)</h3><p>Real-mode per-resource usage can't be fetched. The reseller bills fixed monthly packages; the full usage engine is proven via a boundary-faithful demo provider, with one integration point ready for the day Arvan publishes an API.</p></div>
+      <div class="limit"><h3>No public pricing API</h3><p>Base costs are an admin-maintained table, seeded from the public pricing page with source and timestamp stamps.</p></div>
+      <div class="limit"><h3>Live paid provisioning not fired from this build</h3><p>No real Arvan credential was available here. The endpoints, client and error handling are implemented against the verified specs; the connection test exercises real HTTP the moment a token is entered.</p></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p><span class="repo">github.com/ladekarl1234-commits/arvan-reseller</span> — GPL-2.0. Modular monolith · server-rendered PHP + vanilla JS · 11 ADRs · threat model · scalability &amp; capacity models. Bundled Vazirmatn (SIL OFL).</p>
+  </div>
+</footer>
+
+<!-- The Artifact runtime renders <pre class="mermaid"> blocks natively; no external script is loaded (CSP-blocked). -->
