@@ -29,16 +29,16 @@ The bootstrap (`tests/bootstrap.php`) shims ~20 WP functions; anything needing `
 wp eval-file tests/integration/e2e.php     # fresh install; see DEVELOPMENT.md
 ```
 
-Evidence (WordPress 6.x + SQLite integration, this machine): `ALL E2E CHECKS PASSED` — **42 checks**, covering exactly the required scenarios:
+Evidence (WordPress 6.x + SQLite integration, this machine): `ALL E2E CHECKS PASSED` — **46 checks**, covering exactly the required scenarios:
 
 - **Successful customer purchase**: register → buy → pay → provision → service visible (checks 6–16, 35–36)
 - **Duplicate payment callback**: same callback twice → one ledger payment, one service (checks 17–19)
 - **Provisioning failure**: pay → transient failure → `provision_failed` → retry → `active`, money never silently consumed (checks 37–42)
 - **Low balance**: usage debits cross threshold → warning stage + single notification (cooldown verified) (checks 27–30)
 - **Customer isolation**: B cannot read A's rows directly nor via REST; private fields stripped (checks 31–36)
-- Plus: license activation, idempotent page creation, server-side pricing, tampered-amount rejection, top-up replay safety, usage-sync dedup across two full runs.
+- Plus: license activation, idempotent page creation, server-side pricing, tampered-amount rejection, top-up replay safety, usage-sync dedup across two full runs, per-customer spending/credit limits, and the suspend-service policy action.
 
-This layer found a real bug during development (`insert_id` vs `rows_affected` duplicate detection) — recorded in commit `7f9d2bf`.
+This layer found a real bug during development (`insert_id` vs `rows_affected` duplicate detection) — recorded in commit `7f9d2bf`. A three-lens adversarial review panel then found and drove fixes for a batch of real defects (sandbox-as-live-gateway, unenforced customer limits, a logout hook-order bug, demo/real reconciliation mixing, and more) — recorded in commit `9ec42ae`.
 
 ## 3. Manual / visual
 

@@ -6,7 +6,7 @@ Mapping of the official 300-point rubric to this submission, with verifiable evi
 
 | Criterion | Where | Evidence | Status |
 |---|---|---|---|
-| End-to-end working flow (install → license → onboard → buy → pay → provision → manage) | whole plugin | **42-check E2E on a real WordPress: ALL PASSED** (`tests/integration/e2e.php`, TESTING.md) + screenshots of the live sandbox | ✅ |
+| End-to-end working flow (install → license → onboard → buy → pay → provision → manage) | whole plugin | **46-check E2E on a real WordPress: ALL PASSED** (`tests/integration/e2e.php`, TESTING.md) + screenshots of the live sandbox | ✅ |
 | Three products sellable | storefront + providers | E2E orders cloud_server; CDN/storage plans priced & configurable (screenshots) | ✅ |
 | Real Arvan API layer, no invented endpoints | `src/Arvan/RealProvider.php` | endpoint-by-endpoint source audit in `docs/API_INTEGRATION.md` | ✅ (live firing needs a real token — honest note in traceability) |
 | Wallet/ledger/usage/policy engines | `src/Wallet|Usage|Policies` | unit + E2E checks 20–30; admin reconciliation view | ✅ |
@@ -31,6 +31,7 @@ Mapping of the official 300-point rubric to this submission, with verifiable evi
 |---|---|---|
 | Documented control inventory | `SECURITY.md` (control → code location) | ✅ |
 | Threat model | `docs/THREAT_MODEL.md` — 13 attack scenarios, each with its stopping control | ✅ |
+| Adversarial review performed & acted on | 3-lens panel + a verification round; every major fixed (commit `9ec42ae`) | ✅ |
 | Payment replay/tamper safety | E2E checks 12, 17–19, 24–25 + `PaymentVerificationTest` | ✅ tested |
 | Customer isolation | E2E checks 31–36 (direct + REST) | ✅ tested |
 | Secret handling | sodium encryption, masking, REST omission, log redaction (unit-tested) | ✅ |

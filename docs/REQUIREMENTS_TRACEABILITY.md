@@ -13,7 +13,7 @@ Every significant requirement → spec section → implementation → test evide
 | Cloud Server / CDN / Object Storage storefronts | HC-2 | `Front\Shortcodes::product`, catalog, templates | E:8–11 (order per product config) | 2:30 | ✅ |
 | Live metadata + caching | §12 | `Arvan\Catalog` (6 h transients, refresh) | code + manual | 2:30 | ✅ |
 | Pricing engine (global/product/customer, snapshot) | §6, HC-6 | `Pricing\PricingEngine` + `Pricing` + `BaseCosts` | U:PricingEngineTest, E:9–10 | 2:00 | ✅ |
-| Customer-specific commercial rules | §6, §customer rules | `Customers\Rules` + customer-detail UI | U (pricing rule path), manual | 6:00 | ✅ |
+| Customer-specific commercial rules (markup/discount/limits) | §6, §customer rules | `Customers\Rules`; spending_limit & credit_limit enforced in `OrderService::create` | E:43–44 (limits block purchase) | 6:00 | ✅ |
 | PaymentProvider abstraction + working sandbox | ADR-0006 | `Payments\*` | U:PaymentVerificationTest, E:12–14 | 3:15 | ✅ |
 | Callback verified, idempotent, replay-safe | HC-7 | `claim_paid` + ledger unique keys | E:17–19, 24–25 | 4:00 | ✅ |
 | Order state machine + event history | §5.2 | `Orders\StateMachine`, `order_events` | U:StateMachineTest, E events visible | 5:00 admin | ✅ |
@@ -24,7 +24,7 @@ Every significant requirement → spec section → implementation → test evide
 | Secrets encrypted/masked/never logged | HC-8 | `Crypto`, `Audit::redact` | U:CryptoTest, U:redaction | 6:00 | ✅ |
 | Append-only wallet ledger, derived balances | §7 | `Wallet\Ledger` | U:LedgerDerivationTest, E:20–26 | 4:15 | ✅ |
 | Usage engine, idempotent per-period ingestion | §5.6 | `Usage\UsageSync` | U:determinism, E:24–26 | 5:30 | ✅ (real-mode fetch blocked upstream — documented) |
-| Credit policy engine, configurable, never destroys | §5.5 | `Policies\PolicyEngine` + apply_policy | U:PolicyEngineTest, E:27–30 | 5:30 | ✅ |
+| Credit policy engine, configurable, never destroys | §5.5 | `Policies\PolicyEngine` + apply_policy; suspend_service = reversible local hold, per-customer grace_days | U:PolicyEngineTest, E:27–30, 45–46 | 5:30 | ✅ |
 | Notifications with cooldown | §notifications | `Notifications\Notifier` | E:29–30 | 5:30 | ✅ |
 | Admin dashboard (revenue/margin/health/…) | §admin | `Admin\Menu` + templates | screenshots, manual | 6:00 | ✅ |
 | Customer dashboard (services/wallet/usage/inbox) | §customer dashboard | `Front\Shortcodes::dashboard` | E:35–36 + screenshots | 4:15 | ✅ |
