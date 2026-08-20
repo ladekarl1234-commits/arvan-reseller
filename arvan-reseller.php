@@ -35,6 +35,15 @@ spl_autoload_register(static function ($class) {
 // Multi-class DTO file cannot be autoloaded per-class; load it eagerly.
 require_once ARVRS_DIR . 'src/Arvan/DTO.php';
 
+// The custom cron interval must be known in the ACTIVATION request too, where
+// plugins_loaded fired before this file was included and Plugin::boot never
+// runs — otherwise wp_schedule_event('arvrs_minutely') fails validation and
+// the job runner is never scheduled. Registering at file scope covers both.
+add_filter('cron_schedules', static function (array $schedules) { // phpcs:ignore WordPress.WP.CronInterval.CronSchedulesInterval
+    $schedules['arvrs_minutely'] = ['interval' => 60, 'display' => 'Every minute (Arvan Reseller jobs)'];
+    return $schedules;
+});
+
 register_activation_hook(__FILE__, ['ArvanReseller\\Install\\Activator', 'activate']);
 register_deactivation_hook(__FILE__, ['ArvanReseller\\Install\\Activator', 'deactivate']);
 

@@ -29,10 +29,8 @@ final class JobRunner
 
     public static function register_hooks(): void
     {
-        add_filter('cron_schedules', static function (array $schedules) {
-            $schedules['arvrs_minutely'] = ['interval' => 60, 'display' => 'Every minute (Arvan Reseller jobs)'];
-            return $schedules;
-        });
+        // The arvrs_minutely interval itself is registered at plugin-file
+        // scope (arvan-reseller.php) so the activation request sees it too.
         add_action('arvrs_run_jobs', [self::class, 'run_due']);
     }
 
