@@ -139,7 +139,7 @@ sequenceDiagram
 | **Provider interfaces (Arvan, Payment)** | `DemoArvanProvider` ↔ `RealArvanProvider` swap without touching business logic; future PSP adapters implement one interface. [ADR-0005](docs/adr/0005-arvan-api-boundary.md), [ADR-0006](docs/adr/0006-payment-architecture.md) |
 | **Append-only ledger** | Balance = Σ(entries); replay-safety via `UNIQUE(ref_type, ref_id, type)` + `INSERT IGNORE`. [ADR-0007](docs/adr/0007-wallet-ledger-model.md) |
 | **libsodium secretbox for credentials** | Authenticated encryption keyed from WP salts via HMAC; Base64 or reversible obfuscation rejected. [ADR-0008](docs/adr/0008-secret-management.md) |
-| **Vazirmatn (SIL OFL), Sorkhab-informed tokens** | Sorkhab's own font (Yekan Bakh) is commercial; verified Sorkhab values (radius 8/12, 40px buttons, RTL table rules) are applied, palette documented as fallback. |
+| **"ابرآروان" teal design system, Vazirmatn (SIL OFL)** | The whole UI implements a Claude Design artboard set (storefront, product, dashboard, auth, payment, wizard, admin) — glassy header, gradient hero/CTAs, radio-dot plan cards, pill tabs. The brand palette derives from one `--arvrs-brand` token so a reseller's brand color recolors everything. Vazirmatn is bundled (Sorkhab's Yekan Bakh is commercial). |
 
 ## Security
 
