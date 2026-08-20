@@ -38,7 +38,10 @@ jobs:
           extensions: sodium, mbstring
           coverage: none
       - name: Install dev dependencies
-        run: composer install --no-interaction --no-progress
+        # `update`, not `install`: the plugin has ZERO runtime Composer deps;
+        # composer.lock is intentionally not committed so each PHP version
+        # resolves its own compatible PHPUnit (11 on 8.2, 12 on 8.3).
+        run: composer update --no-interaction --no-progress --prefer-dist
       - name: Run unit tests
         run: vendor/bin/phpunit --no-coverage
 

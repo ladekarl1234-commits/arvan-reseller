@@ -4,3 +4,4 @@ vendor/
 *.zip
 .env
 .playwright-cli/
+composer.lock
