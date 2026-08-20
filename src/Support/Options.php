@@ -17,6 +17,7 @@ final class Options
         'activation_redirect'  => false,
         'demo_mode'            => true,
         'wizard_step'          => 0,
+        'enabled_products'     => ['cloud_server', 'cdn', 'object_storage'],
         // Branding
         'brand_name'           => '',
         'brand_logo_id'        => 0,

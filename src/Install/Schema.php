@@ -53,6 +53,8 @@ final class Schema
                 status varchar(32) NOT NULL DEFAULT 'draft',
                 pricing longtext NULL,
                 amount bigint(20) NOT NULL DEFAULT 0,
+                base_cost bigint(20) NOT NULL DEFAULT 0,
+                margin bigint(20) NOT NULL DEFAULT 0,
                 currency char(3) NOT NULL DEFAULT 'IRT',
                 payment_ref varchar(64) NOT NULL,
                 credential_id bigint(20) unsigned NULL,

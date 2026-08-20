@@ -16,6 +16,13 @@ final class Catalog
 
     public const PRODUCTS = ['cloud_server', 'cdn', 'object_storage'];
 
+    /** Products the reseller has switched on (wizard/product selection). */
+    public static function enabled_products(): array
+    {
+        $enabled = (array) \ArvanReseller\Support\Options::get('enabled_products', self::PRODUCTS);
+        return array_values(array_intersect(self::PRODUCTS, $enabled)) ?: self::PRODUCTS;
+    }
+
     public static function product_label(string $product): string
     {
         $labels = [

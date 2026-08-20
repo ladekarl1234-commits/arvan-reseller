@@ -1,0 +1,63 @@
+/* Arvan Reseller — admin pages. Inherits WP admin chrome; adds card/stat/
+   table styling consistent with the storefront tokens. RTL-safe via logical
+   properties. */
+.arvrs-admin {
+  --arvrs-brand: #0c6960;
+  --arvrs-stroke: #e3e6eb;
+  --arvrs-fg-2: #5b6474;
+  --arvrs-success: #16a34a; --arvrs-success-bg: #ecfdf3;
+  --arvrs-warning: #b45309; --arvrs-warning-bg: #fffaeb;
+  --arvrs-danger: #dc2626;  --arvrs-danger-bg: #fef2f2;
+  --arvrs-info: #2563eb;    --arvrs-info-bg: #eff6ff;
+  max-width: 1100px;
+  line-height: 1.7;
+}
+.arvrs-admin h1 { font-weight: 700; }
+.arvrs-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 12px; margin: 16px 0; }
+.arvrs-acard {
+  background: #fff; border: 1px solid var(--arvrs-stroke); border-radius: 12px;
+  padding: 16px 20px; display: flex; flex-direction: column; gap: 2px;
+}
+.arvrs-acard .label { color: var(--arvrs-fg-2); font-size: 12px; }
+.arvrs-acard .value { font-size: 20px; font-weight: 700; }
+.arvrs-acard .sub { font-size: 12px; color: var(--arvrs-fg-2); }
+.arvrs-acard.is-danger .value { color: var(--arvrs-danger); }
+.arvrs-acard.is-success .value { color: var(--arvrs-success); }
+.arvrs-panel { background: #fff; border: 1px solid var(--arvrs-stroke); border-radius: 12px; padding: 20px 24px; margin: 16px 0; }
+.arvrs-panel h2 { margin-top: 0; font-size: 15px; }
+.arvrs-admin table.widefat { border-radius: 8px; overflow: hidden; }
+.arvrs-admin .widefat th { font-weight: 600; }
+.arvrs-tag {
+  display: inline-flex; padding: 2px 10px; border-radius: 999px; font-size: 11px; font-weight: 600;
+}
+.arvrs-tag-success { background: var(--arvrs-success-bg); color: var(--arvrs-success); }
+.arvrs-tag-warning { background: var(--arvrs-warning-bg); color: var(--arvrs-warning); }
+.arvrs-tag-danger  { background: var(--arvrs-danger-bg); color: var(--arvrs-danger); }
+.arvrs-tag-info    { background: var(--arvrs-info-bg); color: var(--arvrs-info); }
+.arvrs-tag-default { background: #f0f0f1; color: var(--arvrs-fg-2); }
+.arvrs-inline-form { display: inline-block; margin: 0; }
+.arvrs-actions-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.arvrs-form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px 20px; }
+.arvrs-form-grid label, .arvrs-panel label.arvrs-lbl { display: block; font-weight: 600; font-size: 12px; margin-bottom: 4px; }
+.arvrs-form-grid input[type=text], .arvrs-form-grid input[type=email], .arvrs-form-grid input[type=number],
+.arvrs-form-grid input[type=password], .arvrs-form-grid select, .arvrs-form-grid textarea { width: 100%; }
+.arvrs-help { color: var(--arvrs-fg-2); font-size: 12px; margin-top: 4px; }
+.arvrs-check-list { display: flex; flex-direction: column; gap: 6px; }
+
+/* Wizard */
+.arvrs-wizard { max-width: 720px; margin: 40px auto; }
+.arvrs-wizard-progress { display: flex; gap: 4px; margin-bottom: 20px; }
+.arvrs-wizard-progress .seg { height: 6px; flex: 1; border-radius: 999px; background: var(--arvrs-stroke); }
+.arvrs-wizard-progress .seg.is-done { background: var(--arvrs-brand); }
+.arvrs-wizard-card { background: #fff; border: 1px solid var(--arvrs-stroke); border-radius: 12px; padding: 32px; }
+.arvrs-wizard-card h1 { font-size: 22px; margin: 0 0 6px; }
+.arvrs-wizard-sub { color: var(--arvrs-fg-2); margin-bottom: 20px; }
+.arvrs-wizard-nav { display: flex; justify-content: space-between; gap: 12px; margin-top: 24px; }
+.arvrs-wizard .arvrs-field { margin-bottom: 14px; }
+.arvrs-wizard .arvrs-field label { display: block; font-weight: 600; font-size: 13px; margin-bottom: 4px; }
+.arvrs-wizard .arvrs-field input[type=text], .arvrs-wizard .arvrs-field input[type=email],
+.arvrs-wizard .arvrs-field input[type=password], .arvrs-wizard .arvrs-field input[type=number] { width: 100%; }
+.arvrs-validation li { display: flex; gap: 8px; align-items: baseline; padding: 8px 0; border-bottom: 1px solid var(--arvrs-stroke); }
+.arvrs-validation .ok { color: var(--arvrs-success); font-weight: 700; }
+.arvrs-validation .fail { color: var(--arvrs-danger); font-weight: 700; }
+.arvrs-kv-detail { color: var(--arvrs-fg-2); font-size: 12px; }

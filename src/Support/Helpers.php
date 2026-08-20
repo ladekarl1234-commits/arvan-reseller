@@ -34,6 +34,35 @@ final class Helpers
         ]);
     }
 
+    /** Safe status badge HTML shared by admin/front templates. */
+    public static function status_tag(string $status): string
+    {
+        $map = [
+            'pending_payment'    => ['warning', __('در انتظار پرداخت', 'arvan-reseller')],
+            'payment_processing' => ['warning', __('در حال پرداخت', 'arvan-reseller')],
+            'paid'               => ['info', __('پرداخت‌شده', 'arvan-reseller')],
+            'provisioning'       => ['info', __('در حال راه‌اندازی', 'arvan-reseller')],
+            'active'             => ['success', __('فعال', 'arvan-reseller')],
+            'provision_failed'   => ['danger', __('خطا در راه‌اندازی', 'arvan-reseller')],
+            'cancelled'          => ['default', __('لغوشده', 'arvan-reseller')],
+            'refunded'           => ['default', __('بازپرداخت‌شده', 'arvan-reseller')],
+            'at_risk'            => ['warning', __('در معرض تعلیق', 'arvan-reseller')],
+            'suspended'          => ['danger', __('معلق', 'arvan-reseller')],
+            'healthy'            => ['success', __('سالم', 'arvan-reseller')],
+            'warning'            => ['warning', __('هشدار', 'arvan-reseller')],
+            'critical'           => ['danger', __('بحرانی', 'arvan-reseller')],
+            'grace'              => ['danger', __('مهلت', 'arvan-reseller')],
+            'restricted'         => ['danger', __('محدودشده', 'arvan-reseller')],
+            'pending'            => ['warning', __('در صف', 'arvan-reseller')],
+            'running'            => ['info', __('در حال اجرا', 'arvan-reseller')],
+            'done'               => ['success', __('انجام‌شده', 'arvan-reseller')],
+            'dead'               => ['danger', __('متوقف', 'arvan-reseller')],
+            'blocked'            => ['danger', __('مسدود', 'arvan-reseller')],
+        ];
+        [$kind, $label] = $map[$status] ?? ['default', $status];
+        return '<span class="arvrs-tag arvrs-tag-' . esc_attr($kind) . '">' . esc_html($label) . '</span>';
+    }
+
     /** Best-effort client IP for audit rows (never used for auth decisions). */
     public static function client_ip(): string
     {

@@ -59,8 +59,8 @@ final class OrderService
      */
     public static function create(int $customer_id, string $product, string $plan_id, array $raw_config)
     {
-        if (!in_array($product, Catalog::PRODUCTS, true)) {
-            return new \WP_Error('bad_product', __('محصول نامعتبر است.', 'arvan-reseller'));
+        if (!in_array($product, Catalog::enabled_products(), true)) {
+            return new \WP_Error('bad_product', __('این محصول در حال حاضر ارائه نمی‌شود.', 'arvan-reseller'));
         }
         if (!Rules::can_purchase($customer_id, $product)) {
             return new \WP_Error('blocked', __('امکان خرید این محصول برای حساب شما فعال نیست. با پشتیبانی تماس بگیرید.', 'arvan-reseller'));
@@ -89,6 +89,8 @@ final class OrderService
             'status'      => StateMachine::PENDING_PAYMENT,
             'pricing'     => wp_json_encode($quote),
             'amount'      => (int) $quote['customer_price'],
+            'base_cost'   => (int) $quote['base_cost'],
+            'margin'      => (int) $quote['margin'],
             'currency'    => 'IRT',
             'payment_ref' => $ref,
             'is_demo'     => Plugin::demo_mode() ? 1 : 0,

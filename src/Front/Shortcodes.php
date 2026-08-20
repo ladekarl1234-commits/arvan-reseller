@@ -61,7 +61,7 @@ final class Shortcodes
     public static function storefront(): string
     {
         $products = [];
-        foreach (Catalog::PRODUCTS as $product) {
+        foreach (Catalog::enabled_products() as $product) {
             $plans = Catalog::plans($product);
             $min   = null;
             foreach ($plans as $plan) {

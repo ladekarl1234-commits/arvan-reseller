@@ -26,21 +26,8 @@ if (!isset($tabs[$tab])) {
 }
 $dashboard_url = $urls['dashboard'];
 
-$status_labels = [
-    'pending_payment' => ['warning', __('در انتظار پرداخت', 'arvan-reseller')],
-    'payment_processing' => ['warning', __('در حال پرداخت', 'arvan-reseller')],
-    'paid'            => ['info', __('پرداخت‌شده', 'arvan-reseller')],
-    'provisioning'    => ['info', __('در حال راه‌اندازی', 'arvan-reseller')],
-    'active'          => ['success', __('فعال', 'arvan-reseller')],
-    'provision_failed'=> ['danger', __('خطا در راه‌اندازی', 'arvan-reseller')],
-    'cancelled'       => ['default', __('لغوشده', 'arvan-reseller')],
-    'refunded'        => ['default', __('بازپرداخت‌شده', 'arvan-reseller')],
-    'at_risk'         => ['warning', __('در معرض تعلیق', 'arvan-reseller')],
-    'suspended'       => ['danger', __('معلق', 'arvan-reseller')],
-];
-$badge = static function (string $status) use ($status_labels): string {
-    [$kind, $label] = $status_labels[$status] ?? ['default', $status];
-    return '<span class="arvrs-tag arvrs-tag-' . esc_attr($kind) . '">' . esc_html($label) . '</span>';
+$badge = static function (string $status): string {
+    return Helpers::status_tag($status);
 };
 ?>
 <div class="arvrs-dash-head">
