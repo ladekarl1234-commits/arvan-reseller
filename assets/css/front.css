@@ -6,10 +6,14 @@
  * light theme (matches the design source).
  */
 :root {
-  --arvrs-brand: #14bfb4;                 /* overridden inline from reseller brand color */
+  --arvrs-brand: #0c6960;                 /* overridden inline from reseller brand color */
   /* The rest of the brand ramp derives from --arvrs-brand, so changing the
      reseller's brand color in settings recolors the whole UI coherently.
-     Default #14bfb4 yields the ابرآروان teal palette. */
+     Default #0c6960 yields the ابرآروان teal palette, and is the same value
+     Options::BRAND_COLOR holds — the fallback here used to be the lighter
+     #14bfb4, which carries white at only 2.30:1, so a stylesheet loaded before
+     the inline override rendered a brand that the save path would have
+     refused. 6.55:1 on white. */
   --arvrs-brand-2: color-mix(in srgb, var(--arvrs-brand) 86%, #05302c);
   --arvrs-brand-3: color-mix(in srgb, var(--arvrs-brand) 74%, #ffffff);
   --arvrs-brand-ink: color-mix(in srgb, var(--arvrs-brand) 74%, #043a35);
@@ -363,7 +367,7 @@
   border: 1.5px solid var(--arvrs-line); border-radius: var(--arvrs-radius-12); background: var(--arvrs-surface); color: var(--arvrs-ink);
 }
 .arvrs-field textarea { height: auto; padding: 12px 14px; line-height: 1.8; }
-/* 2px outline at var(--arvrs-brand-ink), 3.39:1 on white with the CSS fallback brand, 5.20:1 with the stored default (#0c6960); clears the 3:1 non-text floor either way — was outline:none
+/* 2px outline at var(--arvrs-brand-ink), 5.20:1 on white. The fallback literal and Options::BRAND_COLOR are now the same value, so this holds whether or not the inline override has arrived — was outline:none
    plus a 2.3:1 border-color change, i.e. no AA-passing focus indicator at
    all (EX-140's admin counterpart; the same gap existed here). */
 .arvrs-field input:focus, .arvrs-field select:focus, .arvrs-field textarea:focus { outline: 2px solid var(--arvrs-brand-ink); outline-offset: 1px; border-color: var(--arvrs-brand-ink); }

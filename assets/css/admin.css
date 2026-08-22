@@ -9,7 +9,7 @@
      does not yet emit that override on admin pages, so this falls back to
      the default; the moment it does, the whole admin ramp below recolors
      from one property, same as the front (EX-034). */
-  --brand: var(--arvrs-brand, #14bfb4);
+  --brand: var(--arvrs-brand, #0c6960);
   --brand-2: color-mix(in srgb, var(--brand) 86%, #05302c);
   --brand-ink: color-mix(in srgb, var(--brand) 74%, #043a35);
   --brand-surface: color-mix(in srgb, var(--brand) 9%, #ffffff);
@@ -102,7 +102,7 @@
 .arvrs-admin .arvrs-form-grid select, .arvrs-admin .arvrs-form-grid textarea {
   width: 100%; border-radius: var(--radius-sm); border: 1.5px solid var(--line);
 }
-/* 2px outline at var(--brand-ink), 3.39:1 on white with the CSS fallback brand, 5.20:1 with the stored default (#0c6960); clears the 3:1 non-text floor either way, clears the 3:1 non-text
+/* 2px outline at var(--brand-ink), 5.20:1 on white. The fallback literal and Options::BRAND_COLOR are now the same value, so this holds whether or not the inline override has arrived, clears the 3:1 non-text
    boundary floor — was a 1px box-shadow at var(--brand) (2.3:1 on white),
    thinner and lower-contrast than the WordPress core 2px #2271b1 ring it
    replaced (EX-140). */

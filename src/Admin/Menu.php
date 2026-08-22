@@ -124,6 +124,16 @@ final class Menu
             . '@font-face{font-family:Vazirmatn;src:url("%1$sVazirmatn-Bold.woff2") format("woff2");font-weight:700 900;font-display:swap;font-style:normal}',
             esc_url_raw($fonts)
         ));
+
+        // admin.css derives its whole ramp from `--arvrs-brand`, but nothing
+        // ever emitted that variable on admin pages — so a reseller who set
+        // their brand colour got a recoloured storefront and a default-teal
+        // admin. Same source and same accessibility clamp the front end uses
+        // (Front\Assets), so the two halves cannot drift apart again.
+        wp_add_inline_style(
+            'arvrs-admin',
+            ':root{--arvrs-brand:' . Brand::accessible((string) Options::get('brand_color', Options::BRAND_COLOR))['color'] . ';}'
+        );
     }
 
     private static function render(string $template, array $vars = []): void
