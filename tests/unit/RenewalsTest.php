@@ -265,4 +265,92 @@ final class RenewalsTest extends Arvrs_DbTestCase
         $this->assertSame([], Renewals::due(50));
         $this->assertSame('cancelled', Renewals::charge($service_id)['kind']);
     }
+
+    /** The `after_id` cursor is honoured: a run seeded past the first due service charges only the rest. */
+    public function test_run_due_honours_a_resume_cursor(): void
+    {
+        $customer = $this->customer();
+        Ledger::append($customer, 'topup', 10000000, 'topup', 'TOP-PAGE', 'x');
+        [$order_a] = $this->seed_order($customer, 100000, 'active');
+        [$order_b] = $this->seed_order($customer, 100000, 'active');
+        $service_a = $this->seed_service($customer, $order_a);
+        $service_b = $this->seed_service($customer, $order_b);
+
+        $stats = Renewals::run_due(['after_id' => $service_a]);
+
+        $this->assertSame(1, $stats['due'], 'the cursor must skip the service at/below it');
+        $this->assertSame(1, $stats['charged']);
+        $this->assertSame(0, $this->count_rows('ledger', "ref_type = 'renewal' AND ref_id LIKE '" . $service_a . ":%'"), 'the service at the cursor must not have been charged');
+        $this->assertGreaterThan(0, $this->count_rows('ledger', "ref_type = 'renewal' AND ref_id LIKE '" . $service_b . ":%'"));
+    }
+
+    /**
+     * `Services::due_for_renewal()` is cursor-paged on id like
+     * `active_for_sync()` — the same population, split across two bounded
+     * pages, must add up to the same total `run_due()` sees in one call. This
+     * is the SQL-level guarantee `run_due()`'s wall-clock requeue loop
+     * depends on (a real budget timeout is not something a fast unit test can
+     * trigger deterministically, so this pins the piece that IS deterministic:
+     * the cursor never skips or repeats a row across pages).
+     */
+    public function test_due_for_renewal_pages_the_same_population_the_cursor_walks(): void
+    {
+        $customer = $this->customer();
+        [$order_a] = $this->seed_order($customer, 100000, 'active');
+        [$order_b] = $this->seed_order($customer, 100000, 'active');
+        [$order_c] = $this->seed_order($customer, 100000, 'active');
+        $this->seed_service($customer, $order_a);
+        $this->seed_service($customer, $order_b);
+        $this->seed_service($customer, $order_c);
+
+        $whole = Renewals::due(50);
+        $this->assertCount(3, $whole);
+
+        $first_page  = Renewals::due(2, 0);
+        $second_page = Renewals::due(2, (int) $first_page[1]['id']);
+        $this->assertCount(2, $first_page);
+        $this->assertCount(1, $second_page);
+        $this->assertSame(
+            array_column($whole, 'id'),
+            array_merge(array_column($first_page, 'id'), array_column($second_page, 'id')),
+            'paging must neither skip nor repeat a row the single call also found'
+        );
+    }
+
+    /** Demo services must never renew as real money once the site is live. */
+    public function test_a_demo_service_is_excluded_from_the_due_batch_once_live(): void
+    {
+        $customer = $this->customer();
+        [$order_id] = $this->seed_order($customer, 1200000, 'active');
+        $service_id = $this->seed_service($customer, $order_id, ['is_demo' => 1]);
+
+        $this->assertCount(1, Renewals::due(50), 'still due while the site is in demo mode');
+
+        $this->go_live();
+        $this->assertSame([], Renewals::due(50), 'a demo service must not renew as real money once live');
+    }
+
+    /**
+     * Charging a demo service directly (e.g. an operator forcing it) must
+     * still stamp the resulting usage row and ledger entry as demo — from the
+     * SERVICE's own flag, never from the ambient mode, which by this point is
+     * real.
+     */
+    public function test_a_demo_services_renewal_charge_is_stamped_demo_even_once_live(): void
+    {
+        $customer = $this->customer();
+        BaseCosts::set('cloud_server', 'g1-1-1-25', 800000, 'test');
+        [$order_id] = $this->seed_order($customer, 1200000, 'active');
+        $service_id = $this->seed_service($customer, $order_id, ['is_demo' => 1]);
+        $this->go_live();
+
+        $result = Renewals::charge($service_id);
+
+        $this->assertSame('charged', $result['kind']);
+        $usage = $this->db->get_row($this->db->prepare(
+            'SELECT is_demo FROM ' . $this->db->prefix . 'arvrs_usage_records WHERE service_id = %d', $service_id
+        ), ARRAY_A);
+        $this->assertSame(1, (int) $usage['is_demo']);
+        $this->assertSame(1, $this->count_rows('ledger', "ref_type = 'renewal' AND is_demo = 1"));
+    }
 }

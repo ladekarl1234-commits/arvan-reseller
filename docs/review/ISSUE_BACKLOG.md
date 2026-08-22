@@ -29,15 +29,15 @@ By severity (unchanged by status — a fix does not change how severe the origin
 | [EX-007](#ex-007) | 🟠 high | RealProvider discards the idempotency key while ArvanClient blindly retries POSTs — duplicate billable upstream resources | Security | M | `fixed` |
 | [EX-008](#ex-008) | 🟠 high | Durable job queue has no reaper: a crashed worker strands a job in 'running' forever | Architecture | S | `fixed` |
 | [EX-009](#ex-009) | 🟠 high | Orders can become permanently stuck in 'provisioning' with an orphaned upstream resource | Architecture | M | `fixed` |
-| [EX-010](#ex-010) | 🟠 high | Up to 15s of blocking sleep plus synchronous email inside the payment callback request | Architecture | M | `open` |
+| [EX-010](#ex-010) | 🟠 high | Up to 15s of blocking sleep plus synchronous email inside the payment callback request | Architecture | M | `fixed` |
 | [EX-011](#ex-011) | 🟠 high | Leaving Demo Mode disables all selling — checkout, top-up and the payment page all hard-fail with no admin warning | Product completeness | M | `open` |
 | [EX-012](#ex-012) | 🟠 high | Real-mode Cloud Server storefront renders empty: API flavor IDs have no base-cost rows and nothing detects it | Product completeness | M | `open` |
 | [EX-013](#ex-013) | 🟠 high | An order stuck in `provisioning` is unrecoverable: no admin action exists and the retry job reports success | Reliability | M | `fixed` |
 | [EX-014](#ex-014) | 🟠 high | Jobs left in `running` are never reclaimed — no reaper, not selectable, not retryable | Reliability | S | `fixed` |
 | [EX-015](#ex-015) | 🟠 high | Ledger write failure on a settled payment is swallowed with no repair path — money with no record | Reliability | M | `open` |
 | [EX-016](#ex-016) | 🟠 high | Every admin alert is written to the DB and rendered nowhere — $notices is dead | UX & usability | S | `fixed` |
-| [EX-017](#ex-017) | 🟠 high | Mid-payment network error strands the customer on a permanent spinner with both buttons disabled | UX & usability | S | `open` |
-| [EX-018](#ex-018) | 🟠 high | Abandoned payment is a dead end: the pending-orders page is unreachable from the UI | UX & usability | S | `open` |
+| [EX-017](#ex-017) | 🟠 high | Mid-payment network error strands the customer on a permanent spinner with both buttons disabled | UX & usability | S | `fixed` |
+| [EX-018](#ex-018) | 🟠 high | Abandoned payment is a dead end: the pending-orders page is unreachable from the UI | UX & usability | S | `fixed` |
 | [EX-019](#ex-019) | 🟠 high | Order-payment replay test short-circuits before the DB idempotency guard it claims to prove | Testing & QA | S | `open` |
 | [EX-020](#ex-020) | 🟠 high | sandbox_blocked() — the guard that stops a self-verifiable sandbox proof settling real money — has zero coverage | Testing & QA | S | `open` |
 | [EX-021](#ex-021) | 🟠 high | The only real data migration (v3→v4 ledger is_demo back-stamp) is unreachable from every test | Testing & QA | M | `open` |

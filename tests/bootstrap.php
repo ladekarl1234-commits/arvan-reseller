@@ -565,6 +565,19 @@ function sanitize_textarea_field($str)
 {
     return trim(strip_tags((string) $str));
 }
+/** Minimal stand-in for WP's array-of-objects/arrays column extractor. */
+function wp_list_pluck($list, $field)
+{
+    $out = [];
+    foreach ((array) $list as $key => $item) {
+        if (is_array($item) && array_key_exists($field, $item)) {
+            $out[$key] = $item[$field];
+        } elseif (is_object($item) && isset($item->$field)) {
+            $out[$key] = $item->$field;
+        }
+    }
+    return $out;
+}
 function wp_generate_uuid4()
 {
     return bin2hex(random_bytes(16));

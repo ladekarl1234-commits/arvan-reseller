@@ -23,6 +23,7 @@ Verified endpoint reference and the honest limitation list. Every endpoint below
 | Security groups | `GET /regions/{region}/securities` |
 | Create server | `POST /regions/{region}/servers` — body: `name, network_id, flavor_id, image_id, ssh_key(bool), count[, security_groups]` |
 | Server details / status | `GET /regions/{region}/servers/{id}` |
+| List servers in a region | `GET /regions/{region}/servers` — used to reconcile a create whose outcome is unknown: the deterministic remote name is looked up before creating, and again after a `timeout_indeterminate`, so a retried POST adopts the existing server instead of billing a second one (`RealProvider::find_server`) |
 | Delete | `DELETE /regions/{region}/servers/{id}` |
 
 Documented error semantics handled: `402` (insufficient upstream ArvanCloud wallet balance) maps to a dedicated `ProviderError` kind (`billing`) that is **not** retried — it is a permanent-until-topped-up condition, not a transient failure — and surfaces an actionable Persian message to the customer ("your order is safe, support is on it") while the admin gets the raw detail (`ArvanClient.php:198-202`, `DTO.php:117,134`).

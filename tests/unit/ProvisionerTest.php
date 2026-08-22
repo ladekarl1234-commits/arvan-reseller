@@ -219,6 +219,78 @@ final class ProvisionerTest extends Arvrs_DbTestCase
         $this->assertSame(StateMachine::PROVISIONING, OrderService::get($other)['status']);
     }
 
+    /**
+     * A `paid` order with no job standing behind it is recoverable work, not
+     * a failure — `claim_paid()` succeeds before the provisioning job is
+     * enqueued, so a fatal/OOM/timeout in that gap used to leave the order
+     * `paid` forever, invisible to a sweep that only ever looked at
+     * `provisioning`.
+     */
+    public function test_a_stale_paid_order_with_no_job_is_reclaimed(): void
+    {
+        [$order_id] = $this->seed_order($this->customer(), 1200000, StateMachine::PAID, [
+            'updated_at' => gmdate('Y-m-d H:i:s', time() - 3600),
+        ]);
+
+        $this->assertSame(1, Provisioner::reclaim_stale(20));
+        $this->assertSame(1, $this->count_rows('jobs', "type = 'provision_order'"));
+        $this->assertSame(StateMachine::PAID, OrderService::get($order_id)['status'], 're-enqueuing is not a failure');
+    }
+
+    public function test_a_fresh_paid_order_is_left_alone(): void
+    {
+        [$order_id] = $this->seed_order($this->customer(), 1200000, StateMachine::PAID);
+
+        $this->assertSame(0, Provisioner::reclaim_stale(20), 'an order paid moments ago has not had time to lose its job yet');
+        $this->assertSame(0, $this->count_rows('jobs'));
+    }
+
+    /* --------------------------------------------- CDN/bucket name hijack */
+
+    /**
+     * A second customer's order for a domain that is already a live CDN
+     * service for someone else must never adopt that resource — RealProvider's
+     * create_cdn()/create_bucket() adopt by name with no ownership check of
+     * their own, so this is the only place that stops it before the call.
+     */
+    public function test_provisioning_a_domain_already_live_for_another_customer_fails_without_adopting_it(): void
+    {
+        $alice = $this->customer(701);
+        $bob   = $this->customer(702);
+        [$alice_order] = $this->seed_order($alice, 120000, StateMachine::ACTIVE, ['product' => 'cdn', 'plan_id' => 'cdn-basic']);
+        $this->seed_service($alice, $alice_order, ['product' => 'cdn', 'plan_id' => 'cdn-basic', 'remote_id' => 'shared.example.com']);
+
+        [$bob_order] = $this->seed_order($bob, 120000, StateMachine::PAID, [
+            'product' => 'cdn', 'plan_id' => 'cdn-basic',
+            'config'  => '{"domain":"shared.example.com"}',
+        ]);
+
+        $result = Provisioner::provision($bob_order);
+
+        $this->assertFalse($result['ok']);
+        $this->assertSame('failed', $result['kind']);
+        $this->assertSame(StateMachine::PROVISION_FAILED, OrderService::get($bob_order)['status']);
+        $this->assertSame(1, $this->count_rows('services', "product = 'cdn'"), "bob must not adopt alice's resource");
+    }
+
+    /** The reverse must stay allowed: the SAME customer owning the domain already is never a conflict. */
+    public function test_reprovisioning_the_same_customers_own_domain_is_not_a_conflict(): void
+    {
+        $alice = $this->customer(701);
+        [$existing_order] = $this->seed_order($alice, 120000, StateMachine::ACTIVE, ['product' => 'cdn', 'plan_id' => 'cdn-basic']);
+        $this->seed_service($alice, $existing_order, ['product' => 'cdn', 'plan_id' => 'cdn-basic', 'remote_id' => 'alice.example.com']);
+
+        [$new_order] = $this->seed_order($alice, 120000, StateMachine::PAID, [
+            'product' => 'cdn', 'plan_id' => 'cdn-basic',
+            'config'  => '{"domain":"alice.example.com"}',
+        ]);
+
+        $result = Provisioner::provision($new_order);
+
+        $this->assertTrue($result['ok']);
+        $this->assertSame('provisioned', $result['kind'], 'the domain belongs to this same customer already — not a hijack');
+    }
+
     /** …and once reclaimed, the order is claimable again end to end. */
     public function test_a_reclaimed_order_provisions_on_the_next_attempt(): void
     {

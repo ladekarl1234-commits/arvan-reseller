@@ -64,3 +64,27 @@ through the `.mo`, not through the source literal.
   one-line diff (`POT-Creation-Date`) rather than a reshuffle.
 * Fuzzy entries are **not** compiled into the `.mo`. Clear the `#, fuzzy` flag
   once a translation has been reviewed, or it will not ship.
+
+## `build-plugin.php` — the release artifact
+
+```bash
+php bin/build-plugin.php            # → dist/arvan-reseller-<version>.zip
+```
+
+This is what actually produces the ZIP attached to a GitHub Release. It builds
+from an **allow list** (`src`, `templates`, `assets`, `languages`, `data`, plus
+the named root files), not by excluding things — a deny list silently ships
+whatever you forgot to name, and "whatever you forgot" is how a credential
+reaches a public download.
+
+It refuses to build when the plugin header is missing a required field, when
+`Version`, `ARVRS_VERSION` and `readme.txt`'s `Stable tag` disagree, when a
+compiled `.mo` is absent while `languages/` ships, or when any shipped file
+contains a plaintext access token or an API key. After writing, it reopens the
+archive and asserts it has exactly one top-level directory named for the slug —
+which is what makes **Plugins → Add New → Upload Plugin** unpack correctly.
+
+Prefer it over `git archive`: the pathspec exclusions in the older recipe do
+not apply the way they look like they do, and `data/license-hashes.php` is a
+runtime dependency that is easy to leave out — without it the plugin installs
+and can never be licensed.

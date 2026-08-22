@@ -261,4 +261,52 @@ final class UsagePolicyTest extends Arvrs_DbTestCase
         $this->assertTrue(is_wp_error($order));
         $this->assertSame('unpriced', $order->get_error_code());
     }
+
+    /**
+     * CDN/object storage use the customer-supplied domain/bucket as the
+     * provider's reconciliation key (RealProvider adopts whatever already
+     * exists under that name). Without this check a second customer ordering
+     * a domain someone else already has live would have their order routed
+     * onto — and later able to delete — the first customer's resource.
+     */
+    public function test_a_domain_already_live_for_another_customer_cannot_be_ordered(): void
+    {
+        $alice = $this->customer(711);
+        $bob   = $this->customer(712);
+        BaseCosts::set('cdn', 'cdn-basic', 100000, 'test');
+
+        [$alice_order] = $this->seed_order($alice, 120000, 'active', ['product' => 'cdn', 'plan_id' => 'cdn-basic']);
+        $this->db->insert($this->db->prefix . 'arvrs_services', [
+            'order_id' => $alice_order, 'customer_id' => $alice, 'credential_id' => null,
+            'product' => 'cdn', 'plan_id' => 'cdn-basic', 'remote_id' => 'alice.example.com',
+            'status' => 'active', 'config' => '{}', 'connection' => '{}',
+            'renews_at' => null, 'term_days' => 30, 'renewal_price' => 120000, 'renewal_count' => 0,
+            'is_demo' => 1, 'created_at' => \ArvanReseller\Support\Helpers::now(), 'updated_at' => \ArvanReseller\Support\Helpers::now(),
+        ]);
+
+        $order = \ArvanReseller\Orders\OrderService::create($bob, 'cdn', 'cdn-basic', ['domain' => 'alice.example.com']);
+
+        $this->assertTrue(is_wp_error($order));
+        $this->assertSame('name_taken', $order->get_error_code());
+    }
+
+    /** The owner ordering their own already-live domain again must not be refused. */
+    public function test_the_same_customers_own_domain_can_still_be_ordered(): void
+    {
+        $alice = $this->customer(711);
+        BaseCosts::set('cdn', 'cdn-basic', 100000, 'test');
+
+        [$order_id] = $this->seed_order($alice, 120000, 'active', ['product' => 'cdn', 'plan_id' => 'cdn-basic']);
+        $this->db->insert($this->db->prefix . 'arvrs_services', [
+            'order_id' => $order_id, 'customer_id' => $alice, 'credential_id' => null,
+            'product' => 'cdn', 'plan_id' => 'cdn-basic', 'remote_id' => 'alice.example.com',
+            'status' => 'active', 'config' => '{}', 'connection' => '{}',
+            'renews_at' => null, 'term_days' => 30, 'renewal_price' => 120000, 'renewal_count' => 0,
+            'is_demo' => 1, 'created_at' => \ArvanReseller\Support\Helpers::now(), 'updated_at' => \ArvanReseller\Support\Helpers::now(),
+        ]);
+
+        $order = \ArvanReseller\Orders\OrderService::create($alice, 'cdn', 'cdn-basic', ['domain' => 'alice.example.com']);
+
+        $this->assertIsArray($order, 'the owner is not a hijacker of their own resource');
+    }
 }

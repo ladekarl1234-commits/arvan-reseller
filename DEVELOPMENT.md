@@ -4,7 +4,10 @@ Copy-paste path from clone to a running WordPress with the plugin active and dem
 
 ## Prerequisites
 
-- PHP ≥ 7.4 CLI with `sodium`, `mbstring` (unit tests need 8.2+ for PHPUnit 12)
+- PHP ≥ 7.4 CLI with `sodium`, `mbstring` — that is the plugin's runtime floor.
+  The unit suite needs **8.3+**: `composer.lock` is deliberately untracked so each
+  PHP version resolves its own compatible PHPUnit (11 on 8.2, 12 on 8.3+), which
+  is why the first step below is `composer update`, not `composer install`.
 - Composer (dev tooling only)
 - Option B additionally: Docker (for `wp-env`)
 
@@ -13,7 +16,7 @@ Copy-paste path from clone to a running WordPress with the plugin active and dem
 ```bash
 git clone https://github.com/ladekarl1234-commits/arvan-reseller.git
 cd arvan-reseller
-composer install
+composer update
 ```
 
 ## Run the unit suite

@@ -161,6 +161,13 @@ final class PaymentServiceTest extends Arvrs_DbTestCase
 
         $this->assertTrue($result['ok'], 'a paid order must not be stranded by a ledger fault');
         $this->assertSame(1, $this->count_rows('jobs', "type = 'repair_ledger'"));
+        // The provisioning job is enqueued immediately after the claim
+        // succeeds — before the ledger writes, the notifications and the
+        // audit log — so it exists even though every one of those steps
+        // failed or ran after it here. That ordering is what stops a paid
+        // order from ever sitting with no job standing between it and the
+        // reclaim sweep.
+        $this->assertSame(1, $this->count_rows('jobs', "type = 'provision_order'"));
         $this->assertSame(1, $this->count_rows('notifications', "customer_id = 0 AND type = 'ledger_repair_queued'"));
         $this->assertSame(0, $this->count_rows('ledger'));
 
@@ -232,7 +239,32 @@ final class PaymentServiceTest extends Arvrs_DbTestCase
         Ledger::repair_order_entries(101, $ref, 1200000, $order_id);
         $allowed = PaymentService::refund_order($order, 'admin');
         $this->assertTrue($allowed['ok']);
+        $this->assertFalse($allowed['replay']);
         $this->assertSame(1200000, Ledger::balance(101)['available']);
+    }
+
+    /**
+     * `Ledger::append()` returns 0 on the unique-key replay — a real "already
+     * refunded" — and that return value used to be discarded, so a repeat
+     * refund always answered ok:true whether or not it wrote anything. An
+     * operator retrying after what looked like a failure had no way to tell
+     * the two apart.
+     */
+    public function test_a_repeated_refund_reports_the_replay_instead_of_pretending_it_wrote_again(): void
+    {
+        [$order_id, $ref] = $this->seed_order(101, 1200000, StateMachine::ACTIVE);
+        $order = OrderService::get($order_id);
+        Ledger::repair_order_entries(101, $ref, 1200000, $order_id);
+
+        $first  = PaymentService::refund_order($order, 'admin');
+        $second = PaymentService::refund_order($order, 'admin');
+
+        $this->assertTrue($first['ok']);
+        $this->assertFalse($first['replay']);
+        $this->assertTrue($second['ok']);
+        $this->assertTrue($second['replay'], 'a repeat must be distinguishable from a fresh write');
+        $this->assertSame(1200000, Ledger::balance(101)['available'], 'the customer is credited exactly once');
+        $this->assertSame(1, $this->count_rows('ledger', "type = 'refund'"));
     }
 
     private function seed_topup(string $ref, int $customer_id, int $amount, string $expires_at = ''): void

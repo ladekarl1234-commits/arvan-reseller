@@ -10,7 +10,7 @@ Three layers, each with an honest statement of what it does and does not prove. 
 composer test
 ```
 
-Evidence (this repo, PHP 8.5): `OK (178 tests, 687 assertions)` in ~9 s.
+Evidence (this repo, PHP 8.5): `OK (192 tests, 736 assertions)` in ~9 s.
 
 | Suite | Covers |
 |---|---|
@@ -61,7 +61,7 @@ This layer found a real bug during development (`insert_id` vs `rows_affected` d
 
 ## CI
 
-`.github/workflows/ci.yml`: syntax lint on PHP 7.4/8.2/8.3 (7.4 = minimum runtime), a dedicated **PHP 7.4 compatibility gate** (`php bin/php74-check.php` — parses every shipped file against a real PHP 7.4 grammar via `nikic/php-parser` and walks the AST for PHP 8-only constructs, because `php -l` only ever validates against the interpreter running it and cannot defend a "Requires PHP 7.4" header from an 8.x CI runner; evidence: `100 file(s) parsed against the PHP 7.4 grammar; 0 violation(s)`), unit suite on 8.2/8.3, and a secret-scan step that fails the build if a plaintext access token or API key literal is committed.
+`.github/workflows/ci.yml`: syntax lint on PHP 7.4/8.2/8.3 (7.4 = minimum runtime), a dedicated **PHP 7.4 compatibility gate** (`php bin/php74-check.php` — parses every shipped file against a real PHP 7.4 grammar via `nikic/php-parser` and walks the AST for PHP 8-only constructs, because `php -l` only ever validates against the interpreter running it and cannot defend a "Requires PHP 7.4" header from an 8.x CI runner; evidence: `102 file(s) parsed against the PHP 7.4 grammar; 0 violation(s)`), unit suite on 8.2/8.3, and a secret-scan step that fails the build if a plaintext access token or API key literal is committed.
 
 ## What is NOT covered (honest)
 

@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name:       Arvan Reseller Platform
- * Plugin URI:        https://github.com/successtrade/arvan-reseller
+ * Plugin URI:        https://github.com/ladekarl1234-commits/arvan-reseller
  * Description:       White-label ArvanCloud reseller storefront: sell Cloud Server, CDN and Object Storage from your own WordPress site with automatic provisioning, wallet ledger, usage accounting and credit policies.
  * Version:           1.1.0
  * Requires at least: 6.2

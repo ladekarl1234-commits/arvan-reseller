@@ -111,26 +111,26 @@ final class UsageSyncTest extends Arvrs_DbTestCase
      */
     public function test_a_demo_services_usage_is_stamped_demo_even_once_the_site_is_live(): void
     {
-        BaseCosts::set('cloud_server', 'g1-1-1-25', 720000, 'test');
         $customer = $this->customer();
         [$order_id] = $this->seed_order($customer, 1200000, 'active');
-        $service_id = $this->seed_service($customer, $order_id, ['remote_id' => 'demo-x', 'is_demo' => 1]);
-        $this->register_demo_resource('demo-x', 'g1-1-1-25');
+        $service_id = $this->seed_service($customer, $order_id, ['is_demo' => 1]);
 
+        // go_live() also swaps DemoProvider for RealProvider, which is not
+        // what this test is about — it exercises ingest()'s stamping directly,
+        // the same call sync_page() makes, with the site genuinely out of
+        // demo mode so an ambient-mode read would get this wrong.
         $this->go_live();
-        UsageSync::sync_all();
+        $row = new \ArvanReseller\Arvan\UsageRow('demo-x', '2026-01-01 00:00:00', '2026-01-01 01:00:00', 1.0, 'hour', 1000);
+        UsageSync::ingest($service_id, $customer, $row, 'provider', 1);
 
-        $rows = $this->db->get_results($this->db->prepare(
+        $usage = $this->db->get_row($this->db->prepare(
             'SELECT is_demo FROM ' . UsageSync::table() . ' WHERE service_id = %d', $service_id
         ), ARRAY_A);
-        $this->assertNotEmpty($rows);
-        foreach ($rows as $row) {
-            $this->assertSame(1, (int) $row['is_demo'], 'a demo service must not manufacture real revenue once live');
-        }
+        $this->assertSame(1, (int) $usage['is_demo'], 'a demo service must not manufacture real revenue once live');
         $this->assertSame(
-            $this->count_rows('usage_records', "service_id = $service_id"),
+            1,
             $this->count_rows('ledger', "ref_type = 'usage' AND is_demo = 1"),
-            'every debit for this demo service must itself be stamped demo'
+            'the debit itself must be stamped demo, not read from the (now real) ambient mode'
         );
     }
 }
