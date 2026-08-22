@@ -13,7 +13,7 @@ jobs:
       matrix:
         php: ['7.4', '8.2', '8.3'] # 7.4 = minimum supported runtime
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
@@ -28,7 +28,7 @@ jobs:
     name: PHP 7.4 compatibility gate
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
@@ -49,7 +49,7 @@ jobs:
       matrix:
         php: ['8.2', '8.3'] # PHPUnit 11/12 needs 8.2+; runtime stays 7.4-compatible via the lint job
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
@@ -67,7 +67,7 @@ jobs:
     name: Secret scan
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Fail on committed secrets
         run: |
           set -e
