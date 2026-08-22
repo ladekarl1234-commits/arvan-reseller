@@ -31,7 +31,7 @@ Storage: usage+ledger row ≈ 250 B incl. index → **≈9 GB/year** at Stage A 
 
 | Flow | Peak assumption | Served by |
 |---|---|---|
-| Storefront views | 10 req/s burst | cached catalog, no external HTTP [verified in code] |
+| Storefront views | 10 req/s burst | cached catalog on the hot path; a cold/expired cache makes one guarded upstream call (stampede lock + negative cache + stale-serve — `Arvan\Catalog`), not one per concurrent viewer [verified in code] |
 | Checkout POST | 1/min | 3 indexed queries + 1 insert |
 | Callback POST | bursts of duplicates | 1 SELECT + 1 atomic UPDATE + 2 INSERT IGNORE |
 | Usage sync run | 2,000 services / hourly | grouped per product → ≤3 provider calls (demo) / N bucketed calls (future real API); 48k×(1 INSERT IGNORE + 1 ledger insert)/24 per run ≈ 4k writes/run |
@@ -43,9 +43,6 @@ Worst case: 30 orders land in one hour → 30 `provision_order` jobs; runner bat
 
 ## 5. What was actually measured [measured]
 
-On the development sandbox (Windows, PHP 8.5 CLI, SQLite integration — weaker than any production MySQL):
-- Full E2E scenario (42 checks: 3 orders, 2 payments + replays, 96 usage ingestions ×2 runs, policy staging, REST dispatches): **≈8 s** wall clock including WP bootstrap per `wp eval-file`.
-- Unit suite: 46 tests / 158 assertions in **1.5 s**.
-- Double usage-sync of 48 periods: second run ingests 0 rows (idempotency verified, not assumed).
+On the development sandbox (Windows, PHP 8.5 CLI, SQLite integration — weaker than any production MySQL): the unit suite and the full E2E scenario, both green. Exact counts and wall-clock time are quoted once, in `TESTING.md`, rather than restated here — restating a number in ten places is exactly how this repo previously ended up with two different published check counts for the same script (see `docs/review/ISSUE_BACKLOG.md` EX-045).
 
 These validate correctness at small scale; they are NOT throughput benchmarks. Production benchmarking belongs in `docs/performance/` once a MySQL environment is provisioned (methodology template included there).

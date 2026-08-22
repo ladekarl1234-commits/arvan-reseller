@@ -5,6 +5,9 @@
  * @var string $error @var string $notice
  */
 defined('ABSPATH') || exit;
+
+use ArvanReseller\Admin\Labels;
+use ArvanReseller\Support\Options;
 ?>
 <div class="wrap arvrs-admin arvrs-wizard" dir="rtl">
   <div class="arvrs-wizard-progress" aria-hidden="true">
@@ -65,7 +68,7 @@ defined('ABSPATH') || exit;
       </div>
       <div class="arvrs-field">
         <label for="arvrs-brand-color"><?php esc_html_e('رنگ برند', 'arvan-reseller'); ?></label>
-        <input id="arvrs-brand-color" name="brand_color" type="color" value="<?php echo esc_attr($brand_color ?: '#0c6960'); ?>" />
+        <input id="arvrs-brand-color" name="brand_color" type="color" value="<?php echo esc_attr($brand_color ?: Options::BRAND_COLOR); ?>" />
         <p class="arvrs-help"><?php esc_html_e('لوگو را بعداً می‌توانید از بخش «برند و تنظیمات» بارگذاری کنید.', 'arvan-reseller'); ?></p>
       </div>
 
@@ -99,7 +102,7 @@ defined('ABSPATH') || exit;
       <fieldset class="arvrs-field">
         <legend class="arvrs-lbl"><?php esc_html_e('محصولات قابل فروش', 'arvan-reseller'); ?></legend>
         <?php foreach (['cloud_server' => __('سرور ابری', 'arvan-reseller'), 'cdn' => __('CDN', 'arvan-reseller'), 'object_storage' => __('فضای ابری', 'arvan-reseller')] as $pk => $pl) : ?>
-          <label style="display:inline-flex;gap:6px;margin-inline-end:16px">
+          <label class="arvrs-inline-check">
             <input type="checkbox" name="enabled_products[]" value="<?php echo esc_attr($pk); ?>" <?php checked(in_array($pk, $enabled_products, true)); ?> />
             <?php echo esc_html($pl); ?>
           </label>
@@ -113,7 +116,7 @@ defined('ABSPATH') || exit;
         <?php foreach ($pages as $key => $page) : ?>
           <li>
             <span class="<?php echo $page['status'] === 'publish' ? 'ok' : 'fail'; ?>"><?php echo $page['status'] === 'publish' ? '✓' : '•'; ?></span>
-            <span><?php echo esc_html($key); ?></span>
+            <span><?php echo esc_html(Labels::page_title((string) $key)); ?></span>
             <span class="arvrs-kv-detail"><?php echo $page['status'] === 'publish' ? esc_html__('ساخته شده', 'arvan-reseller') : esc_html__('ساخته می‌شود', 'arvan-reseller'); ?></span>
           </li>
         <?php endforeach; ?>
@@ -131,6 +134,9 @@ defined('ABSPATH') || exit;
           </li>
         <?php endforeach; ?>
       </ul>
+      <?php if (empty($checks['pricing']['ok'])) : ?>
+        <p><a href="<?php echo esc_url(admin_url('admin.php?page=arvan-reseller-pricing')); ?>"><?php esc_html_e('رفتن به قیمت‌گذاری و درون‌ریزی پلن‌های آروان ←', 'arvan-reseller'); ?></a></p>
+      <?php endif; ?>
       <p><a href="<?php echo esc_url(\ArvanReseller\Install\PageFactory::url('storefront')); ?>" target="_blank"><?php esc_html_e('پیش‌نمایش فروشگاه ↗', 'arvan-reseller'); ?></a></p>
     <?php endif; ?>
 

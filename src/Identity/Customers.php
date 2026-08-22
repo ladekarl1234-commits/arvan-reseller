@@ -55,20 +55,46 @@ final class Customers
     }
 
     /**
+     * Is public customer sign-up open on this store?
+     *
+     * Creating accounts used to happen regardless of anything the site owner
+     * had configured, which quietly changed the security posture of any site
+     * that had deliberately closed registration (EX-114). Now it is a visible
+     * plugin setting — defaulting to open, because a storefront nobody can join
+     * is not a storefront — plus a filter for anyone wiring their own gate.
+     */
+    public static function registration_open(): bool
+    {
+        return (bool) apply_filters(
+            'arvrs_registration_open',
+            (bool) \ArvanReseller\Support\Options::get('customer_registration', true)
+        );
+    }
+
+    /**
      * Register a new customer (server-side validation; rate-limited caller).
+     *
+     * The `exists` error is deliberately indistinguishable from a generic
+     * failure at the caller: the storefront must not confirm whether an address
+     * already has an account (EX-114). The error CODE stays distinct so the
+     * caller can still rate-limit and audit correctly.
+     *
      * @return int|\WP_Error user ID
      */
     public static function register(string $email, string $password, string $display_name)
     {
+        if (!self::registration_open()) {
+            return new \WP_Error('registration_closed', __('ثبت‌نام مشتری جدید در این فروشگاه غیرفعال است.', 'arvan-reseller'));
+        }
         $email = sanitize_email($email);
         if (!is_email($email)) {
             return new \WP_Error('invalid_email', __('نشانی ایمیل معتبر نیست.', 'arvan-reseller'));
         }
-        if (email_exists($email)) {
-            return new \WP_Error('exists', __('با این ایمیل قبلاً ثبت‌نام شده است. وارد شوید.', 'arvan-reseller'));
-        }
         if (strlen($password) < 8) {
             return new \WP_Error('weak_password', __('گذرواژه باید دست‌کم ۸ نویسه باشد.', 'arvan-reseller'));
+        }
+        if (email_exists($email)) {
+            return new \WP_Error('exists', __('اگر این نشانی تازه باشد، حساب شما ساخته شد. برای ادامه وارد شوید.', 'arvan-reseller'));
         }
         $user_id = wp_insert_user([
             'user_login'   => $email,

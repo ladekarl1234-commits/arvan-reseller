@@ -1,15 +1,18 @@
 <?php
+
+defined('ABSPATH') || exit;
+
 use ArvanReseller\Arvan\DemoProvider;
 use ArvanReseller\Arvan\ProviderError;
 use ArvanReseller\Audit\Audit;
-use PHPUnit\Framework\TestCase;
+use ArvanReseller\Pricing\BaseCosts;
 
-final class UsageAndRedactionTest extends TestCase
+final class UsageAndRedactionTest extends Arvrs_DbTestCase
 {
     protected function setUp(): void
     {
-        $GLOBALS['__arvrs_options'] = [];
-        $GLOBALS['wpdb']->var_result = 720000; // monthly base cost → 1000/h
+        parent::setUp();
+        BaseCosts::set('cloud_server', 'g1-2-2-25', 720000, 'test'); // monthly → 1000/h
     }
 
     public function test_demo_usage_is_deterministic_for_same_period(): void

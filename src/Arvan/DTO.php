@@ -41,12 +41,21 @@ final class RemoteResource
     public $connection;  // array<string,string> customer-facing connection info
     public $raw;         // array redacted upstream payload kept for management
 
-    public function __construct(string $remote_id, string $status, array $connection = [], array $raw = [])
+    /**
+     * Correlation id of the upstream call that produced this resource, so the
+     * order timeline can carry a traceable id on the SUCCESS path too — until
+     * now only failures recorded one, which is the wrong half (EX-082).
+     * @var string
+     */
+    public $correlation_id = '';
+
+    public function __construct(string $remote_id, string $status, array $connection = [], array $raw = [], string $correlation_id = '')
     {
         $this->remote_id = $remote_id;
         $this->status = $status;
         $this->connection = $connection;
         $this->raw = $raw;
+        $this->correlation_id = $correlation_id;
     }
 }
 
@@ -73,7 +82,17 @@ final class UsageRow
 /** Normalized provider failure — never leaks upstream bodies to customers. */
 final class ProviderError extends \RuntimeException
 {
-    public $kind;          // auth|rate_limit|timeout|invalid|unavailable|unknown
+    /**
+     * auth|rate_limit|timeout|timeout_indeterminate|invalid|conflict|billing|unavailable|unknown
+     *
+     * `timeout_indeterminate` is the load-bearing one: it is raised when a
+     * NON-idempotent upstream write (POST/PATCH) times out or returns 5xx, so
+     * the remote side may or may not have acted. It must never be answered by
+     * repeating the write — only by reconciling against the remote resource
+     * under its deterministic name.
+     * @var string
+     */
+    public $kind;
     public $correlation_id;
 
     public function __construct(string $kind, string $message, string $correlation_id = '')
@@ -83,16 +102,42 @@ final class ProviderError extends \RuntimeException
         $this->correlation_id = $correlation_id;
     }
 
+    /**
+     * Whether re-running the whole operation later is safe.
+     *
+     * `timeout_indeterminate` and `conflict` qualify ONLY because every
+     * RealProvider create looks the resource up under its deterministic name
+     * before it would ever issue a write; a later attempt therefore finds and
+     * adopts the existing resource instead of minting a second one. Nothing
+     * else may replay them. `auth`, `invalid` and `billing` are permanent
+     * until a human acts, so retrying them only delays the alert.
+     */
+    public function retryable(): bool
+    {
+        return in_array($this->kind, ['timeout', 'timeout_indeterminate', 'conflict', 'unavailable', 'rate_limit', 'unknown'], true);
+    }
+
     /** Actionable Persian message safe for customers (SEC-12). */
     public function customer_message(): string
     {
-        $map = [
-            'auth'        => 'پیکربندی سرویس‌دهنده ابری نیاز به بررسی دارد. لطفاً با پشتیبانی تماس بگیرید.',
-            'rate_limit'  => 'درخواست‌ها موقتاً زیاد است. چند دقیقه دیگر دوباره تلاش کنید.',
-            'timeout'     => 'پاسخ سرویس ابری دیر شد. سفارش شما محفوظ است و به‌زودی دوباره تلاش می‌شود.',
-            'invalid'     => 'پیکربندی انتخابی در حال حاضر قابل ارائه نیست. گزینه دیگری را انتخاب کنید.',
-            'unavailable' => 'سرویس ابری موقتاً در دسترس نیست. سفارش شما محفوظ است.',
-        ];
-        return $map[$this->kind] ?? 'خطای غیرمنتظره‌ای رخ داد. سفارش شما محفوظ است و پیگیری می‌شود.';
+        switch ($this->kind) {
+            case 'auth':
+                return __('پیکربندی سرویس‌دهنده ابری نیاز به بررسی دارد. لطفاً با پشتیبانی تماس بگیرید.', 'arvan-reseller');
+            case 'rate_limit':
+                return __('درخواست‌ها موقتاً زیاد است. چند دقیقه دیگر دوباره تلاش کنید.', 'arvan-reseller');
+            case 'timeout':
+                return __('پاسخ سرویس ابری دیر شد. سفارش شما محفوظ است و به‌زودی دوباره تلاش می‌شود.', 'arvan-reseller');
+            case 'timeout_indeterminate':
+                return __('نتیجه ساخت سرویس هنوز از سمت آروان قطعی نشده است. سفارش شما محفوظ است، سرویس تکراری ساخته نمی‌شود و نتیجه به شما اطلاع داده می‌شود.', 'arvan-reseller');
+            case 'conflict':
+                return __('این سرویس پیش‌تر ساخته شده است. در حال بازیابی اطلاعات همان سرویس هستیم.', 'arvan-reseller');
+            case 'billing':
+                return __('حساب سرویس‌دهنده ابری اعتبار کافی ندارد. سفارش شما محفوظ است و پشتیبانی پیگیری می‌کند.', 'arvan-reseller');
+            case 'invalid':
+                return __('پیکربندی انتخابی در حال حاضر قابل ارائه نیست. گزینه دیگری را انتخاب کنید.', 'arvan-reseller');
+            case 'unavailable':
+                return __('سرویس ابری موقتاً در دسترس نیست. سفارش شما محفوظ است.', 'arvan-reseller');
+        }
+        return __('خطای غیرمنتظره‌ای رخ داد. سفارش شما محفوظ است و پیگیری می‌شود.', 'arvan-reseller');
     }
 }

@@ -6,7 +6,7 @@
 ![PHP](https://img.shields.io/badge/PHP-7.4%2B-777bb3)
 ![WordPress](https://img.shields.io/badge/WordPress-6.2%2B-21759b)
 ![License](https://img.shields.io/badge/license-GPL--2.0-blue)
-![Tests](https://img.shields.io/badge/tests-46_unit_·_54_e2e-16a34a)
+![Tests](https://img.shields.io/badge/tests-178_unit_·_123_e2e-16a34a)
 ![Expert review](https://img.shields.io/badge/expert_panel-72.5%2F100-b45309)
 
 ## Why this exists
@@ -82,7 +82,7 @@ flowchart TB
             AC[ArvanClient HTTP]
             CRED[Encrypted credentials]
             JOBS[Durable jobs + WP-Cron]
-            DB[(11 custom tables)]
+            DB[(12 custom tables)]
         end
     end
     CU((Customer)) --> SF --> REST
@@ -134,10 +134,10 @@ sequenceDiagram
 | Choice | Why (short) |
 |---|---|
 | **PHP 7.4+, namespaced, zero runtime Composer deps** | Installs on any standard host; Composer/PHPUnit are dev-only. |
-| **Server-rendered PHP + vanilla JS/CSS** | ~9 KB JS total, RTL trivial, no build step, no React version drift inside wp-admin. Rejected React/Vue with evidence: [`docs/STACK_EVALUATION.md`](docs/STACK_EVALUATION.md) |
-| **11 custom tables** | Financial rows (ledger, orders, usage) need indexes, uniqueness constraints and aggregate queries that `wp_options`/meta cannot provide. [ADR-0003](docs/adr/0003-database-strategy.md) |
+| **Server-rendered PHP + vanilla JS/CSS** | One 16 KB JS file total, RTL trivial, no build step, no React version drift inside wp-admin. Rejected React/Vue with evidence: [`docs/STACK_EVALUATION.md`](docs/STACK_EVALUATION.md) |
+| **12 custom tables** | Financial rows (ledger, orders, usage, top-ups) need indexes, uniqueness constraints and aggregate queries that `wp_options`/meta cannot provide. [ADR-0003](docs/adr/0003-database-strategy.md) |
 | **Durable jobs table + WP-Cron runner** | WP-Cron is traffic-triggered, so durability lives in the table; production scaling = point real cron at `wp-cron.php`, zero code change. [ADR-0004](docs/adr/0004-background-jobs.md) |
-| **Provider interfaces (Arvan, Payment)** | `DemoArvanProvider` ↔ `RealArvanProvider` swap without touching business logic; future PSP adapters implement one interface. [ADR-0005](docs/adr/0005-arvan-api-boundary.md), [ADR-0006](docs/adr/0006-payment-architecture.md) |
+| **Provider interfaces (Arvan, Payment)** | `DemoProvider` ↔ `RealProvider` swap without touching business logic; future PSP adapters implement one interface. [ADR-0005](docs/adr/0005-arvan-api-boundary.md), [ADR-0006](docs/adr/0006-payment-architecture.md) |
 | **Append-only ledger** | Balance = Σ(entries); replay-safety via `UNIQUE(ref_type, ref_id, type)` + `INSERT IGNORE`. [ADR-0007](docs/adr/0007-wallet-ledger-model.md) |
 | **libsodium secretbox for credentials** | Authenticated encryption keyed from WP salts via HMAC; Base64 or reversible obfuscation rejected. [ADR-0008](docs/adr/0008-secret-management.md) |
 | **"ابرآروان" teal design system, Vazirmatn (SIL OFL)** | The whole UI implements a Claude Design artboard set (storefront, product, dashboard, auth, payment, wizard, admin) — glassy header, gradient hero/CTAs, radio-dot plan cards, pill tabs. The brand palette derives from one `--arvrs-brand` token so a reseller's brand color recolors everything. Vazirmatn is bundled (Sorkhab's Yekan Bakh is commercial). |
@@ -167,12 +167,14 @@ This codebase was put through a **15-agent expert evaluation panel**. Each revie
 | Security | 84 | Visual design / Testing / a11y / Integration | 66 |
 | Product completeness | 82 | Operational readiness | 68 |
 
-The panel did not return a clean bill of health, and the record is published unedited on purpose. Its headline conclusions:
+The panel did not return a clean bill of health, and the record is published unedited on purpose — it describes the code as it stood at review time, not as it stands today. Its headline conclusions, and their current status:
 
-- **`ArvanClient` retries non-idempotent `POST`s** on timeout/5xx — found independently by two reviewers, and the single most serious defect: a slow upstream create can charge once and provision twice.
-- **The recurring-revenue model is not implemented** — a "monthly package" is charged exactly once; there is no renewal path in the code.
-- **In real mode the wallet/usage/credit-policy subsystem is inert**, because ArvanCloud publishes no usage API (documented, but the consequence is larger than the docs imply).
-- **The payment screen can tell a customer the service is ready when provisioning failed.**
+- **`ArvanClient` retries non-idempotent `POST`s** on timeout/5xx — found independently by two reviewers, and the single most serious defect: a slow upstream create can charge once and provision twice. **Fixed**: retries are now verb-aware; POST/PATCH raise `timeout_indeterminate` and are reconciled by deterministic remote name instead of repeated (`ArvanClient.php`, `RealProvider::remote_name`).
+- **The recurring-revenue model is not implemented** — a "monthly package" is charged exactly once; there is no renewal path in the code. **Fixed**: `Billing\Renewals` charges each service's own term clock on a daily job.
+- **In real mode the wallet/usage/credit-policy subsystem is inert**, because ArvanCloud publishes no usage API (documented, but the consequence is larger than the docs imply). **Addressed**: recurring revenue in real mode now comes from `Billing\Renewals` (a wallet debit), which makes the credit ladder reachable in real mode too; metered usage sync itself is still demo-only, because the upstream API still does not exist.
+- **The payment screen can tell a customer the service is ready when provisioning failed.** **Fixed**: the payment result now reports the true post-payment provisioning state.
+
+A full re-review has not been run against this round — treat the fixes above as verified against the source (file/line cited), not as a second panel score. `docs/review/ISSUE_BACKLOG.md`'s status column reflects the same verification.
 
 Full record — process, per-dimension scores with reasoning, convergence analysis, and every finding with evidence and a fix:
 
@@ -197,7 +199,7 @@ No WooCommerce, no page builder, no theme requirement, no Node.js at runtime.
 git clone https://github.com/ladekarl1234-commits/arvan-reseller.git
 cd arvan-reseller
 composer install          # dev tooling only
-composer test             # 46 unit tests
+composer test             # unit suite — count in TESTING.md
 ```
 
 Full environment (wp-env / wp-cli + SQLite), seed data and E2E scenario: [`DEVELOPMENT.md`](DEVELOPMENT.md) · [`TESTING.md`](TESTING.md)
@@ -215,27 +217,33 @@ src/
   Orders/              State machine + order service
   Payments/            Provider interface, sandbox gateway, callback service
   Provisioning/        Idempotent provisioner
-  Wallet/              Append-only ledger
+  Wallet/              Append-only ledger (single indexed balance aggregate)
   Usage/               Usage sync + policy application
+  Billing/             Recurring/renewal charges (Billing\Renewals)
+  Reports/             Period revenue/cost/margin, MRR, churn
   Policies/            Pure staging engine
-  Jobs/                Durable job runner
+  Jobs/                Durable job runner + filterable handler registry
   Notifications/       Cooldown-aware notifier
+  Customers/           Per-customer commercial rules
+  Services/            Provisioned-resource rows + Services::get_owned (single-row authorization choke point)
   Admin/  Front/  Rest/  Onboarding/  Identity/  Audit/  Support/
 templates/             Server-rendered admin + front views (escape at sink)
 assets/                Plugin-scoped CSS/JS + bundled Vazirmatn (OFL)
-tests/                 PHPUnit unit suite + WP shims
-docs/                  Engineering handbook (ADRs, threat model, scalability…)
+languages/             Translation catalog (.pot + fa_IR .po/.mo)
+tests/                 PHPUnit unit suite + WP shims + E2E scenario
+docs/                  Engineering handbook (ADRs, threat model, scalability, runbook…)
+readme.txt             WordPress.org plugin-directory listing
 ```
 
 ## Documentation
 
-[spec.md](spec.md) — engineering source of truth · [docs/EXPERT_REVIEW.md](docs/EXPERT_REVIEW.md) — independent 15-agent audit · [ARCHITECTURE.md](ARCHITECTURE.md) · [SECURITY.md](SECURITY.md) · [docs/STACK_EVALUATION.md](docs/STACK_EVALUATION.md) · [docs/SCALABILITY.md](docs/SCALABILITY.md) · [docs/CAPACITY_MODEL.md](docs/CAPACITY_MODEL.md) · [docs/API_INTEGRATION.md](docs/API_INTEGRATION.md) · [docs/DATA_MODEL.md](docs/DATA_MODEL.md) · [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md) · [docs/adr/](docs/adr/) · [docs/REQUIREMENTS_TRACEABILITY.md](docs/REQUIREMENTS_TRACEABILITY.md) · [CONTRIBUTING.md](CONTRIBUTING.md) · [HACKATHON_READINESS.md](HACKATHON_READINESS.md)
+[spec.md](spec.md) — engineering source of truth · [docs/EXPERT_REVIEW.md](docs/EXPERT_REVIEW.md) — independent 15-agent audit · [ARCHITECTURE.md](ARCHITECTURE.md) · [SECURITY.md](SECURITY.md) · [docs/RUNBOOK.md](docs/RUNBOOK.md) — operator incident playbooks · [docs/STACK_EVALUATION.md](docs/STACK_EVALUATION.md) · [docs/SCALABILITY.md](docs/SCALABILITY.md) · [docs/CAPACITY_MODEL.md](docs/CAPACITY_MODEL.md) · [docs/API_INTEGRATION.md](docs/API_INTEGRATION.md) · [docs/DATA_MODEL.md](docs/DATA_MODEL.md) · [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md) · [docs/adr/](docs/adr/) · [docs/REQUIREMENTS_TRACEABILITY.md](docs/REQUIREMENTS_TRACEABILITY.md) · [CONTRIBUTING.md](CONTRIBUTING.md) · [HACKATHON_READINESS.md](HACKATHON_READINESS.md) · [readme.txt](readme.txt) — WordPress.org listing
 
 ## Known limitations
 
 Honest list — each with the fallback that ships. The independent panel found more than this list contained; its findings are the fuller answer and are tracked in [the backlog](docs/review/ISSUE_BACKLOG.md).
 
-- **No public Arvan billing/usage API** (verified) → real-mode usage rows are not fetchable; the reseller bills fixed monthly packages, and the full usage engine is demonstrated with the deterministic demo provider. Single integration point ready when Arvan publishes one.
+- **No public Arvan billing/usage API** (verified) → real-mode usage rows are not fetchable; the reseller bills fixed-term packages via `Billing\Renewals` instead, and the full metered-usage engine is demonstrated with the deterministic demo provider. Single integration point (`RealProvider::usage`) ready when Arvan publishes one.
 - **No public pricing API** → base costs are an admin-maintained table seeded from the public pricing page, with source + timestamp stamps.
 - **Object Storage access keys** are panel-issued upstream; the plugin provisions the bucket and tells the customer where keys come from.
 - **Static offline PAT allowlist** is hackathon-appropriate licensing, not commercial DRM ([ADR-0009](docs/adr/0009-licensing-model.md) documents the signed-license upgrade path).

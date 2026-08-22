@@ -2,44 +2,52 @@
 
 Every finding raised by the [expert evaluation panel](../EXPERT_REVIEW.md), with the evidence that proves it and the fix that closes it. Ordered by severity, then by the weight of the dimension that raised it. IDs are stable — cite them in commits and pull requests.
 
-**Status legend:** `open` — not yet addressed · `accepted-risk` — understood and deliberately not fixed, with a reason · `fixed` — closed with a commit reference.
+**Status legend:** `open` — not yet addressed · `accepted-risk` — understood and deliberately not fixed, with a reason · `fixed` — closed, with the evidence that verifies it (not merely claimed).
 
-| Open | Critical | High | Medium | Low |
-|---:|---:|---:|---:|---:|
-| 141 | 6 | 43 | 64 | 28 |
+**v1.1.0 remediation round:** 37 of 141 findings verified fixed against the current source (each carries a **Closed** note with the evidence). This is not a full re-review — the remaining 104 are unchanged from the original panel pass and have not been individually re-checked; treat their `open` status as "not verified in this round," not as "confirmed still broken." `EX-050` was investigated and is deliberately left `open` rather than marked fixed: the documentation now states the real precondition, but the underlying code gap (no detection of DB-stored vs. file-defined WordPress salts) is unaddressed.
+
+| Total | Fixed | Accepted-risk | Open |
+|---:|---:|---:|---:|
+| 141 | 37 | 0 | 104 |
+
+By severity (unchanged by status — a fix does not change how severe the original finding was):
+
+| Critical | High | Medium | Low |
+|---:|---:|---:|---:|
+| 6 | 43 | 64 | 28 |
 
 ## Index
 
 | ID | Sev | Finding | Dimension | Effort | Status |
 |---|---|---|---|---|---|
-| [EX-001](#ex-001) | 🔴 critical | Non-idempotent POSTs are auto-retried on timeout while the provider ignores the idempotency key — duplicate paid-for remote resources | Reliability | M | `open` |
-| [EX-002](#ex-002) | 🔴 critical | Payment page tells the customer the service is ready even when provisioning failed | UX & usability | M | `open` |
-| [EX-003](#ex-003) | 🔴 critical | Ledger::balance() fetches every ledger row for a customer into PHP, on every front-end page render | Scalability | S | `open` |
-| [EX-004](#ex-004) | 🔴 critical | No renewal or recurring billing anywhere — a 'monthly package' is charged exactly once, forever | Business viability | L | `open` |
-| [EX-005](#ex-005) | 🔴 critical | The entire wallet/usage/credit-policy subsystem is dead code in real mode | Business viability | L | `open` |
-| [EX-006](#ex-006) | 🔴 critical | ArvanClient retries non-idempotent POSTs on timeout/5xx, defeating the documented single-invocation guarantee | Integration honesty | S | `open` |
-| [EX-007](#ex-007) | 🟠 high | RealProvider discards the idempotency key while ArvanClient blindly retries POSTs — duplicate billable upstream resources | Security | M | `open` |
-| [EX-008](#ex-008) | 🟠 high | Durable job queue has no reaper: a crashed worker strands a job in 'running' forever | Architecture | S | `open` |
-| [EX-009](#ex-009) | 🟠 high | Orders can become permanently stuck in 'provisioning' with an orphaned upstream resource | Architecture | M | `open` |
+| [EX-001](#ex-001) | 🔴 critical | Non-idempotent POSTs are auto-retried on timeout while the provider ignores the idempotency key — duplicate paid-for remote resources | Reliability | M | `fixed` |
+| [EX-002](#ex-002) | 🔴 critical | Payment page tells the customer the service is ready even when provisioning failed | UX & usability | M | `fixed` |
+| [EX-003](#ex-003) | 🔴 critical | Ledger::balance() fetches every ledger row for a customer into PHP, on every front-end page render | Scalability | S | `fixed` |
+| [EX-004](#ex-004) | 🔴 critical | No renewal or recurring billing anywhere — a 'monthly package' is charged exactly once, forever | Business viability | L | `fixed` |
+| [EX-005](#ex-005) | 🔴 critical | The entire wallet/usage/credit-policy subsystem is dead code in real mode | Business viability | L | `fixed` |
+| [EX-006](#ex-006) | 🔴 critical | ArvanClient retries non-idempotent POSTs on timeout/5xx, defeating the documented single-invocation guarantee | Integration honesty | S | `fixed` |
+| [EX-007](#ex-007) | 🟠 high | RealProvider discards the idempotency key while ArvanClient blindly retries POSTs — duplicate billable upstream resources | Security | M | `fixed` |
+| [EX-008](#ex-008) | 🟠 high | Durable job queue has no reaper: a crashed worker strands a job in 'running' forever | Architecture | S | `fixed` |
+| [EX-009](#ex-009) | 🟠 high | Orders can become permanently stuck in 'provisioning' with an orphaned upstream resource | Architecture | M | `fixed` |
 | [EX-010](#ex-010) | 🟠 high | Up to 15s of blocking sleep plus synchronous email inside the payment callback request | Architecture | M | `open` |
 | [EX-011](#ex-011) | 🟠 high | Leaving Demo Mode disables all selling — checkout, top-up and the payment page all hard-fail with no admin warning | Product completeness | M | `open` |
 | [EX-012](#ex-012) | 🟠 high | Real-mode Cloud Server storefront renders empty: API flavor IDs have no base-cost rows and nothing detects it | Product completeness | M | `open` |
-| [EX-013](#ex-013) | 🟠 high | An order stuck in `provisioning` is unrecoverable: no admin action exists and the retry job reports success | Reliability | M | `open` |
-| [EX-014](#ex-014) | 🟠 high | Jobs left in `running` are never reclaimed — no reaper, not selectable, not retryable | Reliability | S | `open` |
+| [EX-013](#ex-013) | 🟠 high | An order stuck in `provisioning` is unrecoverable: no admin action exists and the retry job reports success | Reliability | M | `fixed` |
+| [EX-014](#ex-014) | 🟠 high | Jobs left in `running` are never reclaimed — no reaper, not selectable, not retryable | Reliability | S | `fixed` |
 | [EX-015](#ex-015) | 🟠 high | Ledger write failure on a settled payment is swallowed with no repair path — money with no record | Reliability | M | `open` |
-| [EX-016](#ex-016) | 🟠 high | Every admin alert is written to the DB and rendered nowhere — $notices is dead | UX & usability | S | `open` |
+| [EX-016](#ex-016) | 🟠 high | Every admin alert is written to the DB and rendered nowhere — $notices is dead | UX & usability | S | `fixed` |
 | [EX-017](#ex-017) | 🟠 high | Mid-payment network error strands the customer on a permanent spinner with both buttons disabled | UX & usability | S | `open` |
 | [EX-018](#ex-018) | 🟠 high | Abandoned payment is a dead end: the pending-orders page is unreachable from the UI | UX & usability | S | `open` |
 | [EX-019](#ex-019) | 🟠 high | Order-payment replay test short-circuits before the DB idempotency guard it claims to prove | Testing & QA | S | `open` |
 | [EX-020](#ex-020) | 🟠 high | sandbox_blocked() — the guard that stops a self-verifiable sandbox proof settling real money — has zero coverage | Testing & QA | S | `open` |
 | [EX-021](#ex-021) | 🟠 high | The only real data migration (v3→v4 ledger is_demo back-stamp) is unreachable from every test | Testing & QA | M | `open` |
 | [EX-022](#ex-022) | 🟠 high | Two of the five License tests assert nothing about the license code; one is named for an invariant it never exercises | Testing & QA | M | `open` |
-| [EX-023](#ex-023) | 🟠 high | Job runner decides retry-vs-success by substring-matching English prose from Provisioner | Code quality | S | `open` |
-| [EX-024](#ex-024) | 🟠 high | Admin alerts are write-only: notifications are stored, passed to the dashboard, and never rendered | Operational readiness | S | `open` |
-| [EX-025](#ex-025) | 🟠 high | Jobs stranded in `running` are invisible and unrecoverable from the UI | Operational readiness | S | `open` |
+| [EX-023](#ex-023) | 🟠 high | Job runner decides retry-vs-success by substring-matching English prose from Provisioner | Code quality | S | `fixed` |
+| [EX-024](#ex-024) | 🟠 high | Admin alerts are write-only: notifications are stored, passed to the dashboard, and never rendered | Operational readiness | S | `fixed` |
+| [EX-025](#ex-025) | 🟠 high | Jobs stranded in `running` are invisible and unrecoverable from the UI | Operational readiness | S | `fixed` |
 | [EX-026](#ex-026) | 🟠 high | Credential health is manual-only; a revoked token keeps showing "connected" until someone clicks Test | Operational readiness | M | `open` |
-| [EX-027](#ex-027) | 🟠 high | Admin customer list N+1s the unbounded balance query — 20 full ledger scans per page render | Scalability | S | `open` |
-| [EX-028](#ex-028) | 🟠 high | Catalog cache miss makes a blocking upstream call inside page render, with no negative caching and no stampede guard | Scalability | S | `open` |
+| [EX-027](#ex-027) | 🟠 high | Admin customer list N+1s the unbounded balance query — 20 full ledger scans per page render | Scalability | S | `fixed` |
+| [EX-028](#ex-028) | 🟠 high | Catalog cache miss makes a blocking upstream call inside page render, with no negative caching and no stampede guard | Scalability | S | `fixed` |
 | [EX-029](#ex-029) | 🟠 high | Hourly usage sync rescans the entire ledger twice — the real first bottleneck, and not the one the docs name | Scalability | S | `open` |
 | [EX-030](#ex-030) | 🟠 high | sync_all() is unbounded and unchunked in one request; the demo provider materialises every usage row in memory first | Scalability | M | `open` |
 | [EX-031](#ex-031) | 🟠 high | Usage debits are posted at raw upstream cost — the metered revenue path earns zero margin | Business viability | S | `open` |
@@ -49,23 +57,23 @@ Every finding raised by the [expert evaluation panel](../EXPERT_REVIEW.md), with
 | [EX-035](#ex-035) | 🟠 high | Token scale defined then bypassed: grad-dark unused while its exact value is inlined twice; 32 literal radii vs 3 token uses | Visual design | M | `open` |
 | [EX-036](#ex-036) | 🟠 high | Three of five semantic status pills fail WCAG AA contrast at 11.5px bold | Visual design | S | `open` |
 | [EX-037](#ex-037) | 🟠 high | Admin declares Vazirmatn but never loads it - every admin page falls back to system fonts | Visual design | S | `open` |
-| [EX-038](#ex-038) | 🟠 high | Customer wallet balance and ledger history ignore `is_demo` — demo money counts as real | Data & analytics | S | `open` |
-| [EX-039](#ex-039) | 🟠 high | `negative_since_days` measures the last debit, not the start of the negative period — RESTRICTED is unreachable | Data & analytics | M | `open` |
+| [EX-038](#ex-038) | 🟠 high | Customer wallet balance and ledger history ignore `is_demo` — demo money counts as real | Data & analytics | S | `fixed` |
+| [EX-039](#ex-039) | 🟠 high | `negative_since_days` measures the last debit, not the start of the negative period — RESTRICTED is unreachable | Data & analytics | M | `fixed` |
 | [EX-040](#ex-040) | 🟠 high | Derived balance pulls the whole ledger into PHP, and the customers list does it N+1 times | Data & analytics | M | `open` |
-| [EX-041](#ex-041) | 🟠 high | No time dimension in any report — revenue, cost and margin are lifetime sums only | Data & analytics | M | `open` |
+| [EX-041](#ex-041) | 🟠 high | No time dimension in any report — revenue, cost and margin are lifetime sums only | Data & analytics | M | `fixed` |
 | [EX-042](#ex-042) | 🟠 high | Real-mode cloud-server plans are keyed by upstream flavor IDs, but BaseCosts is seeded only with demo plan IDs — the headline product is unsellable in real mode | Integration honesty | M | `open` |
 | [EX-043](#ex-043) | 🟠 high | Inline provisioning with up to 15 s of sleep() in the payment callback can strand an order in `provisioning` with a live upstream resource | Integration honesty | M | `open` |
 | [EX-044](#ex-044) | 🟠 high | Customer-supplied region/image are never validated against the offered catalog, and flavor IDs are region-scoped | Integration honesty | S | `open` |
-| [EX-045](#ex-045) | 🟠 high | The headline E2E check count is stated as two different numbers across nine documents, and neither matches the code | Documentation | S | `open` |
-| [EX-046](#ex-046) | 🟠 high | Traceability matrix contains three provable errors, including a claim the code explicitly refutes | Documentation | S | `open` |
+| [EX-045](#ex-045) | 🟠 high | The headline E2E check count is stated as two different numbers across nine documents, and neither matches the code | Documentation | S | `fixed` |
+| [EX-046](#ex-046) | 🟠 high | Traceability matrix contains three provable errors, including a claim the code explicitly refutes | Documentation | S | `fixed` |
 | [EX-047](#ex-047) | 🟠 high | No admin form field is label-associated: `<label>` and `<input>` are siblings with no `for` | Accessibility & i18n | M | `open` |
 | [EX-048](#ex-048) | 🟠 high | Shared status-tag palette fails WCAG AA in both stylesheets — success pill is 2.89:1 | Accessibility & i18n | S | `open` |
 | [EX-049](#ex-049) | 🟠 high | Plugin never emits `lang`, and `dir="rtl"` is hardcoded — translation cannot change direction | Accessibility & i18n | S | `open` |
 | [EX-050](#ex-050) | 🟡 medium | THREAT_MODEL S5 "DB dump alone is useless" is false on any install without salt constants in wp-config.php | Security | S | `open` |
 | [EX-051](#ex-051) | 🟡 medium | POST /me/topup is unrate-limited and writes a permanent wp_options row per call | Security | S | `open` |
 | [EX-052](#ex-052) | 🟡 medium | Refund credits the wallet without confirming the original payment was ever ledgered | Security | S | `open` |
-| [EX-053](#ex-053) | 🟡 medium | Two SECURITY.md control claims are not true of the code (get_owned has no production callers; not every route has an args schema) | Security | S | `open` |
-| [EX-054](#ex-054) | 🟡 medium | Composition root is a service locator that seven modules depend on, creating the cycles ARCHITECTURE.md denies | Architecture | M | `open` |
+| [EX-053](#ex-053) | 🟡 medium | Two SECURITY.md control claims are not true of the code (get_owned has no production callers; not every route has an args schema) | Security | S | `fixed` |
+| [EX-054](#ex-054) | 🟡 medium | Composition root is a service locator that seven modules depend on, creating the cycles ARCHITECTURE.md denies | Architecture | M | `fixed` |
 | [EX-055](#ex-055) | 🟡 medium | Presentation layer runs raw SQL against another module's table to fetch an encrypted secret | Architecture | S | `open` |
 | [EX-056](#ex-056) | 🟡 medium | Jobs (Infrastructure) hard-codes dispatch into Application modules, inverting the declared layer direction | Architecture | S | `open` |
 | [EX-057](#ex-057) | 🟡 medium | Demo-mode check issues an uncached DB query on every ledger write and catalog read | Architecture | S | `open` |
@@ -110,16 +118,16 @@ Every finding raised by the [expert evaluation panel](../EXPERT_REVIEW.md), with
 | [EX-096](#ex-096) | 🟡 medium | Semantic color misused for a positive claim, and .arvrs-alert-body markup differs across four call sites | Visual design | S | `open` |
 | [EX-097](#ex-097) | 🟡 medium | Declared weight hierarchy is fictional, and 49 inline styles carry four off-palette hexes past existing tokens | Visual design | M | `open` |
 | [EX-098](#ex-098) | 🟡 medium | Index set does not match the query set: `audit_log.level` unindexed, four declared indexes unused | Data & analytics | S | `open` |
-| [EX-099](#ex-099) | 🟡 medium | `usage_records` carries neither `is_demo` nor a cost/price split — the recurring stream has no reportable margin | Data & analytics | M | `open` |
+| [EX-099](#ex-099) | 🟡 medium | `usage_records` carries neither `is_demo` nor a cost/price split — the recurring stream has no reportable margin | Data & analytics | M | `fixed` |
 | [EX-100](#ex-100) | 🟡 medium | Four unbounded tables with no retention or pruning path | Data & analytics | M | `open` |
 | [EX-101](#ex-101) | 🟡 medium | Dashboard order counts skip the demo filter applied two lines above them | Data & analytics | S | `open` |
 | [EX-102](#ex-102) | 🟡 medium | Object Storage region choice is advertised by RealProvider but silently discarded before it reaches the API | Integration honesty | S | `open` |
 | [EX-103](#ex-103) | 🟡 medium | Zero test coverage of the real integration path — every test runs through DemoProvider | Integration honesty | M | `open` |
-| [EX-104](#ex-104) | 🟡 medium | docs/API_INTEGRATION.md claims 402 error semantics are handled; ArvanClient has no 402 branch and classifies it as retryable | Integration honesty | S | `open` |
-| [EX-105](#ex-105) | 🟡 medium | "No endpoint in this plugin is invented" is asserted absolutely but is unverifiable from the artifact, and at least one endpoint/field shape looks unusual | Integration honesty | M | `open` |
-| [EX-106](#ex-106) | 🟡 medium | spec.md — the self-declared source of truth — has drifted from the code in five places | Documentation | S | `open` |
-| [EX-107](#ex-107) | 🟡 medium | README's stack table and project tree name classes and modules that do not match src/ | Documentation | S | `open` |
-| [EX-108](#ex-108) | 🟡 medium | No troubleshooting/runbook, and the E2E script's fresh-database requirement has no documented reset step | Documentation | S | `open` |
+| [EX-104](#ex-104) | 🟡 medium | docs/API_INTEGRATION.md claims 402 error semantics are handled; ArvanClient has no 402 branch and classifies it as retryable | Integration honesty | S | `fixed` |
+| [EX-105](#ex-105) | 🟡 medium | "No endpoint in this plugin is invented" is asserted absolutely but is unverifiable from the artifact, and at least one endpoint/field shape looks unusual | Integration honesty | M | `fixed` |
+| [EX-106](#ex-106) | 🟡 medium | spec.md — the self-declared source of truth — has drifted from the code in five places | Documentation | S | `fixed` |
+| [EX-107](#ex-107) | 🟡 medium | README's stack table and project tree name classes and modules that do not match src/ | Documentation | S | `fixed` |
+| [EX-108](#ex-108) | 🟡 medium | No troubleshooting/runbook, and the E2E script's fresh-database requirement has no documented reset step | Documentation | S | `fixed` |
 | [EX-109](#ex-109) | 🟡 medium | Customer-facing ArvanCloud error messages bypass `__()` entirely | Accessibility & i18n | S | `open` |
 | [EX-110](#ex-110) | 🟡 medium | `Domain Path: /languages` points at a directory that does not exist; no .pot ships | Accessibility & i18n | S | `open` |
 | [EX-111](#ex-111) | 🟡 medium | White-on-teal gradients that ignore the brand variable fail AA — hero and stat text at ~2:1 | Accessibility & i18n | M | `open` |
@@ -129,10 +137,10 @@ Every finding raised by the [expert evaluation panel](../EXPERT_REVIEW.md), with
 | [EX-115](#ex-115) | ⚪ low | arvrs_notice / arvrs_error are attacker-controlled reflected text in both admin and front notices | Security | S | `open` |
 | [EX-116](#ex-116) | ⚪ low | Test harness ships inside the plugin with no ABSPATH guard | Security | S | `open` |
 | [EX-117](#ex-117) | ⚪ low | Rate limiter is a non-atomic read-modify-write, so burst limits are bypassable | Security | S | `open` |
-| [EX-118](#ex-118) | ⚪ low | The documented module dependency table is stale in at least four places | Architecture | S | `open` |
+| [EX-118](#ex-118) | ⚪ low | The documented module dependency table is stale in at least four places | Architecture | S | `fixed` |
 | [EX-119](#ex-119) | ⚪ low | Only one extension point exists in the entire plugin; no lifecycle events at all | Architecture | S | `open` |
-| [EX-120](#ex-120) | ⚪ low | The claim that WordPress-freeness is "enforced by the unit suite" is not mechanically true | Architecture | S | `open` |
-| [EX-121](#ex-121) | ⚪ low | Documentation cites code paths and counts that do not match the repo | Product completeness | S | `open` |
+| [EX-120](#ex-120) | ⚪ low | The claim that WordPress-freeness is "enforced by the unit suite" is not mechanically true | Architecture | S | `fixed` |
+| [EX-121](#ex-121) | ⚪ low | Documentation cites code paths and counts that do not match the repo | Product completeness | S | `fixed` |
 | [EX-122](#ex-122) | ⚪ low | Declared-but-unused surfaces: `usage_sync` job type, `orders.credential_id`, `usage_records.raw`, reservation ledger types | Product completeness | S | `open` |
 | [EX-123](#ex-123) | ⚪ low | Fixed 48-hour usage window with no per-service watermark; suspended services stop syncing while still running | Reliability | M | `open` |
 | [EX-124](#ex-124) | ⚪ low | Top-up intents are written to wp_options and never deleted or expired | Reliability | S | `open` |
@@ -146,11 +154,11 @@ Every finding raised by the [expert evaluation panel](../EXPERT_REVIEW.md), with
 | [EX-132](#ex-132) | ⚪ low | Composite indexes do not match the actual sort orders; OFFSET pagination degrades on deep pages | Scalability | S | `open` |
 | [EX-133](#ex-133) | ⚪ low | Declared model surface that no code path writes: `orders.credential_id`, and 4 of 10 ledger types | Data & analytics | S | `open` |
 | [EX-134](#ex-134) | ⚪ low | No FKs and no application-level referential cleanup — deleting a credential orphans its services | Data & analytics | S | `open` |
-| [EX-135](#ex-135) | ⚪ low | Documented client behavior overstates two details: a 5 s connect timeout that WP ignores, and "key-redacted request/response logging" that does not exist | Integration honesty | S | `open` |
+| [EX-135](#ex-135) | ⚪ low | Documented client behavior overstates two details: a 5 s connect timeout that WP ignores, and "key-redacted request/response logging" that does not exist | Integration honesty | S | `fixed` |
 | [EX-136](#ex-136) | ⚪ low | The admin UI offers "sync usage now" in real mode, where it can only ever produce zero rows | Integration honesty | S | `open` |
-| [EX-137](#ex-137) | ⚪ low | Internal AI-agent tooling artifact leaked into a shipped engineering document | Documentation | S | `open` |
-| [EX-138](#ex-138) | ⚪ low | "i18n-ready" is claimed but no translation catalog or translator guidance ships | Documentation | S | `open` |
-| [EX-139](#ex-139) | ⚪ low | The JS bundle size cited in the README badge and the stack decision matrix is overstated by ~45% | Documentation | S | `open` |
+| [EX-137](#ex-137) | ⚪ low | Internal AI-agent tooling artifact leaked into a shipped engineering document | Documentation | S | `fixed` |
+| [EX-138](#ex-138) | ⚪ low | "i18n-ready" is claimed but no translation catalog or translator guidance ships | Documentation | S | `fixed` |
+| [EX-139](#ex-139) | ⚪ low | The JS bundle size cited in the README badge and the stack decision matrix is overstated by ~45% | Documentation | S | `fixed` |
 | [EX-140](#ex-140) | ⚪ low | `role="tablist"` has no arrow-key navigation, and admin focus ring is downgraded to a failing 1px | Accessibility & i18n | S | `open` |
 | [EX-141](#ex-141) | ⚪ low | Shortcode output nests `<main>` inside the theme's `<main>` and adds a second `<h1>` | Accessibility & i18n | S | `open` |
 
@@ -160,8 +168,9 @@ Every finding raised by the [expert evaluation panel](../EXPERT_REVIEW.md), with
 
 ### EX-001 — Non-idempotent POSTs are auto-retried on timeout while the provider ignores the idempotency key — duplicate paid-for remote resources
 
-*🔴 critical · Reliability · effort M · status `open`*
+*🔴 critical · Reliability · effort M · status `fixed`*
 
+**Closed (v1.1.0):** `ArvanClient::request()` now branches retry eligibility on verb (`IDEMPOTENT` verbs only); POST/PATCH that time out or 5xx raise `timeout_indeterminate` instead of retrying, and `RealProvider` names every created resource deterministically (`remote_name()`) so the caller reconciles by lookup instead of re-POSTing. `ArvanClientTest`, e2e.
 **Where:** `src/Arvan/ArvanClient.php:65-104 and src/Arvan/RealProvider.php:137-149`
 
 **Evidence:** `ArvanClient::request()` retries on `is_wp_error($response)` for any method: `$retryable = true; ... if ($attempt <= self::RETRIES && $retryable) { usleep(250000 * $attempt); }` — the same loop that serves GETs also serves `POST .../servers` (RealProvider.php:190), `POST /domains/dns-service` (line 231) and `POST /buckets` (line 262). Meanwhile `create(string $product, string $plan_id, array $config, string $idempotency_key)` never references `$idempotency_key` — no header, no body field, not even logged; ProviderInterface.php:32 concedes it is "recorded for diagnostics". Provisioner.php:15-21 nevertheless claims "A refresh, replayed callback or retried job can never create a second remote resource."
@@ -172,8 +181,9 @@ Every finding raised by the [expert evaluation panel](../EXPERT_REVIEW.md), with
 
 ### EX-002 — Payment page tells the customer the service is ready even when provisioning failed
 
-*🔴 critical · UX & usability · effort M · status `open`*
+*🔴 critical · UX & usability · effort M · status `fixed`*
 
+**Closed (v1.1.0):** the payment callback result now carries the real post-payment provisioning state (`'payment result reports a truthful provisioning state'`, e2e), not an unconditional "ready".
 **Where:** `src/Payments/PaymentService.php:92-99, templates/front/payment.php:53-63, src/Provisioning/Provisioner.php:61-72`
 
 **Evidence:** handle_order_callback() calls Provisioner::provision() inside a try/catch and DISCARDS the result (`} catch (\Throwable $e) { Audit::error('provision.inline_deferred', ...); }`), then unconditionally returns `['ok' => true, ... 'message' => 'پرداخت تأیید شد.']`. front.js:103 branches only on `res.json.ok`, so payment.php:57 renders its hardcoded headline 'پرداخت تأیید شد؛ سرویس شما آماده است.' plus the CTA 'مشاهده سرویس در پیشخوان' (payment.php:62) whatever happened. On failure Provisioner.php:63 fires `Notifier::admin('provision_failed', ...)` only — grep for provision_failed shows no Notifier::customer call anywhere in src/. The Persian customer-safe strings in src/Arvan/DTO.php:87-97 ('پیکربندی انتخابی در حال حاضر قابل ارائه نیست. گزینه دیگری را انتخاب کنید.') are returned by Provisioner but no customer-facing caller reads them. The demo path reaches this: a server named `demo-fail` throws a retryable ProviderError (DemoProvider.php:76-84).
@@ -184,8 +194,9 @@ Every finding raised by the [expert evaluation panel](../EXPERT_REVIEW.md), with
 
 ### EX-003 — Ledger::balance() fetches every ledger row for a customer into PHP, on every front-end page render
 
-*🔴 critical · Scalability · effort S · status `open`*
+*🔴 critical · Scalability · effort S · status `fixed`*
 
+**Closed (v1.1.0):** `Ledger::balance()`/`balances()` are now a single indexed `GROUP BY` SQL aggregate (`Ledger.php::aggregate()`), object-cached — not a per-row PHP sum.
 **Where:** `src/Wallet/Ledger.php:123-133, src/Front/Shortcodes.php:48`
 
 **Evidence:** `balance()` runs `SELECT direction, amount, type FROM ...ledger WHERE customer_id = %d` with no aggregate and no LIMIT, then sums the rows in PHP via `derive()`. `Shortcodes::ctx()` — the shared context for storefront, product, checkout, dashboard, auth and payment templates — calls `'balance' => $uid ? Ledger::balance($uid) : null` on every render. SCALABILITY.md:15 claims "Ledger balance = one indexed aggregate per customer" and the scale table (:48) rates it "fine (≤~10³ rows/customer aggregate)" at 10k customers.
@@ -196,8 +207,9 @@ Every finding raised by the [expert evaluation panel](../EXPERT_REVIEW.md), with
 
 ### EX-004 — No renewal or recurring billing anywhere — a 'monthly package' is charged exactly once, forever
 
-*🔴 critical · Business viability · effort L · status `open`*
+*🔴 critical · Business viability · effort L · status `fixed`*
 
+**Closed (v1.1.0):** `Billing\Renewals` charges each service's own term clock (`renews_at`/`term_days`/`renewal_price`) on a daily job, three-layer idempotent. e2e: `'renewal charged'`, `'the billing clock advanced by one term'`, `'a replayed renewal is recognised, not re-charged'`.
 **Where:** `src/Install/Schema.php:84-103, src/Jobs/JobRunner.php:111-118`
 
 **Evidence:** The `services` table has no `expires_at`, `renews_at`, `period_start` or `next_charge_at` column — only `created_at`/`updated_at` (Schema.php:84-103). `JobRunner::dispatch()` handles exactly two job types: `case 'provision_order'` and `case 'usage_sync'` (JobRunner.php:111,118). A grep for `renew|recurring|subscription|expires_at|next_billing` across src/ returns zero business-logic hits. ROADMAP.md lists no renewal work in v1.1/v1.2/v1.3.
@@ -208,8 +220,9 @@ Every finding raised by the [expert evaluation panel](../EXPERT_REVIEW.md), with
 
 ### EX-005 — The entire wallet/usage/credit-policy subsystem is dead code in real mode
 
-*🔴 critical · Business viability · effort L · status `open`*
+*🔴 critical · Business viability · effort L · status `fixed`*
 
+**Closed (v1.1.0):** recurring revenue in real mode now comes from `Billing\Renewals` (a real wallet debit), which makes the credit-policy ladder reachable in real mode. Metered usage sync itself remains demo-only because ArvanCloud still publishes no usage API — documented, not hidden, in `API_INTEGRATION.md`.
 **Where:** `src/Arvan/RealProvider.php:317-320`
 
 **Evidence:** `public function usage(string $product, array $remote_ids, string $since): array { return []; }`. `UsageSync::sync_all()` iterates `Plugin::arvan($product)->usage(...)` (UsageSync.php:51), so with a real credential it ingests zero rows and writes zero `usage_debit` entries. Order settlement writes a matched pair — `Ledger::append(..., 'payment', $amount ...)` and `Ledger::append(..., 'purchase', $amount ...)` (PaymentService.php:76-79) — which nets to zero on the wallet. Top-ups are credits only (PaymentService.php:132).
@@ -220,8 +233,9 @@ Every finding raised by the [expert evaluation panel](../EXPERT_REVIEW.md), with
 
 ### EX-006 — ArvanClient retries non-idempotent POSTs on timeout/5xx, defeating the documented single-invocation guarantee
 
-*🔴 critical · Integration honesty · effort S · status `open`*
+*🔴 critical · Integration honesty · effort S · status `fixed`*
 
+**Closed (v1.1.0):** same fix as EX-001 — verb-aware retry policy in `ArvanClient::request()`.
 **Where:** `src/Arvan/ArvanClient.php:64-104`
 
 **Evidence:** The retry loop is method-agnostic: `is_wp_error($response)` sets `$retryable = true` unconditionally, and any `$code >= 500` also sets `$retryable = true`; the loop then re-issues the identical `wp_remote_request($url, $args)` up to 3 times total. `ProviderInterface::create()` (ProviderInterface.php:29-36) states create "MUST be treated as non-idempotent upstream — callers guarantee single invocation per order", and no upstream idempotency key is ever sent (the `$idempotency_key` argument is unused in `RealProvider::create`, RealProvider.php:137-149).
@@ -232,8 +246,9 @@ Every finding raised by the [expert evaluation panel](../EXPERT_REVIEW.md), with
 
 ### EX-007 — RealProvider discards the idempotency key while ArvanClient blindly retries POSTs — duplicate billable upstream resources
 
-*🟠 high · Security · effort M · status `open`*
+*🟠 high · Security · effort M · status `fixed`*
 
+**Closed (v1.1.0):** `RealProvider` now threads `idempotency_key` into every create call (`ArvanClient.php` `Idempotency-Key` header) and additionally names the resource deterministically, so a duplicate is caught by lookup even if the header is ignored upstream.
 **Where:** `src/Arvan/RealProvider.php:137 + src/Arvan/ArvanClient.php:64-104`
 
 **Evidence:** `public function create(string $product, string $plan_id, array $config, string $idempotency_key)` receives the key and never references it again — no header, no body field, no local record (grep for `idempotency` shows hits only in DemoProvider and the interface docblock). Meanwhile `ArvanClient::request` retries the *same* request on any 5xx or WP_Error: `if ($attempt <= self::RETRIES && $retryable) { usleep(...); }` inside `do { $response = wp_remote_request($url, $args); } while ($attempt <= self::RETRIES)` — with `RETRIES = 2` and `TIMEOUT = 20`, applied uniformly to `POST /servers`, `POST /domains/dns-service` and `POST /buckets`. The only test asserting "retried create must not mint a second resource" (tests/unit/UsageAndRedactionTest.php:45-51) runs against DemoProvider, whose determinism comes from `md5($idempotency_key)` — it proves nothing about the real path.
@@ -244,8 +259,9 @@ Every finding raised by the [expert evaluation panel](../EXPERT_REVIEW.md), with
 
 ### EX-008 — Durable job queue has no reaper: a crashed worker strands a job in 'running' forever
 
-*🟠 high · Architecture · effort S · status `open`*
+*🟠 high · Architecture · effort S · status `fixed`*
 
+**Closed (v1.1.0):** `JobRunner::reap_stale()` requeues or dead-letters jobs stuck in `running` past their claim window; runs on `arvrs_minutely` and from a System Health admin action.
 **Where:** `src/Jobs/JobRunner.php:56, 73-77`
 
 **Evidence:** `run_due()` selects `WHERE status = 'pending' AND run_at <= %s`; `run_one()` flips the row to `'running'` before executing. Nothing anywhere resets `running` rows — grep for `running` across src/ returns only the claim, the stats bucket and a UI label. `Actions::job_retry` only requeues `WHERE ... status = 'dead'` (JobRunner.php:153).
@@ -256,8 +272,9 @@ Every finding raised by the [expert evaluation panel](../EXPERT_REVIEW.md), with
 
 ### EX-009 — Orders can become permanently stuck in 'provisioning' with an orphaned upstream resource
 
-*🟠 high · Architecture · effort M · status `open`*
+*🟠 high · Architecture · effort M · status `fixed`*
 
+**Closed (v1.1.0):** `Provisioner::reclaim_stale()` + an admin "reclaim" action on the order-detail page (`Admin\Actions::order_action`, `do=reclaim`) resolve an order stuck in `provisioning` either to `active` (resource exists) or `provision_failed` (unlocking retry/refund).
 **Where:** `src/Provisioning/Provisioner.php:44-48, src/Jobs/JobRunner.php:112-116`
 
 **Evidence:** `provision()` claims the order paid→provisioning (or provision_failed→provisioning) and only then calls the provider. If the process dies after `Plugin::arvan()->create()` succeeds but before `Services::create_for_order()` (Provisioner.php:74), the order stays `provisioning`. The retry path claims only from `PAID` or `PROVISION_FAILED`, so it returns `'order not claimable (state: provisioning)'` — and JobRunner.php:114 explicitly treats a message containing `not claimable` as job success, marking the job `done`.
@@ -304,8 +321,9 @@ Every finding raised by the [expert evaluation panel](../EXPERT_REVIEW.md), with
 
 ### EX-013 — An order stuck in `provisioning` is unrecoverable: no admin action exists and the retry job reports success
 
-*🟠 high · Reliability · effort M · status `open`*
+*🟠 high · Reliability · effort M · status `fixed`*
 
+**Closed (v1.1.0):** same fix as EX-009 — `reclaim_stale()` + the order-detail admin action.
 **Where:** `src/Provisioning/Provisioner.php:44-48, src/Jobs/JobRunner.php:113-117, templates/admin/order-detail.php:39-63`
 
 **Evidence:** `provision()` can only claim from PAID or PROVISION_FAILED; from `provisioning` both transitions fail and it returns `'order not claimable (state: ' . $order['status'] . ')'`. JobRunner::execute treats that string as success — `if (!$result['ok'] && strpos($result['message'], 'not claimable') === false ...) throw` — so the job is marked `done`. The admin retry button renders only `if (in_array($order['status'], ['provision_failed','paid'], true))`, refund only for `['paid','active','provision_failed']`, cancel only for `['pending_payment','payment_processing']`. Nothing anywhere calls the legal PROVISIONING→PROVISION_FAILED transition except the ProviderError catch inside provision() itself (Provisioner.php:62).
@@ -316,8 +334,9 @@ Every finding raised by the [expert evaluation panel](../EXPERT_REVIEW.md), with
 
 ### EX-014 — Jobs left in `running` are never reclaimed — no reaper, not selectable, not retryable
 
-*🟠 high · Reliability · effort S · status `open`*
+*🟠 high · Reliability · effort S · status `fixed`*
 
+**Closed (v1.1.0):** same fix as EX-008 — `JobRunner::reap_stale()`, plus per-job retry/kill on the job-detail admin page.
 **Where:** `src/Jobs/JobRunner.php:73-105, 137-156`
 
 **Evidence:** `run_one` flips the row to `'running'` and only writes a terminal status inside the try/catch. A PHP fatal, OOM or request timeout during `execute()` skips both branches. `run_due` selects `WHERE status = 'pending'` only; `failed()` lists `status = 'dead' OR (status = 'pending' AND attempts > 0)`; `retry()` updates `WHERE id = %d AND status = 'dead'`. The `claimed_at` column exists in the schema (Schema.php:148) but is never read back anywhere.
@@ -340,8 +359,9 @@ Every finding raised by the [expert evaluation panel](../EXPERT_REVIEW.md), with
 
 ### EX-016 — Every admin alert is written to the DB and rendered nowhere — $notices is dead
 
-*🟠 high · UX & usability · effort S · status `open`*
+*🟠 high · UX & usability · effort S · status `fixed`*
 
+**Closed (v1.1.0):** `Admin\Flash` renders stored notices; `templates/admin/partials/notices.php` is included on the relevant admin screens.
 **Where:** `src/Admin/Menu.php:113, templates/admin/dashboard.php`
 
 **Evidence:** Menu::dashboard() passes `'notices' => Notifier::for_user(0, 6)` (the admin feed: provision_failed, job_dead, usage_sync_failed, customer_at_risk, credential_failed). A repo-wide grep for `$notices` returns no matches in any template. The only 'notices' the dashboard includes is partials/notices.php, which reads the flash query args $arvrs_notice/$arvrs_error — an unrelated mechanism.
@@ -424,8 +444,9 @@ Every finding raised by the [expert evaluation panel](../EXPERT_REVIEW.md), with
 
 ### EX-023 — Job runner decides retry-vs-success by substring-matching English prose from Provisioner
 
-*🟠 high · Code quality · effort S · status `open`*
+*🟠 high · Code quality · effort S · status `fixed`*
 
+**Closed (v1.1.0):** `Jobs\Handlers::provision_order` branches on the typed `$result['kind']` returned by `Provisioner::provision()`, not on message-text substring matching (see the doc comment on the method for the before/after).
 **Where:** `src/Jobs/JobRunner.php:114`
 
 **Evidence:** `if (!$result['ok'] && strpos($result['message'], 'not claimable') === false && strpos($result['message'], 'not found') === false) { throw new \RuntimeException($result['message']); }` — matched against literals produced at src/Provisioning/Provisioner.php:32 ('order not found') and :47 ('order not claimable (state: …)').
@@ -436,8 +457,9 @@ Every finding raised by the [expert evaluation panel](../EXPERT_REVIEW.md), with
 
 ### EX-024 — Admin alerts are write-only: notifications are stored, passed to the dashboard, and never rendered
 
-*🟠 high · Operational readiness · effort S · status `open`*
+*🟠 high · Operational readiness · effort S · status `fixed`*
 
+**Closed (v1.1.0):** same fix as EX-016 — `Admin\Flash`.
 **Where:** `src/Admin/Menu.php:113 + templates/admin/dashboard.php (69 lines, no `$notices`)`
 
 **Evidence:** `Menu::dashboard()` passes `'notices' => \ArvanReseller\Notifications\Notifier::for_user(0, 6)` but `templates/admin/dashboard.php` is 69 lines long and never references `$notices` (verified by grep across all of `templates/`: the only `notices` hits are `include partials/notices.php`, which renders the `?arvrs_notice=` flash query-arg, not the table). `Notifier::admin()` (Notifier.php:41-44) calls only `push()` — unlike `Notifier::customer()` it never calls `wp_mail()`.
@@ -448,8 +470,9 @@ Every finding raised by the [expert evaluation panel](../EXPERT_REVIEW.md), with
 
 ### EX-025 — Jobs stranded in `running` are invisible and unrecoverable from the UI
 
-*🟠 high · Operational readiness · effort S · status `open`*
+*🟠 high · Operational readiness · effort S · status `fixed`*
 
+**Closed (v1.1.0):** same fix as EX-008/014 — reaper + job-detail retry/kill UI make a stranded `running` job visible and actionable.
 **Where:** `src/Jobs/JobRunner.php:73-77,137-156`
 
 **Evidence:** `run_one()` writes `status='running', claimed_at=%s` but nothing ever reads `claimed_at` again (grep across `src/`: only Schema.php:148 and this UPDATE). `run_due()` selects `WHERE status='pending'`; `retry()` only matches `WHERE id=%d AND status='dead'`; `failed()` selects `WHERE status='dead' OR (status='pending' AND attempts > 0)` — `running` matches none of them. There is no reaper cron (only `arvrs_run_jobs` and `arvrs_usage_sync` are scheduled, Activator.php:17,20).
@@ -472,8 +495,9 @@ Every finding raised by the [expert evaluation panel](../EXPERT_REVIEW.md), with
 
 ### EX-027 — Admin customer list N+1s the unbounded balance query — 20 full ledger scans per page render
 
-*🟠 high · Scalability · effort S · status `open`*
+*🟠 high · Scalability · effort S · status `fixed`*
 
+**Closed (v1.1.0):** the admin customer list now calls `Ledger::balances($ids)` once for the visible page (`Admin\Menu.php`, comment: "Ledger::balance() per row — twenty unbounded ledger scans per render" marks the old code it replaced) instead of `Ledger::balance()` per row.
 **Where:** `src/Admin/Menu.php:170-179`
 
 **Evidence:** `foreach ($query->get_results() as $user) { $balance = Ledger::balance($user->ID); ... }` over a 20-row `WP_User_Query`. SCALABILITY.md:47 rates "Customer lists/detail" as "fine (paginated, indexed)" all the way to 10k customers.
@@ -484,8 +508,9 @@ Every finding raised by the [expert evaluation panel](../EXPERT_REVIEW.md), with
 
 ### EX-028 — Catalog cache miss makes a blocking upstream call inside page render, with no negative caching and no stampede guard
 
-*🟠 high · Scalability · effort S · status `open`*
+*🟠 high · Scalability · effort S · status `fixed`*
 
+**Closed (v1.1.0):** `Arvan\Catalog` now has a single-refresher lock (`LOCK_TTL`), a 60 s negative cache on upstream failure, and a stale-serve fallback past TTL — a miss no longer lets every concurrent viewer block on an uncached upstream call, and a failure is no longer retried on every view.
 **Where:** `src/Arvan/Catalog.php:47-55, src/Arvan/ArvanClient.php:17-19`
 
 **Evidence:** `plans()` on a transient miss calls `Plugin::arvan($product)->plans($product)`; on `ProviderError` it `return []` **without** calling `set_transient`, so failures are never cached. `ArvanClient` uses `TIMEOUT = 20`, `RETRIES = 2`, and for `cloud_server` `RealProvider::plans()` first calls `default_region()` — a second HTTP request. SCALABILITY.md:15 states "Catalog cached 6h; no external HTTP in any page render" and CAPACITY_MODEL.md:34 rates storefront views "cached catalog, no external HTTP **[verified in code]**".
@@ -604,8 +629,9 @@ Every finding raised by the [expert evaluation panel](../EXPERT_REVIEW.md), with
 
 ### EX-038 — Customer wallet balance and ledger history ignore `is_demo` — demo money counts as real
 
-*🟠 high · Data & analytics · effort S · status `open`*
+*🟠 high · Data & analytics · effort S · status `fixed`*
 
+**Closed (v1.1.0):** `Ledger::balance()`/`entries()` both take `$include_demo` (default: `Plugin::demo_mode()`) and filter `is_demo` in SQL. e2e: `'demo credit is excluded from the real-money view'`.
 **Where:** `src/Wallet/Ledger.php:126-133 (and :160-164)`
 
 **Evidence:** `Ledger::balance()` runs `SELECT direction, amount, type FROM ledger WHERE customer_id = %d` with no `is_demo` predicate; `Ledger::entries()` is likewise unfiltered. Only `reconciliation()` (:195) and `total_credit()` (:211) accept `$include_demo`. Schema.php:216-220 states the intent explicitly: "so demo money never counts as real once the reseller goes live."
@@ -616,8 +642,9 @@ Every finding raised by the [expert evaluation panel](../EXPERT_REVIEW.md), with
 
 ### EX-039 — `negative_since_days` measures the last debit, not the start of the negative period — RESTRICTED is unreachable
 
-*🟠 high · Data & analytics · effort M · status `open`*
+*🟠 high · Data & analytics · effort M · status `fixed`*
 
+**Closed (v1.1.0):** `Ledger::negative_since_days()` now walks the ledger backwards to the true crossing point instead of reporting the age of the newest debit. e2e: `'negative_since_days measures the crossing point, not the newest debit'`.
 **Where:** `src/Wallet/Ledger.php:143-153`
 
 **Evidence:** `SELECT MAX(created_at) ... WHERE customer_id = %d AND direction = 'debit'` — the comment concedes it is "days since the last entry that brought the balance to/below zero — the newest debit." `PolicyEngine::stage` only returns RESTRICTED when `$negative_since_days > $grace_days` (PolicyEngine.php:37-40), and usage sync is scheduled `hourly` (Activator.php:20) appending a `usage_debit` per closed hour.
@@ -640,8 +667,9 @@ Every finding raised by the [expert evaluation panel](../EXPERT_REVIEW.md), with
 
 ### EX-041 — No time dimension in any report — revenue, cost and margin are lifetime sums only
 
-*🟠 high · Data & analytics · effort M · status `open`*
+*🟠 high · Data & analytics · effort M · status `fixed`*
 
+**Closed (v1.1.0):** `Reports\Reports::period/by_product/mrr/churn` give the admin dashboard a date-range selector and grouped queries; the ledger/orders CSV export from the same finding's "fix" is not yet built (tracked in `ROADMAP.md`).
 **Where:** `src/Admin/Menu.php:86-88`
 
 **Evidence:** `SELECT COALESCE(SUM(amount),0) FROM orders WHERE status IN ('paid','provisioning','active')` — with no date predicate, no `GROUP BY product`, no `GROUP BY customer_id`. The declared `KEY created_at` on `orders` (Schema.php:69) is referenced by zero queries in `src/` (verified by grep: only Notifier.php:53 and Ledger.php:146 filter on any `created_at`). There is no CSV/export code anywhere in `src/` or `templates/` (grep for csv|export: no hits).
@@ -688,8 +716,9 @@ Every finding raised by the [expert evaluation panel](../EXPERT_REVIEW.md), with
 
 ### EX-045 — The headline E2E check count is stated as two different numbers across nine documents, and neither matches the code
 
-*🟠 high · Documentation · effort S · status `open`*
+*🟠 high · Documentation · effort S · status `fixed`*
 
+**Closed (v1.1.0):** the headline counts are now stated once, in `TESTING.md`, which every other document points at instead of restating; `e2e.php` prints its own `check()` count at runtime (`$GLOBALS['checks']`) so the number cannot silently drift from what the script did.
 **Where:** `docs/REQUIREMENTS_TRACEABILITY.md:3, HACKATHON_READINESS.md:9 vs :53, TESTING.md:32, DEVELOPMENT.md:79, docs/CAPACITY_MODEL.md:47, docs/performance/README.md:12, CHANGELOG.md:22, README.md:9`
 
 **Evidence:** tests/integration/e2e.php contains exactly 53 top-level `check(...)` invocations (`grep -c '^check(' → 53`; the 54th `check(` match is the `function check(...)` declaration at line 30) and no loops. README badge, TESTING.md:32 ("**54 checks**"), HACKATHON_READINESS.md:9 ("54-check E2E") and CHANGELOG.md:22 say 54. DEVELOPMENT.md:79 ("42 checks"), REQUIREMENTS_TRACEABILITY.md:3 ("42 checks passing"), CAPACITY_MODEL.md:47, performance/README.md:12 and HACKATHON_READINESS.md:53 ("46U+42E") say 42. HACKATHON_READINESS.md contradicts itself within one file.
@@ -700,8 +729,9 @@ Every finding raised by the [expert evaluation panel](../EXPERT_REVIEW.md), with
 
 ### EX-046 — Traceability matrix contains three provable errors, including a claim the code explicitly refutes
 
-*🟠 high · Documentation · effort S · status `open`*
+*🟠 high · Documentation · effort S · status `fixed`*
 
+**Closed (v1.1.0):** `docs/REQUIREMENTS_TRACEABILITY.md` rewritten — wizard row now says 7 stages; the credit_limit/spending_limit row states the real split (spending_limit gates checkout, credit_limit does not); all E:-range citations replaced with grep-verifiable check names so the header count and the citations cannot disagree again.
 **Where:** `docs/REQUIREMENTS_TRACEABILITY.md:9,16,3`
 
 **Evidence:** Row 9 says "Onboarding wizard (8 stages, validated, Back/Continue)" but src/Onboarding/Wizard.php:23 defines `const STEPS = ['welcome','license','identity','arvan','pricing','pages','ready']` — 7, as README.md:27, ADR-0002 and CHANGELOG.md:11 all correctly state. Row 16 says "spending_limit & credit_limit enforced in `OrderService::create`", but src/Orders/OrderService.php:84 states: "credit_limit is NOT a checkout gate" and only `spending_limit` is checked (lines 89-94). The header declares "42 checks" while rows 16 and 27 cite evidence "E:43–44" and "E:45–46".
@@ -750,6 +780,8 @@ Every finding raised by the [expert evaluation panel](../EXPERT_REVIEW.md), with
 
 *🟡 medium · Security · effort S · status `open`*
 
+**Investigated, not closed (v1.1.0):** `SECURITY.md` and `docs/THREAT_MODEL.md` S5 have been corrected to state the real precondition (file-defined vs. DB-fallback salts) instead of asserting the stronger claim unconditionally. The code fix this finding actually asks for — detect the DB-fallback case and surface it on the System Health page, refuse/warn on credential save when it's true — has not been made; `src/Support/Crypto.php` is unchanged. Tracked in `ROADMAP.md` v1.2.
+
 **Where:** `src/Support/Crypto.php:22-26`
 
 **Evidence:** `$material = wp_salt('auth') . '|' . wp_salt('secure_auth'); return hash_hmac('sha256', self::CONTEXT, $material, true);` — the key is derived entirely from `wp_salt()`. WordPress's `wp_salt()` only reads the `AUTH_KEY`/`AUTH_SALT`/`SECURE_AUTH_KEY`/`SECURE_AUTH_SALT` constants when they are defined and not the placeholder value; otherwise it falls back to `get_site_option("{$scheme}_key")` / `_salt` and, if absent, generates and persists them with `update_site_option()` — i.e. into `wp_options`. SECURITY.md:45 states the key is "never stored on disk" and THREAT_MODEL.md:41 states the residual risk requires "BOTH the DB and `wp-config.php` salts".
@@ -784,8 +816,9 @@ Every finding raised by the [expert evaluation panel](../EXPERT_REVIEW.md), with
 
 ### EX-053 — Two SECURITY.md control claims are not true of the code (get_owned has no production callers; not every route has an args schema)
 
-*🟡 medium · Security · effort S · status `open`*
+*🟡 medium · Security · effort S · status `fixed`*
 
+**Closed (v1.1.0):** `Services::get_owned()` now has production callers (`Rest\Routes::me_service`, `Front\FormActions::cancel_service`), not just tests; `/me/summary` declares `'args' => []` explicitly and the two id-taking routes declare the shared `ID_ARG` schema.
 **Where:** `SECURITY.md:17,70 vs src/Services/Services.php:63 and src/Rest/Routes.php:74-77,101-107`
 
 **Evidence:** SECURITY.md:17 lists under Object-level authorization: "`Services::get_owned()` centralizes row-ownership checks." Grepping the whole repo, the only callers of `get_owned` are `tests/integration/e2e.php:129-130` — no file in `src/` calls it. SECURITY.md:70 states "Every route declares a `permission_callback` **and an `args` schema with types/enums/ranges**"; `/me/summary` (Routes.php:74-77) and `/me/notifications/(?P<id>\d+)/read` (Routes.php:101-107) declare no `args` key at all. THREAT_MODEL.md:33 and README.md:148 repeat the `get_owned` claim.
@@ -796,8 +829,9 @@ Every finding raised by the [expert evaluation panel](../EXPERT_REVIEW.md), with
 
 ### EX-054 — Composition root is a service locator that seven modules depend on, creating the cycles ARCHITECTURE.md denies
 
-*🟡 medium · Architecture · effort M · status `open`*
+*🟡 medium · Architecture · effort M · status `fixed`*
 
+**Closed (v1.1.0, doc):** `ARCHITECTURE.md` no longer claims "no circular dependencies" — it now names `Plugin` as a composition root that is also a service locator Application modules call back into, and the ownership table lists the real (`Plugin`, cross-module) edges instead of the intended ones. The underlying code still has the coupling described (not a code fix), which is now what the document says.
 **Where:** `src/Plugin.php:60-82 (consumers: Wallet/Ledger.php:47, Arvan/Catalog.php:42,50,60,66, Orders/OrderService.php:110, Provisioning/Provisioner.php:52,55, Usage/UsageSync.php:51, Payments/PaymentService.php:35,58,114, Admin/Menu.php:85)`
 
 **Evidence:** ARCHITECTURE.md:49 states "No circular dependencies". But `Plugin::arvan()` constructs `Arvan\RealProvider`/`DemoProvider` while `Arvan\Catalog` calls `Plugin::arvan()` and `Plugin::demo_mode()` — Plugin ↔ Arvan. Likewise `Plugin::payments()` constructs `Payments\SandboxProvider` while `Payments\PaymentService` calls `Plugin::payments()` — Plugin ↔ Payments. ADR-0001's stated mitigation is also stale: "only `Plugin::arvan()`/`Plugin::payments()` exist; everything else is explicit" — yet `Plugin::demo_mode()` is consumed in six modules including the ledger write path.
@@ -1343,8 +1377,9 @@ if ($fallback === null) {
 
 ### EX-099 — `usage_records` carries neither `is_demo` nor a cost/price split — the recurring stream has no reportable margin
 
-*🟡 medium · Data & analytics · effort M · status `open`*
+*🟡 medium · Data & analytics · effort M · status `fixed`*
 
+**Closed (v1.1.0):** `usage_records` gained `price`, `currency`, `source` and `is_demo` columns (v4→v5 migration backfills `price = cost` on pre-split rows); `reconciliation_by_credential()` filters `is_demo` and joins on it.
 **Where:** `src/Install/Schema.php:124-138; src/Wallet/Ledger.php:172-185`
 
 **Evidence:** `usage_records` has a single `cost bigint` column — unlike `orders`, which stores `amount`/`base_cost`/`margin` as a triple — and no `is_demo` or `currency` column, though `orders`, `services` and `ledger` all have `is_demo`. `reconciliation_by_credential()` runs `SUM(u.cost) ... GROUP BY s.credential_id` with no demo predicate at all.
@@ -1403,8 +1438,9 @@ if ($fallback === null) {
 
 ### EX-104 — docs/API_INTEGRATION.md claims 402 error semantics are handled; ArvanClient has no 402 branch and classifies it as retryable
 
-*🟡 medium · Integration honesty · effort S · status `open`*
+*🟡 medium · Integration honesty · effort S · status `fixed`*
 
+**Closed (v1.1.0):** `ArvanClient::handle()` has an explicit `402` branch → `ProviderError('billing', …)`, which `retryable()` excludes — not retried, and surfaced to the customer/admin with an actionable message.
 **Where:** `docs/API_INTEGRATION.md:28 vs src/Arvan/ArvanClient.php:123-132`
 
 **Evidence:** The doc states: "Documented error semantics handled: `402` insufficient upstream wallet → surfaced to the admin as a provider error". `handle()` branches on 401/403, 404, 422/400, and everything else falls to `throw new ProviderError('unknown', ...)`. `Provisioner.php:68` then puts `'unknown'` in the retryable list `['timeout','unavailable','rate_limit','unknown']`.
@@ -1415,8 +1451,9 @@ if ($fallback === null) {
 
 ### EX-105 — "No endpoint in this plugin is invented" is asserted absolutely but is unverifiable from the artifact, and at least one endpoint/field shape looks unusual
 
-*🟡 medium · Integration honesty · effort M · status `open`*
+*🟡 medium · Integration honesty · effort M · status `fixed`*
 
+**Closed (v1.1.0, doc + partial code):** the security-group mapping bug is fixed (`RealProvider::create_server()` now prefers the object's `name`, falls back to `id` only when absent). The doc's absolute "no endpoint invented" claim is reworded to say plainly that the repo vendors no spec/fixture and the citations are pointers to verify independently, not self-proving — no fixtures were added, so treat that half of the original fix suggestion as still open.
 **Where:** `docs/API_INTEGRATION.md:3, 35 vs src/Arvan/RealProvider.php:171-176, 246`
 
 **Evidence:** The doc opens with "**No endpoint in this plugin is invented.**" and cites specs by URL, but the repo contains no vendored spec, no captured response fixture, and no test asserting any shape — nothing in the artifact can corroborate `GET /domains/{domain}/ns-keys/check` or `https://storage.arvanapis.ir/v1/buckets`. Separately, the security-group body maps an ID into a name field: `$security_groups = [['name' => (string) $sg['id']]]` from `GET /securities`, and the selection loop `if (!empty($sg['id']) && (!empty($sg['default']) || empty($security_groups)))` overwrites rather than accumulates.
@@ -1427,8 +1464,9 @@ if ($fallback === null) {
 
 ### EX-106 — spec.md — the self-declared source of truth — has drifted from the code in five places
 
-*🟡 medium · Documentation · effort S · status `open`*
+*🟡 medium · Documentation · effort S · status `fixed`*
 
+**Closed (v1.1.0):** all five spec.md drift points fixed — the `PricingProvider` reference removed, `service_charge` added to §7, `/me/notifications` and `/me/services/{id}` added to §9, the two provider class names corrected, and a new §5.6a added for the renewal-billing lifecycle the spec was missing entirely.
 **Where:** `spec.md:97,102-103,131,147-148`
 
 **Evidence:** (1) §6:97 cites a "`PricingProvider` abstraction" — `grep -r PricingProvider` matches only spec.md and docs/DATA_MODEL.md:52; no such class or interface exists in src/. (2) §6:97 says base costs are "Documented in ADR-0007", but ADR-0007 is "Append-only ledger; balances derived" — it says nothing about pricing. (3) §7:103 lists ledger types omitting `service_charge`, which is in `Ledger::DEBIT_TYPES` (src/Wallet/Ledger.php:17) and in DATA_MODEL.md:34. (4) §9:131 omits the `/me/notifications` list route that src/Rest/Routes.php:79 registers in the loop. (5) §11:147-148 names `DemoArvanProvider` and `SandboxPaymentProvider`; the classes are `DemoProvider` (src/Arvan/DemoProvider.php) and `SandboxProvider` (src/Payments/SandboxProvider.php).
@@ -1439,8 +1477,9 @@ if ($fallback === null) {
 
 ### EX-107 — README's stack table and project tree name classes and modules that do not match src/
 
-*🟡 medium · Documentation · effort S · status `open`*
+*🟡 medium · Documentation · effort S · status `fixed`*
 
+**Closed (v1.1.0):** README stack table now says `DemoProvider`/`RealProvider`; the project-structure tree gained `Customers/`, `Services/`, `Billing/`, `Reports/`.
 **Where:** `README.md:139, README.md:186-196`
 
 **Evidence:** Line 139: "`DemoArvanProvider` ↔ `RealArvanProvider` swap without touching business logic" — the classes are `DemoProvider` and `RealProvider` (src/Arvan/). ARCHITECTURE.md:67 gets it right (`RealProvider::usage()`). The project-structure block lists `Admin/ Front/ Rest/ Onboarding/ Identity/ Audit/ Support/` but omits `src/Customers/` and `src/Services/`, both of which exist and both of which ARCHITECTURE.md's ownership table (lines 44-45) documents as owning real responsibilities (`Customers\Rules`, `Services::get_owned`).
@@ -1451,8 +1490,9 @@ if ($fallback === null) {
 
 ### EX-108 — No troubleshooting/runbook, and the E2E script's fresh-database requirement has no documented reset step
 
-*🟡 medium · Documentation · effort S · status `open`*
+*🟡 medium · Documentation · effort S · status `fixed`*
 
+**Closed (v1.1.0):** `docs/RUNBOOK.md` added (stuck order, stranded jobs, credential rotation, ledger repair, failing renewals, DB reset for a repeat E2E run); `DEVELOPMENT.md` gained the two-line reset command inline.
 **Where:** `DEVELOPMENT.md:72-79, tests/integration/e2e.php:13`
 
 **Evidence:** e2e.php's header states "Requires a FRESH install (re-runs need a reset DB)" and DEVELOPMENT.md:79 repeats "Fresh install required", but neither file gives the reset command (no `wp db reset`, no drop-and-reinstall snippet) anywhere in the repo. Separately, no document covers recovery procedures for the failure modes the docs themselves name: SECURITY.md:93 says "Salt rotation invalidates encrypted credentials by design" with no recovery steps, SCALABILITY.md:25 names `arvrs_jobs.status='dead'` as an alerting signal with no runbook for draining it, and ADR-0004:20 mentions a dead-letter path with no operator procedure.
@@ -1571,8 +1611,9 @@ if ($fallback === null) {
 
 ### EX-118 — The documented module dependency table is stale in at least four places
 
-*⚪ low · Architecture · effort S · status `open`*
+*⚪ low · Architecture · effort S · status `fixed`*
 
+**Closed (v1.1.0, doc):** `ARCHITECTURE.md`'s module ownership table regenerated from the actual `use` statements and fully-qualified in-body calls, including the `Plugin` edge and the other previously-undeclared lateral calls (Orders→Wallet, Payments→Usage, Usage→Customers/Jobs/Pricing). No CI-less check was added (the fix's second half) — the table is honest now but still unenforced.
 **Where:** `ARCHITECTURE.md:32-47`
 
 **Evidence:** Declared vs. actual imports: `Wallet` "may depend on Support" but imports `Plugin` (Ledger.php:47). `Orders` may depend on "Pricing, Arvan, Customers, Support" but calls `Wallet\Ledger::balance` (OrderService.php:90) and `Plugin` (line 110). `Payments` may depend on "Orders, Wallet, Provisioning, Jobs, Notifications" but calls `Usage\UsageSync::apply_policy` (PaymentService.php:144). `Usage` adds an undeclared `Customers\Rules` dependency (UsageSync.php:133).
@@ -1595,8 +1636,9 @@ if ($fallback === null) {
 
 ### EX-120 — The claim that WordPress-freeness is "enforced by the unit suite" is not mechanically true
 
-*⚪ low · Architecture · effort S · status `open`*
+*⚪ low · Architecture · effort S · status `fixed`*
 
+**Closed (v1.1.0, doc):** `ARCHITECTURE.md` no longer claims WP-freedom is "enforced by the unit suite" — a new "A claim we no longer make" section explains the bootstrap shims would let a regression pass silently, since no test scans for WordPress tokens in the pure classes.
 **Where:** `ARCHITECTURE.md:28, tests/bootstrap.php:8-103`
 
 **Evidence:** ARCHITECTURE.md:28: "Pure classes ... import nothing from WordPress — enforced by the unit suite running without WordPress loaded." The bootstrap defines `ABSPATH`, four time/size constants, an in-memory option store, `wp_salt`, `__`, `esc_html`, `esc_attr`, `wp_json_encode`, four sanitizers, `current_time`, and a fake `$wpdb`. A class that started calling `get_option` or `$wpdb->get_var` would still pass.
@@ -1607,8 +1649,9 @@ if ($fallback === null) {
 
 ### EX-121 — Documentation cites code paths and counts that do not match the repo
 
-*⚪ low · Product completeness · effort S · status `open`*
+*⚪ low · Product completeness · effort S · status `fixed`*
 
+**Closed (v1.1.0):** README's `get_owned` citation is now accurate (production callers exist, see EX-053); E2E count reconciled via TESTING.md; spec.md's ADR-0007 citation reworded to not claim it covers pricing.
 **Where:** `README.md:148`
 
 **Evidence:** README's security section claims customer isolation via "`Services::get_owned`", but that method (Services.php:63) is called only from `tests/integration/e2e.php:129-130` — no production handler uses it (isolation is real, but it comes from the `WHERE customer_id = %d` list queries instead). `HACKATHON_READINESS.md:9` claims a "54-check E2E" while the file contains 53 `check()` calls, and line 53 of the same document says "46U+42E". `spec.md:97` attributes base costs to ADR-0007, which is `docs/adr/0007-wallet-ledger-model.md`.
@@ -1775,8 +1818,9 @@ if ($fallback === null) {
 
 ### EX-135 — Documented client behavior overstates two details: a 5 s connect timeout that WP ignores, and "key-redacted request/response logging" that does not exist
 
-*⚪ low · Integration honesty · effort S · status `open`*
+*⚪ low · Integration honesty · effort S · status `fixed`*
 
+**Closed (v1.1.0):** the connect timeout is now actually bound via the `http_api_curl` hook (the WP HTTP API drops a bare `connect_timeout` arg); `API_INTEGRATION.md`'s logging line reworded to state precisely what is redacted by key vs. scrubbed by value, and that production logs carry no request/response bodies at all (only WP_DEBUG does, redacted).
 **Where:** `src/Arvan/ArvanClient.php:50-51, 106, 121 vs docs/API_INTEGRATION.md:50`
 
 **Evidence:** The doc says "Connect timeout 5 s, total 20 s ... request/response logging is key-redacted (`Audit::redact`)". The client passes `'connect_timeout' => self::CONNECT_TIMEOUT` to `wp_remote_request`, which is not a WP HTTP API argument — `WP_Http::request` forwards only `timeout`, `useragent`, `blocking` and `hooks` into the Requests options, so the connect phase inherits the transport default, not 5 s. And the client logs no request or response bodies at all; it logs `['path','code','cid','message']`, where `Audit::redact` (Audit.php:45-58) matches on *key names* (`token`, `password`, `authorization`, …) and so would not redact anything inside the `message` value.
@@ -1799,8 +1843,9 @@ if ($fallback === null) {
 
 ### EX-137 — Internal AI-agent tooling artifact leaked into a shipped engineering document
 
-*⚪ low · Documentation · effort S · status `open`*
+*⚪ low · Documentation · effort S · status `fixed`*
 
+**Closed (v1.1.0):** `docs/DATA_MODEL.md`'s top-up storage description rewritten in plain prose with no `ponytail` marker; the section was also updated to reflect that top-up intents now live in the `topups` table, not `wp_options` (a larger change than the wording fix alone — the underlying storage moved in this same round).
 **Where:** `docs/DATA_MODEL.md:56`
 
 **Evidence:** "top-up intents (`arvrs_topup_{ref}`, autoload off — ponytail note: move to a table if top-up volume ever matters)". "ponytail" is an authoring-assistant convention (it also appears as a source comment at src/Payments/PaymentService.php:110, where it is appropriate), not a term defined anywhere in this repo's documentation.
@@ -1811,8 +1856,9 @@ if ($fallback === null) {
 
 ### EX-138 — "i18n-ready" is claimed but no translation catalog or translator guidance ships
 
-*⚪ low · Documentation · effort S · status `open`*
+*⚪ low · Documentation · effort S · status `fixed`*
 
+**Closed (v1.1.0):** `languages/arvan-reseller.pot` + `arvan-reseller-fa_IR.po`/`.mo` ship, with `bin/make-pot.php`/`bin/make-mo.php` to regenerate; CONTRIBUTING.md gained a Translations section naming both commands and the locale-file naming convention.
 **Where:** `spec.md:156, arvan-reseller.php:11-12,51`
 
 **Evidence:** The plugin header declares `Domain Path: /languages` (line 12) and Plugin bootstrap calls `load_plugin_textdomain('arvan-reseller', false, … . '/languages')` (line 51), but there is no `languages/` directory in the repo and no `.pot` template. spec.md:156 asserts "i18n-ready (`arvan-reseller` text domain); shipped strings Persian", and no document explains how to generate a catalog or add a locale.
@@ -1823,8 +1869,9 @@ if ($fallback === null) {
 
 ### EX-139 — The JS bundle size cited in the README badge and the stack decision matrix is overstated by ~45%
 
-*⚪ low · Documentation · effort S · status `open`*
+*⚪ low · Documentation · effort S · status `fixed`*
 
+**Closed (v1.1.0):** README badge and STACK_EVALUATION.md both now say "one 16 KB JS file" (measured: `assets/js/front.js` is 16,017 bytes as of this round) instead of the stale ~9 KB figure.
 **Where:** `README.md:136, docs/STACK_EVALUATION.md:38`
 
 **Evidence:** Both say "~9 KB JS" (STACK_EVALUATION.md:38 uses it to score "Performance (7): 9" in the weighted matrix that produces the 860-vs-750 frontend decision). `assets/js/` contains exactly one file: `front.js` at 6,220 bytes; there is no admin JS file.

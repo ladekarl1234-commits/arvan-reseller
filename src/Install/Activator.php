@@ -8,16 +8,33 @@ defined('ABSPATH') || exit;
 
 final class Activator
 {
+    /**
+     * Cron hook => interval. Kept as one list so activation and deactivation
+     * cannot drift: adding a hook to the plugin without clearing it on
+     * deactivate leaves an orphan event firing against a dead callback.
+     */
+    private const SCHEDULE = [
+        'arvrs_run_jobs'   => 'arvrs_minutely',
+        'arvrs_usage_sync' => 'hourly',
+        'arvrs_daily'      => 'daily',
+    ];
+
+    /** Stagger the first run so activation does not fire three jobs at once. */
+    private const FIRST_RUN_DELAY = [
+        'arvrs_run_jobs'   => 60,
+        'arvrs_usage_sync' => 300,
+        'arvrs_daily'      => 900,
+    ];
+
     public static function activate(): void
     {
         Schema::migrate();
         Customers::ensure_role();
 
-        if (!wp_next_scheduled('arvrs_run_jobs')) {
-            wp_schedule_event(time() + 60, 'arvrs_minutely', 'arvrs_run_jobs');
-        }
-        if (!wp_next_scheduled('arvrs_usage_sync')) {
-            wp_schedule_event(time() + 300, 'hourly', 'arvrs_usage_sync');
+        foreach (self::SCHEDULE as $hook => $interval) {
+            if (!wp_next_scheduled($hook)) {
+                wp_schedule_event(time() + self::FIRST_RUN_DELAY[$hook], $interval, $hook);
+            }
         }
 
         // First activation → onboarding wizard (spec §5.1).
@@ -28,7 +45,19 @@ final class Activator
 
     public static function deactivate(): void
     {
-        wp_clear_scheduled_hook('arvrs_run_jobs');
-        wp_clear_scheduled_hook('arvrs_usage_sync');
+        foreach (array_keys(self::SCHEDULE) as $hook) {
+            wp_clear_scheduled_hook($hook);
+        }
+    }
+
+    /**
+     * Hooks this plugin schedules — so the health page can show what should be
+     * running, and so a test can assert deactivation left nothing behind.
+     *
+     * @return string[]
+     */
+    public static function cron_hooks(): array
+    {
+        return array_keys(self::SCHEDULE);
     }
 }

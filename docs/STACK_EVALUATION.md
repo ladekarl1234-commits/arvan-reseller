@@ -35,7 +35,7 @@ Weights per the addendum (adjusted +2 to WordPress compatibility from Developer 
 | Dev speed for THIS scope (10) | **9** — pages are forms + tables | 6 — component/bundle setup tax | 6 | 7 |
 | Testability (10) | 7 — server logic unit-tested; JS thin enough to review | **9** — RTL/jest ecosystem | 8 | 8 |
 | Operational simplicity (8) | **10** — zero build at install AND develop | 6 | 6 | 7 |
-| Performance (7) | **9** — ~9 KB JS, server-rendered | 6 — 45 KB+ react-dom before app code | 7 | 8 |
+| Performance (7) | **9** — one 16 KB vanilla JS file, no bundler, server-rendered | 6 — 45 KB+ react-dom before app code | 7 | 8 |
 | Developer availability (3) | 8 — any WP dev | **9** | 7 | 7 |
 | Bundle/runtime footprint (3) | **10** | 5 | 6 | 8 |
 | Future extensibility (3) | 7 — REST API already exists for a future SPA | **9** | 8 | 7 |
@@ -54,7 +54,7 @@ Full rationale: [ADR-0002](adr/0002-frontend-stack.md).
 | `wp_options` | Config only (single `arvrs_settings` array + tiny stores). Serialized blobs cannot index or constrain financial rows. |
 | User meta | Identity extras only (`arvrs_policy_stage`). Meta queries for ledger aggregation would be O(horrible). |
 | CPT + post meta | Rejected for orders: no uniqueness constraints, JOIN-through-meta for every aggregate, `wp_posts` bloat, no `INSERT IGNORE` idempotency. |
-| **11 custom tables** | **Selected** for credentials, orders (+events), services, ledger, usage, jobs, audit, notifications, rules, base costs. Real indexes, `UNIQUE` business keys (the core of replay-safety), fast aggregates. |
+| **12 custom tables** | **Selected** for credentials, orders (+events), services, ledger, usage, top-ups, jobs, audit, notifications, rules, base costs. Real indexes, `UNIQUE` business keys (the core of replay-safety), fast aggregates. |
 | External DB/service | Rejected: violates standalone constraint. |
 
 Schema + index rationale: [DATA_MODEL.md](DATA_MODEL.md), [ADR-0003](adr/0003-database-strategy.md).
@@ -77,9 +77,9 @@ Two extremes rejected: raw `wp_remote_*` calls in controllers (untestable, unswa
 
 ## 6. Quality tooling
 
-- **PHPUnit 12** for pure-domain units (46 tests) with a 100-line WP shim — no WP install needed in CI.
+- **PHPUnit** for pure-domain and `$wpdb`-shimmed units (count in `TESTING.md`) with a bootstrap-level WP shim — no WP install needed in CI.
 - **wp-cli + SQLite integration** for a full end-to-end run in development (see TESTING.md) — chosen over Docker because judges/devs on any OS can run it with PHP alone; wp-env remains documented for those with Docker.
-- **GitHub Actions**: syntax lint on PHP 7.4/8.2/8.3 (7.4 = minimum runtime), unit tests on 8.2/8.3, secret scan.
+- **GitHub Actions**: syntax lint on PHP 7.4/8.2/8.3 (7.4 = minimum runtime), a dedicated PHP 7.4 grammar/AST gate (`bin/php74-check.php`, since `php -l` on an 8.x runner can't catch PHP 8-only syntax), unit tests on 8.2/8.3, secret scan.
 - PHPCS/WPCS: deliberately not gating the hackathon CI (rule-noise vs value under deadline); config recommended in ROADMAP.
 
 ## Dependency discipline

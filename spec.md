@@ -87,20 +87,23 @@ Transitions outside this table are rejected and logged. Every transition writes 
 WP user with role `arvrs_customer` (no wp-admin access). States (policy engine): `healthy → warning → critical → grace → restricted → suspended` derived from balance vs configurable thresholds. Actions per state are configurable (notify / block purchases / mark at risk / suspend where API supports). Resources are never auto-destroyed by a local balance calculation.
 
 ### 5.6 Usage accounting
-Cron (hourly) + admin **Sync now**: for each active service, the provider's usage source returns period records `(service, period_start, period_end, quantity, unit, cost)`. A unique index on `(service_id, period_start, period_end)` makes ingestion idempotent — a period is debited exactly once. Each ingested record writes a ledger `usage_debit` referencing the usage row.
+Cron (hourly) + admin **Sync now**: for each active service, the provider's usage source returns period records `(service, period_start, period_end, quantity, unit, cost)`. A unique index on `(service_id, period_start, period_end)` makes ingestion idempotent — a period is debited exactly once. Each ingested record writes a ledger `usage_debit` referencing the usage row. **No documented Arvan API returns this data in real mode** (§15); the demo provider generates it so the pipeline is demonstrable end to end.
+
+### 5.6a Recurring / renewal billing (`Billing\Renewals`)
+ArvanCloud publishes no metering/billing API, so real-mode recurring revenue cannot come from usage ingestion. Instead each `service` row carries its own billing clock: `renews_at`, `term_days` (default 30), `renewal_price`, `renewal_count`. A daily job (`renew_services`) charges every service whose `renews_at` has passed: it debits the wallet `service_charge` for `renewal_price`, advances `renews_at` by `term_days`, and increments `renewal_count`. Idempotency has three layers: a `UNIQUE(service_id, period_start, period_end)` usage-record row per term, a `UNIQUE(ref_type, ref_id, type)` ledger key on `('renewal', "{service_id}:{period_start}")`, and the clock advance itself is a single conditional `UPDATE … WHERE renews_at = <old>` so two concurrent runners can never both charge the same term. A companion `renewal_reminders` job notifies a customer a configurable number of days before their next charge. Cancelling a service (`Renewals::cancel`) stops future charges without deleting history.
 
 ## 6. Pricing
 
 - `PricingEngine::quote(product, plan, customer)` returns a **PriceQuote**: base cost, applied rule, margin, customer price, currency (IRT), version, timestamp.
 - Rule resolution order (first match wins): customer override → product rule → global rule. **Customer-group pricing is an optional tier not implemented in 1.0** (the resolution chain is designed to accept it; see ROADMAP) — the shipped engine covers global, per-product and per-customer, which subsumes the group case for the hackathon scope.
 - Rule shape: `markup_percent` (float ≥ −100), `fixed_adjustment` (signed IRT), optional `discount_percent`.
-- Base costs: no official pricing API exists ⇒ admin-maintained base-cost table seeded from the public pricing page, with source + last-updated stamps (`PricingProvider` abstraction keeps a future API swap cheap). Documented in ADR-0007.
+- Base costs: no official pricing API exists ⇒ admin-maintained base-cost table (`Pricing\BaseCosts`) seeded from the public pricing page, with source + last-updated stamps. There is no separate `PricingProvider` abstraction in the code — `BaseCosts` is the swap point if Arvan ever publishes a pricing API. Rationale for the ledger/wallet model generally: ADR-0007; pricing itself has no dedicated ADR.
 - Orders persist the full quote as an immutable JSON snapshot.
 
 ## 7. Wallet semantics
 
 Append-only ledger; every row: `customer_id, type, direction (credit|debit), amount, currency, ref_type, ref_id, description, actor, created_at`, unique `(ref_type, ref_id, type)` where applicable.
-Types: `topup, purchase, payment, usage_debit, adjustment, refund, promo_credit, reservation, release`.
+Types: `topup, purchase, payment, usage_debit, service_charge, adjustment, refund, promo_credit, reservation, release` (`service_charge` is the type `Billing\Renewals` debits on each term renewal — see §5.6a).
 Derived figures: `available = credits − debits − open reservations`; also exposed: reserved, consumed, total top-up. Admin reconciliation view aggregates per customer and per credential.
 
 ## 8. Security requirements
@@ -128,7 +131,8 @@ Derived figures: `available = credits − debits − open reservations`; also ex
 | `/checkout` | POST | customer + nonce | create order from plan + config (server-priced) |
 | `/payment/callback` | POST/GET | signed by provider | § 5.3 |
 | `/me/summary` | GET | customer | balance, services, orders overview |
-| `/me/orders`, `/me/services`, `/me/ledger`, `/me/usage` | GET | customer | paginated, owner-scoped |
+| `/me/orders`, `/me/services`, `/me/ledger`, `/me/usage`, `/me/notifications` | GET | customer | paginated, owner-scoped |
+| `/me/services/{id}` | GET | customer | single-service read through `Services::get_owned` |
 | `/me/topup` | POST | customer + nonce | start wallet top-up (payment provider) |
 | `/me/notifications/{id}/read` | POST | customer | owner-scoped mark-read |
 
@@ -137,15 +141,15 @@ Admin operations intentionally use `admin-post.php` handlers (capability + per-a
 
 ## 10. Data model (custom tables, prefix `{$wpdb->prefix}arvrs_`)
 
-`credentials, orders, order_events, services, ledger, usage_records, jobs, audit_log, notifications, customer_rules, base_costs`
+`credentials, orders, order_events, services, ledger, usage_records, topups, jobs, audit_log, notifications, customer_rules, base_costs`
 (columns and indexes: `docs/DATA_MODEL.md`; migration versioning via `arvrs_schema_version` option; all migrations idempotent).
 Brand/settings/wizard state: `wp_options` (low volume). Identity: WP users + minimal usermeta.
 
 ## 11. Demo mode
 
 - Toggle in settings + forced when no real credential passes a connection test.
-- `DemoArvanProvider`: in-memory/option-backed catalog identical in shape to real API DTOs; `create` returns realistic fake resources after a short simulated delay; usage source generates plausible per-service consumption so policies can be demonstrated.
-- `SandboxPaymentProvider`: on-site payment page with **pay / fail / duplicate-callback** buttons (the duplicate button proves HC-7 live).
+- `Arvan\DemoProvider`: in-memory/option-backed catalog identical in shape to real API DTOs; `create` returns realistic fake resources; usage source generates plausible per-service consumption so policies can be demonstrated.
+- `Payments\SandboxProvider`: on-site payment page with **pay / fail / duplicate-callback** buttons (the duplicate button proves HC-7 live).
 - Admin bar + dashboard show a persistent «حالت دمو» badge. Demo services are flagged `is_demo=1` and never mixed into real reconciliation.
 
 ## 12. Non-functional
@@ -153,7 +157,7 @@ Brand/settings/wizard state: `wp_options` (low volume). Identity: WP users + min
 - Assets enqueued only on plugin pages (admin) / plugin-generated pages (front).
 - Catalog cached (transient, 6 h; manual refresh). No external HTTP during normal page render.
 - Tables paginated server-side; indexes on every FK + status + created_at.
-- i18n-ready (`arvan-reseller` text domain); shipped strings Persian.
+- i18n: all strings go through the `arvan-reseller` text domain; a generated catalog ships (`languages/arvan-reseller.pot`, `arvan-reseller-fa_IR.po`/`.mo`, regenerated via `bin/make-pot.php`/`bin/make-mo.php`). Shipped strings are Persian; the `.pot` is the starting point for any other locale.
 - Accessibility: semantic HTML, labels, focus states, contrast per Sorkhab tokens.
 
 ## 13. Acceptance criteria (Definition of Done extract)

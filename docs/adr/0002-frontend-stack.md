@@ -13,7 +13,7 @@ Zero-build installability · RTL fidelity · bundle size · one-language maintai
 Weighted matrix in [STACK_EVALUATION.md §2](../STACK_EVALUATION.md): SSR PHP+vanilla (860/1000), Vanilla TS+build (750), React+TS (734), Vue (690).
 
 ## Decision
-Server-rendered PHP templates (escape at sink) + one 9 KB vanilla JS file (checkout fetch, sandbox gateway, top-up, mark-read) + one hand-written CSS file with Sorkhab-verified tokens (radius 8/12 px, 40 px buttons, RTL-always-right tables) + bundled Vazirmatn (OFL).
+Server-rendered PHP templates (escape at sink) + one vanilla JS file (checkout fetch, sandbox gateway, top-up, mark-read — 16 KB as of v1.1.0, up from ~6 KB pre-remediation; measure `assets/js/front.js` rather than trust this number) + one hand-written CSS file with Sorkhab-verified tokens (radius 8/12 px, 40 px buttons, RTL-always-right tables) + bundled Vazirmatn (OFL).
 
 ## Why
 Every screen in scope is a form or a table. React's payoff begins where client state graphs get deep — that point is not in this product's demo path, and React inside wp-admin adds version-drift risk against WP's own bundled React. The REST API is already the seam where a future SPA attaches.

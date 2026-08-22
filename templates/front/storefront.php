@@ -23,7 +23,7 @@ $descriptions = [
   <span class="arvrs-shape arvrs-shape-3" aria-hidden="true"></span>
   <div class="arvrs-hero-body">
     <span class="arvrs-hero-badge"><?php esc_html_e('تحویل خودکار و آنی', 'arvan-reseller'); ?></span>
-    <h1><?php echo esc_html(sprintf(__('زیرساخت ابری، از %s', 'arvan-reseller'), $brand_name)); ?></h1>
+    <h2 class="arvrs-h1"><?php echo esc_html(sprintf(__('زیرساخت ابری، از %s', 'arvan-reseller'), $brand_name)); ?></h2>
     <p class="arvrs-hero-sub"><?php echo esc_html($brand_desc ?: __('سرور ابری، CDN و فضای ذخیره‌سازی — خرید آنلاین، تحویل خودکار و آنی، پرداخت ریالی.', 'arvan-reseller')); ?></p>
     <div class="arvrs-hero-actions">
       <a class="arvrs-btn arvrs-btn-white" href="#arvrs-products"><?php esc_html_e('مشاهده پلن‌ها', 'arvan-reseller'); ?></a>
@@ -49,9 +49,9 @@ $descriptions = [
 </section>
 
 <section class="arvrs-features">
-  <div class="arvrs-feature"><span class="arvrs-feature-mark">✓</span><div><strong><?php esc_html_e('تحویل آنی', 'arvan-reseller'); ?></strong><div><?php esc_html_e('سرویس بلافاصله پس از پرداخت ساخته می‌شود.', 'arvan-reseller'); ?></div></div></div>
-  <div class="arvrs-feature"><span class="arvrs-feature-mark is-coral">✓</span><div><strong><?php esc_html_e('پرداخت ریالی', 'arvan-reseller'); ?></strong><div><?php esc_html_e('بدون نیاز به ارز و کارت بین‌المللی.', 'arvan-reseller'); ?></div></div></div>
-  <div class="arvrs-feature"><span class="arvrs-feature-mark">✓</span><div><strong><?php esc_html_e('پشتیبانی فارسی', 'arvan-reseller'); ?></strong><div><?php esc_html_e('در کنار شما، به زبان خودتان.', 'arvan-reseller'); ?></div></div></div>
+  <div class="arvrs-feature"><span class="arvrs-feature-mark" aria-hidden="true">✓</span><div><strong><?php esc_html_e('تحویل آنی', 'arvan-reseller'); ?></strong><div><?php esc_html_e('سرویس بلافاصله پس از پرداخت ساخته می‌شود.', 'arvan-reseller'); ?></div></div></div>
+  <div class="arvrs-feature"><span class="arvrs-feature-mark is-coral" aria-hidden="true">✓</span><div><strong><?php esc_html_e('پرداخت ریالی', 'arvan-reseller'); ?></strong><div><?php esc_html_e('بدون نیاز به ارز و کارت بین‌المللی.', 'arvan-reseller'); ?></div></div></div>
+  <div class="arvrs-feature"><span class="arvrs-feature-mark" aria-hidden="true">✓</span><div><strong><?php esc_html_e('پشتیبانی فارسی', 'arvan-reseller'); ?></strong><div><?php esc_html_e('در کنار شما، به زبان خودتان.', 'arvan-reseller'); ?></div></div></div>
 </section>
 
 <?php if (!empty($brand_about)) : ?>

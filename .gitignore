@@ -6,3 +6,6 @@ vendor/
 .playwright-cli/
 composer.lock
 .phpunit.cache/
+
+# Build output — the release ZIP is attached to the GitHub Release, not committed.
+dist/

@@ -17,7 +17,19 @@ final class Notifier
     // Repeating, customer-scoped warnings that must not flood. Per-event
     // admin alerts (provision_failed, job_dead) are deliberately NOT here —
     // each names a distinct order/job and must always surface.
-    private const COOLDOWN_TYPES = ['low_balance', 'critical_balance', 'suspension_warning', 'credential_failed', 'usage_sync_failed'];
+    private const COOLDOWN_TYPES = ['low_balance', 'critical_balance', 'suspension_warning', 'credential_failed', 'usage_sync_failed', 'renewal_no_price'];
+
+    /**
+     * Types worth an email as well as an in-app notice. Every renewal event
+     * is here: a recurring charge the customer only discovers in-app is a
+     * surprise on their card, and a renewal they were never reminded of is a
+     * service that stops without warning.
+     */
+    private const EMAIL_TYPES = [
+        'payment_success', 'provisioned', 'provision_failed',
+        'low_balance', 'critical_balance', 'suspension_warning',
+        'renewal_reminder', 'renewal_charged', 'renewal_cancelled',
+    ];
 
     public static function table(): string
     {
@@ -33,7 +45,7 @@ final class Notifier
             return;
         }
         $user = get_userdata($customer_id);
-        if ($user && in_array($type, ['payment_success', 'provisioned', 'provision_failed', 'low_balance', 'critical_balance', 'suspension_warning'], true)) {
+        if ($user && in_array($type, self::EMAIL_TYPES, true)) {
             wp_mail($user->user_email, wp_specialchars_decode($title), $body); // best-effort
         }
     }
@@ -41,6 +53,35 @@ final class Notifier
     public static function admin(string $type, string $title, string $body): void
     {
         self::push(0, $type, $title, $body);
+    }
+
+    /**
+     * A provisioning failure that the CUSTOMER hears about, not just the
+     * admin. The panel's UX critical was that a paid order could fail and the
+     * buyer would be told nothing, ever — so this is one call that always
+     * reaches both, and callers must not choose only half of it.
+     *
+     * @param string $reason customer-safe text (ProviderError::customer_message()),
+     *                       never a raw upstream body
+     * @param string $detail admin-only diagnostic (error kind, correlation id)
+     */
+    public static function provision_failed(int $customer_id, int $order_id, string $reason, string $detail = ''): void
+    {
+        self::customer(
+            $customer_id,
+            'provision_failed',
+            __('راه‌اندازی سرویس شما ناموفق بود', 'arvan-reseller'),
+            sprintf(
+                __('راه‌اندازی سفارش #%1$d با مشکل روبه‌رو شد: %2$s مبلغ پرداختی شما محفوظ است و تیم پشتیبانی در حال بررسی است. در صورت نیاز با شماره سفارش #%1$d با ما تماس بگیرید.', 'arvan-reseller'),
+                $order_id,
+                $reason !== '' ? $reason : __('خطای نامشخص.', 'arvan-reseller')
+            )
+        );
+        self::admin(
+            'provision_failed',
+            __('خطای راه‌اندازی سرویس', 'arvan-reseller'),
+            sprintf(__('سفارش #%1$d با خطا مواجه شد: %2$s', 'arvan-reseller'), $order_id, $detail !== '' ? $detail : $reason)
+        );
     }
 
     /** @return bool true when a notice was actually written (false = cooldown-suppressed) */

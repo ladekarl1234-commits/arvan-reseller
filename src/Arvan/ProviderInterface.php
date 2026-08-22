@@ -8,9 +8,6 @@ namespace ArvanReseller\Arvan;
  */
 interface ProviderInterface
 {
-    /** Whether this provider talks to the real ArvanCloud API. */
-    public function is_real(): bool;
-
     /**
      * Purchasable catalog for a product. Plans carry base_cost injected from
      * the admin-maintained BaseCosts table (no official pricing API exists).
@@ -27,9 +24,19 @@ interface ProviderInterface
     public function options(string $product): array;
 
     /**
-     * Create the remote resource for a paid order. MUST be treated as
-     * non-idempotent upstream — callers guarantee single invocation per order
-     * (spec §5.4); $idempotency_key is recorded for diagnostics.
+     * Create the remote resource for a paid order.
+     *
+     * $idempotency_key is NOT diagnostic decoration: implementations must send
+     * it upstream AND derive the remote resource's name from it, so that an
+     * attempt whose outcome is unknown can be reconciled by looking the
+     * resource up instead of writing a second one. A create that times out
+     * therefore raises `timeout_indeterminate` and is answered by a lookup —
+     * never by a repeat POST, which is how one paid order becomes two upstream
+     * invoices.
+     *
+     * The returned resource may legitimately be `status = 'creating'`; the
+     * `poll_service` job completes it via status().
+     *
      * @param array $config validated customer configuration
      * @throws ProviderError
      */

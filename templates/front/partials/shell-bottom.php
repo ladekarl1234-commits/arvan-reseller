@@ -2,7 +2,7 @@
 /** @var string $brand_name @var string $support_email @var string $support_phone @var string $brand_desc */
 defined('ABSPATH') || exit;
 ?>
-  </main>
+  </div>
   <footer class="arvrs-footer">
     <div>
       <strong><?php echo esc_html($brand_name); ?></strong>

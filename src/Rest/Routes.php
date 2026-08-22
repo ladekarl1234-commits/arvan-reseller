@@ -16,14 +16,25 @@ defined('ABSPATH') || exit;
 
 /**
  * REST API (spec §9): customer-facing routes + the payment callback. Every
- * route has a permission_callback and an args schema; every /me/* handler is
- * owner-scoped by construction — the customer ID always comes from the
- * session, never from the request (SEC-2, HC-5).
+ * route declares a permission_callback and — including the path parameters
+ * carried in the route regex — an `args` schema with types, ranges and
+ * sanitisers, which is what SECURITY.md has always claimed. Every /me/*
+ * handler is owner-scoped by construction: the customer ID always comes from
+ * the session, never from the request (SEC-2, HC-5), and the two routes that
+ * take a row id resolve it through an owner-scoped read.
  * Admin operations intentionally use admin-post + nonces, not REST (ADR-0005).
  */
 final class Routes
 {
     private const NS = 'arvan-reseller/v1';
+
+    /** Reusable arg schema for a positive row id carried in the route regex. */
+    private const ID_ARG = [
+        'type'              => 'integer',
+        'required'          => true,
+        'minimum'           => 1,
+        'sanitize_callback' => 'absint',
+    ];
 
     public static function register_hooks(): void
     {
@@ -40,7 +51,14 @@ final class Routes
         register_rest_route(self::NS, '/catalog/(?P<product>[a-z_]+)', [
             'methods'  => 'GET',
             'permission_callback' => $public,
-            'args' => ['product' => ['type' => 'string', 'enum' => Catalog::PRODUCTS]],
+            'args' => [
+                'product' => [
+                    'type'     => 'string',
+                    'required' => true,
+                    'enum'     => Catalog::PRODUCTS,
+                    'sanitize_callback' => 'sanitize_key',
+                ],
+            ],
             'callback' => static function (\WP_REST_Request $r) {
                 return rest_ensure_response([
                     'plans'   => array_map([self::class, 'priced_plan'], Catalog::plans($r['product'])),
@@ -53,9 +71,17 @@ final class Routes
             'methods'  => 'POST',
             'permission_callback' => $customer_auth,
             'args' => [
-                'product' => ['type' => 'string', 'enum' => Catalog::PRODUCTS, 'required' => true],
-                'plan_id' => ['type' => 'string', 'required' => true, 'sanitize_callback' => 'sanitize_text_field'],
-                'config'  => ['type' => 'object', 'default' => []],
+                'product' => ['type' => 'string', 'enum' => Catalog::PRODUCTS, 'required' => true, 'sanitize_callback' => 'sanitize_key'],
+                'plan_id' => ['type' => 'string', 'required' => true, 'maxLength' => 64, 'sanitize_callback' => 'sanitize_text_field'],
+                'config'  => [
+                    'type'    => 'object',
+                    'default' => [],
+                    // OrderService::sanitize_config is the real whitelist; this
+                    // only stops a non-object body reaching it.
+                    'validate_callback' => static function ($value): bool {
+                        return is_array($value) || is_object($value);
+                    },
+                ],
             ],
             'callback' => [self::class, 'checkout'],
         ]);
@@ -64,46 +90,69 @@ final class Routes
             'methods'  => 'POST',
             'permission_callback' => $public, // authenticity = provider verify()
             'args' => [
-                'ref'  => ['type' => 'string', 'required' => true, 'sanitize_callback' => 'sanitize_text_field'],
-                'type' => ['type' => 'string', 'enum' => ['order', 'topup'], 'default' => 'order'],
-                'sandbox_proof' => ['type' => 'string', 'default' => '', 'sanitize_callback' => 'sanitize_text_field'],
+                'ref'  => ['type' => 'string', 'required' => true, 'maxLength' => 64, 'sanitize_callback' => 'sanitize_text_field'],
+                'type' => ['type' => 'string', 'enum' => ['order', 'topup'], 'default' => 'order', 'sanitize_callback' => 'sanitize_key'],
+                'sandbox_proof' => ['type' => 'string', 'default' => '', 'maxLength' => 128, 'sanitize_callback' => 'sanitize_text_field'],
             ],
             'callback' => [self::class, 'payment_callback'],
         ]);
 
         register_rest_route(self::NS, '/me/summary', [
             'methods' => 'GET', 'permission_callback' => $customer_auth,
+            'args'    => [], // takes no parameters
             'callback' => [self::class, 'me_summary'],
         ]);
 
         foreach (['orders', 'services', 'ledger', 'usage', 'notifications'] as $list) {
             register_rest_route(self::NS, '/me/' . $list, [
                 'methods' => 'GET', 'permission_callback' => $customer_auth,
-                'args' => ['page' => ['type' => 'integer', 'default' => 1, 'minimum' => 1]],
+                'args' => [
+                    'page' => ['type' => 'integer', 'default' => 1, 'minimum' => 1, 'maximum' => 1000, 'sanitize_callback' => 'absint'],
+                ],
                 'callback' => static function (\WP_REST_Request $r) use ($list) {
                     return self::me_list($list, (int) $r['page']);
                 },
             ]);
         }
 
+        // Single-service read. This is the production caller that makes
+        // Services::get_owned() the object-level authorization choke point the
+        // control inventory describes — the id comes from the request, the
+        // customer id never does.
+        register_rest_route(self::NS, '/me/services/(?P<id>\d+)', [
+            'methods' => 'GET', 'permission_callback' => $customer_auth,
+            'args' => ['id' => self::ID_ARG],
+            'callback' => [self::class, 'me_service'],
+        ]);
+
         register_rest_route(self::NS, '/me/topup', [
             'methods' => 'POST', 'permission_callback' => $customer_auth,
-            'args' => ['amount' => ['type' => 'integer', 'required' => true, 'minimum' => 100000, 'maximum' => 500000000]],
-            'callback' => static function (\WP_REST_Request $r) {
-                if (PaymentService::sandbox_blocked()) {
-                    return new \WP_Error('no_gateway', __('درگاه پرداخت واقعی هنوز پیکربندی نشده است.', 'arvan-reseller'), ['status' => 503]);
-                }
-                $url = PaymentService::start_topup(get_current_user_id(), (int) $r['amount']);
-                return rest_ensure_response(['redirect' => $url]);
-            },
+            'args' => [
+                'amount' => [
+                    'type' => 'integer', 'required' => true,
+                    'minimum' => 100000, 'maximum' => 500000000,
+                    'sanitize_callback' => 'absint',
+                ],
+            ],
+            'callback' => [self::class, 'topup'],
         ]);
 
         register_rest_route(self::NS, '/me/notifications/(?P<id>\d+)/read', [
             'methods' => 'POST', 'permission_callback' => $customer_auth,
+            'args' => ['id' => self::ID_ARG],
             'callback' => static function (\WP_REST_Request $r) {
                 Notifier::mark_read(get_current_user_id(), (int) $r['id']); // owner-scoped in SQL
                 return rest_ensure_response(['ok' => true]);
             },
+        ]);
+
+        // Provisioning state for the payment page's poll. Owner-scoped: an
+        // order id that is not this customer's answers 404, never 403, so the
+        // route cannot be used to probe which order ids exist.
+        register_rest_route(self::NS, '/orders/(?P<id>\d+)/state', [
+            'methods' => 'GET', 'permission_callback' => $customer_auth,
+            'args' => ['id' => self::ID_ARG],
+            'callback' => [self::class, 'order_state'],
         ]);
     }
 
@@ -133,6 +182,7 @@ final class Routes
         // must NEVER be the live payment path in real operation — refuse to
         // sell until a real gateway adapter is registered (ADR-0006).
         if (PaymentService::sandbox_blocked()) {
+            PaymentService::alert_gateway_blocked();
             return new \WP_Error('no_gateway', __('درگاه پرداخت واقعی هنوز پیکربندی نشده است. با پشتیبانی تماس بگیرید.', 'arvan-reseller'), ['status' => 503]);
         }
         if (UsageSync::purchases_blocked($customer_id)) {
@@ -151,12 +201,39 @@ final class Routes
         ]);
     }
 
+    public static function topup(\WP_REST_Request $r)
+    {
+        $customer_id = get_current_user_id();
+        // Every other money endpoint was throttled and this one was not, while
+        // it is the one that writes a durable row per call.
+        if (!Helpers::rate_limit('topup:' . $customer_id, 10, 300)) {
+            return new \WP_Error('rate_limited', __('درخواست‌های شما زیاد است. کمی صبر کنید.', 'arvan-reseller'), ['status' => 429]);
+        }
+        if (PaymentService::sandbox_blocked()) {
+            PaymentService::alert_gateway_blocked();
+            return new \WP_Error('no_gateway', __('درگاه پرداخت واقعی هنوز پیکربندی نشده است.', 'arvan-reseller'), ['status' => 503]);
+        }
+        $url = PaymentService::start_topup($customer_id, (int) $r['amount']);
+        if ($url === '') {
+            return new \WP_Error('topup_failed', __('شروع افزایش اعتبار ناموفق بود. دوباره تلاش کنید.', 'arvan-reseller'), ['status' => 500]);
+        }
+        return rest_ensure_response(['redirect' => $url]);
+    }
+
     public static function payment_callback(\WP_REST_Request $r)
     {
-        if (!Helpers::rate_limit('callback:' . Helpers::client_ip(), 30, 300)) {
+        $ref = (string) $r['ref'];
+        // Throttle the REFERENCE, not the caller. A real gateway confirms every
+        // customer's payment from the same handful of server IPs, so an IP
+        // budget of 30/5min throttles the gateway itself out and payments stop
+        // confirming site-wide. A handful of attempts per reference is the
+        // actual abuse signal; the IP cap stays only as a crude flood guard.
+        if (!Helpers::rate_limit('callback_ref:' . $ref, 10, 300)) {
+            return new \WP_Error('rate_limited', 'Too many attempts for this reference', ['status' => 429]);
+        }
+        if (!Helpers::rate_limit('callback_ip:' . Helpers::client_ip(), 600, 300)) {
             return new \WP_Error('rate_limited', 'Too many callbacks', ['status' => 429]);
         }
-        $ref     = (string) $r['ref'];
         $payload = ['sandbox_proof' => (string) $r['sandbox_proof'], 'type' => (string) $r['type']];
 
         if ($r['type'] === 'topup') {
@@ -166,11 +243,56 @@ final class Routes
         $result = PaymentService::handle_order_callback($ref, $payload);
         $order  = $result['order'];
         return rest_ensure_response([
-            'ok'      => $result['ok'],
-            'replay'  => $result['replay'],
-            'message' => $result['message'],
-            'status'  => $order ? $order['status'] : null,
+            'ok'        => $result['ok'],
+            'replay'    => $result['replay'],
+            'message'   => $result['message'],
+            'status'    => $order ? $order['status'] : null,
+            'order_id'  => $order ? (int) $order['id'] : null,
+            'provision' => $result['provision'],
         ]);
+    }
+
+    /**
+     * Truthful provisioning state for one of the caller's own orders. The
+     * payment page polls this instead of announcing success it cannot see.
+     */
+    public static function order_state(\WP_REST_Request $r)
+    {
+        $customer_id = get_current_user_id();
+        if (!Helpers::rate_limit('order_state:' . $customer_id, 120, 300)) {
+            return new \WP_Error('rate_limited', __('درخواست‌های شما زیاد است. کمی صبر کنید.', 'arvan-reseller'), ['status' => 429]);
+        }
+        $order = OrderService::get((int) $r['id']);
+        if (!$order || (int) $order['customer_id'] !== $customer_id) {
+            return new \WP_Error('not_found', __('سفارش یافت نشد.', 'arvan-reseller'), ['status' => 404]);
+        }
+        $provision = PaymentService::provision_state($order);
+        return rest_ensure_response([
+            'order_id'        => (int) $order['id'],
+            'status'          => (string) $order['status'],
+            'status_label'    => wp_strip_all_tags(Helpers::status_tag((string) $order['status'])),
+            'provision_state' => $provision['state'],
+            'message'         => $provision['message'],
+            'reference'       => (string) $order['payment_ref'],
+        ]);
+    }
+
+    /** Single service, resolved through the owner-scoped read path. */
+    public static function me_service(\WP_REST_Request $r)
+    {
+        $row = Services::get_owned((int) $r['id'], get_current_user_id());
+        if (!$row) {
+            return new \WP_Error('not_found', __('سرویس یافت نشد.', 'arvan-reseller'), ['status' => 404]);
+        }
+        $connection = json_decode((string) $row['connection'], true) ?: [];
+        $labelled   = [];
+        foreach ($connection as $key => $value) {
+            $labelled[] = ['key' => (string) $key, 'label' => Helpers::connection_label((string) $key), 'value' => $value];
+        }
+        unset($row['credential_id']); // upstream routing is private
+        $row['connection']        = $connection;
+        $row['connection_fields'] = $labelled;
+        return rest_ensure_response($row);
     }
 
     public static function me_summary()
@@ -197,14 +319,18 @@ final class Routes
                 foreach ($rows as &$row) {
                     unset($row['pricing']); // margin/base cost is reseller-private
                     $row['amount_label'] = Helpers::money((int) $row['amount']);
+                    $row['created_label'] = Helpers::jdate((string) $row['created_at'], 'j F Y — H:i');
                 }
+                unset($row);
                 return rest_ensure_response($rows);
             case 'services':
                 $rows = Services::list($uid, $page);
                 foreach ($rows as &$row) {
                     $row['connection'] = json_decode((string) $row['connection'], true) ?: [];
+                    $row['created_label'] = Helpers::jdate((string) $row['created_at'], 'j F Y');
                     unset($row['credential_id']); // upstream routing is private
                 }
+                unset($row);
                 return rest_ensure_response($rows);
             case 'ledger':
                 return rest_ensure_response(Ledger::entries($uid, $page));

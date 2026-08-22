@@ -26,7 +26,7 @@ The two boundaries that actually vary at runtime (Arvan provider, payment provid
 Easier: unit testing without WP; reading one module top-to-bottom; extracting a module later (SCALABILITY §seams). Harder: swapping the persistence layer wholesale (services call `$wpdb` directly — accepted, see ADR-0003).
 
 ## Risks
-Static service accessors can rot into hidden globals. Mitigation: only `Plugin::arvan()`/`Plugin::payments()` exist; everything else is explicit.
+Static service accessors can rot into hidden globals. The intended mitigation was "only `Plugin::arvan()`/`Plugin::payments()` exist; everything else is explicit" — that has not held: `Plugin::demo_mode()` is called back into from `Wallet\Ledger`, `Arvan\Catalog`, `Orders\OrderService`, `Payments\PaymentService`, `Usage\UsageSync` and `Admin\Menu` (see `ARCHITECTURE.md` § the composition-root note, and `docs/review/ISSUE_BACKLOG.md` EX-054). The risk materialized as described; it was not prevented.
 
 ## Revisit Trigger
 A second deployment target (SaaS control plane) or a second team working in parallel.

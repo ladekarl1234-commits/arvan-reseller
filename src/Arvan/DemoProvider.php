@@ -15,11 +15,6 @@ final class DemoProvider implements ProviderInterface
 {
     private const REGISTRY = 'arvrs_demo_resources';
 
-    public function is_real(): bool
-    {
-        return false;
-    }
-
     public function plans(string $product): array
     {
         $catalog = [
@@ -67,7 +62,15 @@ final class DemoProvider implements ProviderInterface
             return ['fields' => ['domain' => __('نام دامنه شما (مثل example.ir)', 'arvan-reseller')]];
         }
         if ($product === 'object_storage') {
-            return ['fields' => ['bucket' => __('نام باکت (حروف کوچک انگلیسی و خط تیره)', 'arvan-reseller')]];
+            // Same shape as RealProvider: the region is a real, honoured choice
+            // here too, so the storefront field behaves identically in demo.
+            return [
+                'fields'  => ['bucket' => __('نام باکت (حروف کوچک انگلیسی و خط تیره)', 'arvan-reseller')],
+                'regions' => [
+                    ['id' => 'ir-central1', 'name' => 'ایران مرکزی (سیمین)'],
+                    ['id' => 'ir-northwest1', 'name' => 'شمال‌غرب (شهریار)'],
+                ],
+            ];
         }
         return [];
     }
@@ -104,9 +107,11 @@ final class DemoProvider implements ProviderInterface
                 'ns2'    => 'ns2.arvancdn.ir',
             ];
         } elseif ($product === 'object_storage') {
+            $region     = ($config['region'] ?? '') === 'ir-northwest1' ? 'ir-northwest1' : 'ir-central1';
             $connection = [
                 'bucket'    => (string) ($config['bucket'] ?? 'my-bucket'),
-                'endpoint'  => 's3.ir-thr-at1.arvanstorage.ir',
+                'region'    => $region,
+                'endpoint'  => $region === 'ir-central1' ? 's3.ir-thr-at1.arvanstorage.ir' : 's3.ir-tbz-sh1.arvanstorage.ir',
                 'access_key_hint' => __('کلیدهای دسترسی در پنل سرویس نمایش داده می‌شود (شبیه‌سازی دمو)', 'arvan-reseller'),
             ];
         }

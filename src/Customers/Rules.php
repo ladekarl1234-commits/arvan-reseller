@@ -71,6 +71,37 @@ final class Rules
         Audit::log(0, 'customer_rules.saved', 'user', (string) $customer_id, ['status' => $row['status']]);
     }
 
+    /**
+     * How far this customer's wallet may go negative before the account stops
+     * being extended more service, in IRT. Null = no per-customer cap.
+     */
+    public static function credit_limit(int $customer_id): ?int
+    {
+        $row = self::get($customer_id);
+        return ($row && $row['credit_limit'] !== null) ? (int) $row['credit_limit'] : null;
+    }
+
+    /**
+     * Has usage driven the balance past the customer's negative-credit cap?
+     *
+     * This is the decision the admin field «سقف اعتبار منفی» was always
+     * documented to make and previously made nowhere: it is read at checkout
+     * (OrderService::create) and by the policy ladder, which treats an
+     * exhausted credit line as RESTRICTED regardless of the grace clock.
+     *
+     * @param int $available current wallet balance (may be negative)
+     */
+    public static function credit_exhausted(int $customer_id, int $available): bool
+    {
+        $limit = self::credit_limit($customer_id);
+        if ($limit === null) {
+            return false;
+        }
+        // A cap of 0 means "no negative balance at all"; a cap of 200,000 means
+        // the balance may sit as low as -200,000 and no lower.
+        return $available < -abs($limit);
+    }
+
     /** Purchase gate: may this customer buy this product right now? */
     public static function can_purchase(int $customer_id, string $product): bool
     {

@@ -19,7 +19,7 @@ composer install
 ## Run the unit suite
 
 ```bash
-composer test          # 46 tests, no WordPress required
+composer test          # no WordPress required — see TESTING.md for the current count
 ```
 
 ## Option A — full WordPress sandbox with PHP only (SQLite)
@@ -76,7 +76,17 @@ ARVRS_DEMO_TOKEN=ARVRS-0845499FB98AB18F8984F7D1F2F84581 \
   php wp-cli.phar eval-file /path/to/arvan-reseller/tests/integration/e2e.php --path=wp
 ```
 
-Fresh install required (it registers `alice@example.com` / `bob@example.com`, both `password123`, buys and provisions services, syncs usage, exercises replay safety — 42 checks). Log in as alice on the front-end afterwards to browse a fully populated customer dashboard.
+Fresh install required (it registers `alice@example.com` / `bob@example.com`, both `password123`, buys and provisions services, syncs usage, exercises replay safety — see `TESTING.md` for the current check count). Re-running against a database that already has these accounts fails on duplicate registration; reset first:
+
+```bash
+php wp-cli.phar db reset --yes --path=wp
+php wp-cli.phar core install --path=wp --url=http://localhost:8899 \
+  --title="Demo Reseller" --admin_user=admin --admin_password=admin123 \
+  --admin_email=admin@example.com --skip-email
+php wp-cli.phar plugin activate arvan-reseller --path=wp
+```
+
+Full incident/recovery playbooks (stuck orders, stranded jobs, credential rotation, ledger repair, renewal failures): [`docs/RUNBOOK.md`](docs/RUNBOOK.md). Log in as alice on the front-end afterwards to browse a fully populated customer dashboard.
 
 ## Linters / static checks
 

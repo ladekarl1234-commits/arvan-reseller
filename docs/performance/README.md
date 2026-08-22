@@ -6,10 +6,10 @@ Reproducible measurements only — no vague claims. What exists today, and the t
 
 Environment: Windows 11, PHP 8.5 CLI, WordPress latest + official SQLite integration (a *slower* substrate than production MySQL — treat these as upper bounds for correctness-path cost, not throughput claims).
 
+Exact test/check counts and timings are quoted once, in [`TESTING.md`](../../TESTING.md), and not restated here — see EX-045 in `docs/review/ISSUE_BACKLOG.md` for why duplicating that number across files is exactly the mistake to avoid.
+
 | Operation | Result |
 |---|---|
-| Unit suite (46 tests / 158 assertions) | 1.5 s |
-| Full E2E scenario (42 checks: license, 3 orders, payments + replays, 2×48-period usage sync, policy, REST dispatches) | ≈8 s incl. WP bootstrap |
 | Usage re-sync of 48 already-ingested periods | 0 rows ingested (idempotency measured, not assumed) |
 | Duplicate payment callback | 0 additional ledger rows / services (measured) |
 

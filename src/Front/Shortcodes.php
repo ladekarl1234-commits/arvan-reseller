@@ -6,6 +6,8 @@ use ArvanReseller\Identity\Customers;
 use ArvanReseller\Install\PageFactory;
 use ArvanReseller\Notifications\Notifier;
 use ArvanReseller\Orders\OrderService;
+use ArvanReseller\Payments\PaymentService;
+use ArvanReseller\Payments\SandboxProvider;
 use ArvanReseller\Plugin;
 use ArvanReseller\Pricing\Pricing;
 use ArvanReseller\Services\Services;
@@ -23,6 +25,9 @@ defined('ABSPATH') || exit;
  */
 final class Shortcodes
 {
+    /** Order statuses that still have money owed on them. */
+    public const UNPAID = ['pending_payment', 'payment_processing'];
+
     public static function register_hooks(): void
     {
         add_shortcode('arvrs_storefront', [self::class, 'storefront']);
@@ -31,6 +36,41 @@ final class Shortcodes
         add_shortcode('arvrs_dashboard', [self::class, 'dashboard']);
         add_shortcode('arvrs_auth', [self::class, 'auth']);
         add_shortcode('arvrs_payment', [self::class, 'payment']);
+    }
+
+    /**
+     * Human text for a flash CODE carried in `arvrs_notice` / `arvrs_error`.
+     *
+     * The query string used to carry the sentence itself, which let anyone hand
+     * a customer a link that renders arbitrary text inside a first-party banner
+     * (EX-115). Only these keys resolve; anything else renders nothing at all.
+     */
+    public static function flash(string $code): string
+    {
+        $map = [
+            'login_failed'      => __('ایمیل یا گذرواژه نادرست است.', 'arvan-reseller'),
+            'login_throttled'   => __('تلاش‌های ورود زیاد است. ده دقیقه بعد دوباره امتحان کنید.', 'arvan-reseller'),
+            'register_throttled' => __('تعداد ثبت‌نام‌ها از این نشانی زیاد است. بعداً تلاش کنید.', 'arvan-reseller'),
+            'register_closed'   => __('ثبت‌نام مشتری جدید در این فروشگاه غیرفعال است. برای دریافت حساب با پشتیبانی تماس بگیرید.', 'arvan-reseller'),
+            'register_invalid_email' => __('نشانی ایمیل معتبر نیست.', 'arvan-reseller'),
+            'register_weak_password' => __('گذرواژه باید دست‌کم ۸ نویسه باشد.', 'arvan-reseller'),
+            'register_failed'   => __('ساخت حساب انجام نشد. اطلاعات را بررسی کنید و دوباره تلاش کنید.', 'arvan-reseller'),
+            // Deliberately identical for "e-mail already taken" and for a
+            // successful sign-up whose auto-login did not take: the page must
+            // not confirm whether an account exists (EX-114).
+            'register_check_inbox' => __('اگر این نشانی تازه باشد، حساب شما ساخته شد. برای ادامه وارد شوید.', 'arvan-reseller'),
+            'renewal_cancelled' => __('تمدید خودکار این سرویس لغو شد.', 'arvan-reseller'),
+            'renewal_failed'    => __('لغو تمدید انجام نشد. اگر ادامه داشت با پشتیبانی تماس بگیرید.', 'arvan-reseller'),
+        ];
+        return isset($map[$code]) ? $map[$code] : '';
+    }
+
+    /** Flash code from the query string, resolved through the fixed map. */
+    private static function flash_from_query(string $key): string
+    {
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- display-only flash, resolved through a fixed map
+        $code = isset($_GET[$key]) ? sanitize_key(wp_unslash($_GET[$key])) : '';
+        return $code === '' ? '' : self::flash($code);
     }
 
     /** Shared branding/header context for every template. */
@@ -45,6 +85,9 @@ final class Shortcodes
             'support_email' => (string) Options::get('support_email', ''),
             'support_phone' => (string) Options::get('support_phone', ''),
             'customer_id' => $uid,
+            // A logged-in WordPress user who is NOT a customer (the reseller
+            // previewing their own storefront) needs a way out — see EX-065.
+            'foreign_login' => $uid === 0 && is_user_logged_in(),
             'balance'    => $uid ? Ledger::balance($uid) : null,
             'unread'     => $uid ? Notifier::unread_count($uid) : 0,
             'urls'       => [
@@ -55,6 +98,8 @@ final class Shortcodes
                 'cloud_server' => PageFactory::url('cloud_server'),
                 'cdn'          => PageFactory::url('cdn'),
                 'object_storage' => PageFactory::url('object_storage'),
+                'admin'        => admin_url(),
+                'lost_password' => wp_lostpassword_url(PageFactory::url('auth')),
             ],
         ], $extra);
     }
@@ -116,12 +161,16 @@ final class Shortcodes
         }
         $uid    = get_current_user_id();
         $orders = array_filter(OrderService::list($uid, '', 1, 10), static function ($order) {
-            return in_array($order['status'], ['pending_payment', 'payment_processing'], true);
+            return in_array($order['status'], self::UNPAID, true);
         });
         foreach ($orders as &$order) {
             $order['pay_url'] = Plugin::payments()->start((string) $order['payment_ref'], (int) $order['amount'], 'order');
         }
-        return Helpers::view('front/checkout', self::ctx(['orders' => array_values($orders)]));
+        unset($order);
+        return Helpers::view('front/checkout', self::ctx([
+            'current' => 'checkout',
+            'orders'  => array_values($orders),
+        ]));
     }
 
     public static function dashboard(): string
@@ -135,26 +184,58 @@ final class Shortcodes
             $service['connection'] = json_decode((string) $service['connection'], true) ?: [];
             $service['label']      = Catalog::product_label((string) $service['product']);
         }
+        unset($service);
+
+        $orders = OrderService::list($uid, '', 1, 10);
+        // The pending-payment page exists and was reachable from nothing
+        // (EX-018); the dashboard is where an abandoned checkout is found again.
+        $unpaid = array_values(array_filter($orders, static function ($order) {
+            return in_array($order['status'], self::UNPAID, true);
+        }));
+
         return Helpers::view('front/dashboard', self::ctx([
             'user'          => wp_get_current_user(),
             'stage'         => (string) get_user_meta($uid, 'arvrs_policy_stage', true) ?: 'healthy',
             'services'      => $services,
-            'orders'        => OrderService::list($uid, '', 1, 10),
+            'orders'        => $orders,
+            'unpaid'        => $unpaid,
             'ledger'        => Ledger::entries($uid, 1, 15),
             'usage'         => UsageSync::customer_usage($uid, 20),
             'notifications' => Notifier::for_user($uid, 10),
+            'notice'        => self::flash_from_query('arvrs_notice'),
+            'error'         => self::flash_from_query('arvrs_error'),
             'tab'           => isset($_GET['tab']) ? sanitize_key($_GET['tab']) : 'overview', // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only view switch
         ]));
     }
 
     public static function auth(): string
     {
-        if (Customers::is_customer()) {
-            return Helpers::view('front/require-login', self::ctx()); // template shows "go to dashboard" for logged-in users
+        if (Customers::is_customer() || is_user_logged_in()) {
+            // Both the customer ("you are already signed in") and the
+            // administrator previewing their own store ("this account is not a
+            // customer account") get an explanatory panel instead of a login
+            // form that redirects straight back here (EX-065).
+            return Helpers::view('front/require-login', self::ctx());
         }
+        // phpcs:disable WordPress.Security.NonceVerification.Recommended -- read-only redisplay of a failed submit
+        $tab    = (isset($_GET['tab']) && sanitize_key(wp_unslash($_GET['tab'])) === 'register') ? 'register' : 'login';
+        $error  = self::flash_from_query('arvrs_error');
+        $notice = self::flash_from_query('arvrs_notice');
+        // Re-render a failed registration with what the customer typed rather
+        // than emptying the form (EX-066) — but only in the state our own
+        // redirect produces, so a bare link cannot plant text on the page.
+        $prefill = ['display_name' => '', 'email' => ''];
+        if ($error !== '' || $notice !== '') {
+            $prefill['display_name'] = isset($_GET['arvrs_name']) ? substr(sanitize_text_field(wp_unslash($_GET['arvrs_name'])), 0, 60) : '';
+            $prefill['email']        = isset($_GET['arvrs_email']) ? sanitize_email(wp_unslash($_GET['arvrs_email'])) : '';
+        }
+        // phpcs:enable
         return Helpers::view('front/auth', self::ctx([
-            'error'   => isset($_GET['arvrs_error']) ? sanitize_text_field(wp_unslash($_GET['arvrs_error'])) : '', // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-            'notice'  => isset($_GET['arvrs_notice']) ? sanitize_text_field(wp_unslash($_GET['arvrs_notice'])) : '', // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+            'error'   => $error,
+            'notice'  => $notice,
+            'tab'     => $tab,
+            'prefill' => $prefill,
+            'registration_open' => Customers::registration_open(),
         ]));
     }
 
@@ -168,19 +249,27 @@ final class Shortcodes
             return Helpers::view('front/payment', self::ctx(['error' => __('شناسه پرداخت یافت نشد.', 'arvan-reseller')]));
         }
 
-        $amount = 0;
-        $title  = '';
-        $owner  = 0;
+        $amount    = 0;
+        $title     = '';
+        $owner     = 0;
+        $payable   = false;
+        $order_id  = 0;
+        $provision = null;
         if ($type === 'order') {
             $order = OrderService::by_ref($ref);
             if ($order) {
-                $amount = (int) $order['amount'];
-                $title  = sprintf(__('سفارش #%1$d — %2$s', 'arvan-reseller'), (int) $order['id'], Catalog::product_label((string) $order['product']));
-                $owner  = (int) $order['customer_id'];
-                $payable = in_array($order['status'], ['pending_payment', 'payment_processing'], true);
+                $amount    = (int) $order['amount'];
+                $title     = sprintf(__('سفارش #%1$d — %2$s', 'arvan-reseller'), (int) $order['id'], Catalog::product_label((string) $order['product']));
+                $owner     = (int) $order['customer_id'];
+                $payable   = in_array($order['status'], self::UNPAID, true);
+                $order_id  = (int) $order['id'];
+                // The one truthful source for what happened to this order. A
+                // customer who comes back to the payment link tomorrow sees the
+                // real outcome, not a stale "ready" (EX-002).
+                $provision = PaymentService::provision_state($order);
             }
         } else {
-            $intent = get_option('arvrs_topup_' . $ref);
+            $intent = PaymentService::topup_intent($ref);
             if (is_array($intent)) {
                 $amount  = (int) $intent['amount'];
                 $title   = __('افزایش اعتبار کیف پول', 'arvan-reseller');
@@ -192,17 +281,19 @@ final class Shortcodes
             return Helpers::view('front/payment', self::ctx(['error' => __('تراکنش معتبر یافت نشد.', 'arvan-reseller')]));
         }
         // Never mint a sandbox proof when the sandbox must not settle live.
-        if (\ArvanReseller\Payments\PaymentService::sandbox_blocked()) {
+        if (PaymentService::sandbox_blocked()) {
             return Helpers::view('front/payment', self::ctx(['error' => __('درگاه پرداخت واقعی هنوز پیکربندی نشده است. با پشتیبانی تماس بگیرید.', 'arvan-reseller')]));
         }
         return Helpers::view('front/payment', self::ctx([
-            'ref'     => $ref,
-            'type'    => $type,
-            'amount'  => $amount,
-            'title'   => $title,
-            'payable' => !empty($payable),
-            'proof'   => \ArvanReseller\Payments\SandboxProvider::proof($ref, $amount, $type),
-            'gateway' => Plugin::payments()->label(),
+            'ref'       => $ref,
+            'type'      => $type,
+            'amount'    => $amount,
+            'title'     => $title,
+            'payable'   => $payable,
+            'order_id'  => $order_id,
+            'provision' => $provision,
+            'proof'     => SandboxProvider::proof($ref, $amount, $type),
+            'gateway'   => Plugin::payments()->label(),
         ]));
     }
 }

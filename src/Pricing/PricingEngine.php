@@ -14,6 +14,16 @@ final class PricingEngine
     public const VERSION = 1;
 
     /**
+     * One markup application, integer IRT in and out — the metered/renewal
+     * path needs the price without the whole quote snapshot (a usage row
+     * already carries its own cost and price columns).
+     */
+    public static function apply_markup(int $cost, float $percent): int
+    {
+        return max(0, (int) round($cost * (1 + max(-100.0, $percent) / 100)));
+    }
+
+    /**
      * @param int        $base_cost        upstream cost in IRT
      * @param float      $global_markup    percent
      * @param float|null $product_markup   percent, overrides global

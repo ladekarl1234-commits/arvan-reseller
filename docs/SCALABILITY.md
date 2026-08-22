@@ -11,8 +11,8 @@ Comfort envelope (assumption-based, CAPACITY_MODEL §2): **≤1,000 customers, �
 ### What scales already at Stage A
 - Every FK/status/created_at column indexed; list endpoints paginate server-side.
 - Idempotency via unique keys means retries add zero rows, so failure storms don't amplify writes.
-- Catalog cached 6h; no external HTTP in any page render.
-- Ledger balance = one indexed aggregate per customer (`customer_id` key).
+- Catalog cached 6h; a cold/expired cache is guarded against a stampede (one refresher at a time, `Catalog::LOCK_TTL`), an upstream failure is negative-cached for 60 s instead of retried on every view, and a stale copy is served past TTL while one request refreshes — so an ArvanCloud outage costs roughly one call/minute, not one call per visitor. This closed a real gap: earlier, a miss made every concurrent request block on an uncached upstream call and never cached a failure at all.
+- Ledger balance = one indexed `GROUP BY` aggregate per customer (`Ledger::balance`/`balances`), object-cached. This also closed a real gap: the balance used to fetch every ledger row for a customer into PHP and sum it there, on every storefront/dashboard render — an O(customer's lifetime row count) cost on the hottest path in the product. The admin customer list now batch-fetches all visible customers' balances in one query (`Ledger::balances`) instead of one query per row.
 
 ## Stage B — Growing reseller (configuration, not code)
 
@@ -44,8 +44,8 @@ Candidates in extraction order: (1) usage ingestion (highest row volume), (2) pr
 
 | Axis | 100 | 1k | 10k | 100k customers |
 |---|---|---|---|---|
-| Customer lists/detail | trivial | trivial | fine (paginated, indexed) | fine; admin search should move to dedicated index columns |
-| Ledger balance reads | trivial | trivial | fine (≤~10³ rows/customer aggregate) | add periodic checkpoint rows (documented in ADR-0007) |
+| Customer lists/detail | trivial | trivial | fine (paginated, indexed, batch balance fetch) | fine; admin search should move to dedicated index columns |
+| Ledger balance reads | trivial | trivial | fine (indexed `GROUP BY` aggregate, not a row scan) | add periodic checkpoint rows (documented in ADR-0007) if the aggregate itself ever shows up in a slow-query log |
 | Usage rows | 2.4k/day | 24k/day | 240k/day | 2.4M/day → Stage C worker + monthly rollup/archival table |
 | Concurrent callbacks | n/a | rare | atomic claims already correct; contention is row-level | same; DB write throughput is the ceiling, not the code |
 | Credentials | 1 | few | tens — selection query trivial | hundreds — selection stays O(n) on an in-memory list; add caching if ever measured |

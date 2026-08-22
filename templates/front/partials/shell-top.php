@@ -10,8 +10,12 @@ use ArvanReseller\Support\Helpers;
 
 $brand_initial = function_exists('mb_substr') ? mb_substr($brand_name, 0, 1, 'UTF-8') : substr($brand_name, 0, 1);
 $current = isset($current) ? $current : '';
+// Direction and language come from the active locale, never from a literal:
+// translating the plugin has to be able to flip the layout (EX-049).
+$arvrs_dir  = is_rtl() ? 'rtl' : 'ltr';
+$arvrs_lang = str_replace('_', '-', get_locale());
 ?>
-<div class="arvrs-app" dir="rtl">
+<div class="arvrs-app" dir="<?php echo esc_attr($arvrs_dir); ?>" lang="<?php echo esc_attr($arvrs_lang); ?>">
   <header class="arvrs-header">
     <div class="arvrs-header-inner">
       <a class="arvrs-brand" href="<?php echo esc_url($urls['storefront']); ?>">
@@ -24,10 +28,19 @@ $current = isset($current) ? $current : '';
         </span>
         <span class="arvrs-brand-name"><?php echo esc_html($brand_name); ?></span>
       </a>
-      <nav class="arvrs-nav" aria-label="<?php esc_attr_e('منوی فروشگاه', 'arvan-reseller'); ?>">
+      <?php // Disclosure button for the small-screen nav; DESIGN's CSS hides it above the breakpoint. ?>
+      <button type="button" class="arvrs-nav-toggle" data-arvrs-nav-toggle
+              aria-expanded="false" aria-controls="arvrs-nav">
+        <span class="arvrs-nav-toggle-mark" aria-hidden="true"></span>
+        <span class="arvrs-sr-only"><?php esc_html_e('منوی فروشگاه', 'arvan-reseller'); ?></span>
+      </button>
+      <nav class="arvrs-nav" id="arvrs-nav" aria-label="<?php esc_attr_e('منوی فروشگاه', 'arvan-reseller'); ?>">
         <a href="<?php echo esc_url($urls['cloud_server']); ?>" class="<?php echo $current === 'cloud_server' ? 'is-active' : ''; ?>"><?php esc_html_e('سرور ابری', 'arvan-reseller'); ?></a>
         <a href="<?php echo esc_url($urls['cdn']); ?>" class="<?php echo $current === 'cdn' ? 'is-active' : ''; ?>"><?php esc_html_e('CDN', 'arvan-reseller'); ?></a>
         <a href="<?php echo esc_url($urls['object_storage']); ?>" class="<?php echo $current === 'object_storage' ? 'is-active' : ''; ?>"><?php esc_html_e('فضای ابری', 'arvan-reseller'); ?></a>
+        <?php if ($customer_id) : ?>
+          <a href="<?php echo esc_url($urls['checkout']); ?>" class="<?php echo $current === 'checkout' ? 'is-active' : ''; ?>"><?php esc_html_e('پرداخت‌های در انتظار', 'arvan-reseller'); ?></a>
+        <?php endif; ?>
       </nav>
       <div class="arvrs-header-actions">
         <?php if ($customer_id) : ?>
@@ -44,4 +57,5 @@ $current = isset($current) ? $current : '';
       </div>
     </div>
   </header>
-  <main class="arvrs-main">
+  <?php // A <div>, not a <main>: the theme already wraps the_content() in one (EX-141). ?>
+  <div class="arvrs-main">

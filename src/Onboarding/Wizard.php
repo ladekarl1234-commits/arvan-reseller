@@ -1,11 +1,14 @@
 <?php
 namespace ArvanReseller\Onboarding;
 
+use ArvanReseller\Admin\Brand;
+use ArvanReseller\Admin\Flash;
 use ArvanReseller\Arvan\Catalog;
 use ArvanReseller\Arvan\Credentials;
 use ArvanReseller\Audit\Audit;
 use ArvanReseller\Install\PageFactory;
 use ArvanReseller\Licensing\License;
+use ArvanReseller\Plugin;
 use ArvanReseller\Pricing\BaseCosts;
 use ArvanReseller\Support\Helpers;
 use ArvanReseller\Support\Options;
@@ -68,14 +71,15 @@ final class Wizard
         $step = self::step();
         $key  = self::STEPS[$step];
 
+        // Flash text comes from the server side, never from the query string:
+        // `?arvrs_error=<text>` let anyone render arbitrary words inside a
+        // first-party banner on the screen that asks for an API token.
         $vars = [
-            'step'       => $step,
-            'step_key'   => $key,
-            'steps'      => self::STEPS,
-            'licensed'   => License::is_active(),
-            'error'      => isset($_GET['arvrs_error']) ? sanitize_text_field(wp_unslash($_GET['arvrs_error'])) : '', // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-            'notice'     => isset($_GET['arvrs_notice']) ? sanitize_text_field(wp_unslash($_GET['arvrs_notice'])) : '', // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-        ];
+            'step'     => $step,
+            'step_key' => $key,
+            'steps'    => self::STEPS,
+            'licensed' => License::is_active(),
+        ] + Flash::take();
         if ($key === 'identity') {
             foreach (['brand_name', 'brand_description', 'support_email', 'support_phone', 'brand_color'] as $field) {
                 $vars[$field] = Options::get($field, '');
@@ -100,6 +104,34 @@ final class Wizard
         echo Helpers::view('admin/wizard', $vars); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- template escapes at sink
     }
 
+    /**
+     * Is anything actually sellable right now?
+     *
+     * Counting `BaseCosts::all()` was not the same question: `seed_defaults()`
+     * guarantees rows exist, but their plan ids are the demo ones, and real
+     * ArvanCloud flavor ids never match them. So onboarding used to report
+     * «راه‌اندازی کامل شد» over a storefront that would render empty. This
+     * asks the same source the storefront asks and counts the plans that
+     * actually carry a price.
+     *
+     * @return array{sellable:int,unpriced:int}
+     */
+    private static function sellable_plans(): array
+    {
+        $sellable = 0;
+        $unpriced = 0;
+        foreach (Catalog::enabled_products() as $product) {
+            foreach (Catalog::plans($product) as $plan) {
+                if ((int) ($plan['base_cost'] ?? 0) > 0) {
+                    $sellable++;
+                } else {
+                    $unpriced++;
+                }
+            }
+        }
+        return ['sellable' => $sellable, 'unpriced' => $unpriced];
+    }
+
     /** @return array<string,array{ok:bool,label:string,detail:string}> */
     public static function validation_checks(): array
     {
@@ -109,6 +141,7 @@ final class Wizard
         }
         $has_credential = Credentials::has_verified_credential();
         $demo           = (bool) Options::get('demo_mode', true);
+        $plans          = self::sellable_plans();
         return [
             'license' => [
                 'ok'     => License::is_active(),
@@ -123,9 +156,13 @@ final class Wizard
                     : ($demo ? __('حالت دمو فعال است؛ بدون توکن واقعی هم می‌توانید ادامه دهید.', 'arvan-reseller') : __('هیچ اتصال آزمایش‌شده‌ای ندارید.', 'arvan-reseller')),
             ],
             'pricing' => [
-                'ok'     => count(BaseCosts::all()) > 0,
+                'ok'     => $plans['sellable'] > 0,
                 'label'  => __('قیمت‌گذاری', 'arvan-reseller'),
-                'detail' => __('هزینه پایه پلن‌ها و درصد سود تنظیم شده است.', 'arvan-reseller'),
+                'detail' => $plans['sellable'] > 0
+                    ? ($plans['unpriced'] > 0
+                        ? sprintf(__('%1$d پلن قابل فروش است؛ %2$d پلن هنوز هزینه پایه ندارند و در فروشگاه دیده نمی‌شوند.', 'arvan-reseller'), $plans['sellable'], $plans['unpriced'])
+                        : sprintf(__('%d پلن قیمت‌گذاری شده و آماده فروش است.', 'arvan-reseller'), $plans['sellable']))
+                    : __('هیچ پلنی هزینه پایه ندارد، بنابراین فروشگاه خالی نمایش داده می‌شود. در صفحه «قیمت‌گذاری» پلن‌های آروان را درون‌ریزی و قیمت‌گذاری کنید.', 'arvan-reseller'),
             ],
             'pages' => [
                 'ok'     => $pages_ok,
@@ -149,6 +186,7 @@ final class Wizard
         if ($direction === 'back') {
             Options::set('wizard_step', max(0, $step - 1));
             self::redirect();
+            return;
         }
 
         switch ($key) {
@@ -160,10 +198,12 @@ final class Wizard
                     $token = (string) wp_unslash($_POST['access_token'] ?? ''); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- secret, verified not stored
                     if (!Helpers::rate_limit('license:' . get_current_user_id(), 10, 600)) {
                         self::redirect(__('تلاش‌های زیاد؛ چند دقیقه بعد دوباره امتحان کنید.', 'arvan-reseller'));
+                        return;
                     }
                     if (!License::activate($token)) {
                         Audit::log(0, 'license.failed', 'license', '', [], 'audit');
                         self::redirect(__('توکن دسترسی معتبر نیست. توکنی که از تیم فروش دریافت کرده‌اید را بدون فاصله وارد کنید.', 'arvan-reseller'));
+                        return;
                     }
                     Audit::log(0, 'license.activated', 'license');
                 }
@@ -173,13 +213,17 @@ final class Wizard
                 $brand_name = sanitize_text_field(wp_unslash($_POST['brand_name'] ?? ''));
                 if ($brand_name === '') {
                     self::redirect(__('نام فروشگاه را وارد کنید.', 'arvan-reseller'));
+                    return;
                 }
                 Options::set_many([
                     'brand_name'        => $brand_name,
                     'brand_description' => sanitize_text_field(wp_unslash($_POST['brand_description'] ?? '')),
                     'support_email'     => sanitize_email(wp_unslash($_POST['support_email'] ?? '')),
                     'support_phone'     => preg_replace('/[^0-9+\-\s]/', '', (string) wp_unslash($_POST['support_phone'] ?? '')),
-                    'brand_color'       => sanitize_hex_color(wp_unslash($_POST['brand_color'] ?? '')) ?: '#0c6960',
+                    // Same contrast guard as the settings screen: this token
+                    // paints white-on-brand surfaces across the storefront, so
+                    // a light pick is darkened rather than shipped illegible.
+                    'brand_color'       => Brand::accessible(sanitize_hex_color(wp_unslash($_POST['brand_color'] ?? '')) ?: Brand::FALLBACK)['color'],
                 ]);
                 break;
 
@@ -198,8 +242,10 @@ final class Wizard
                     Credentials::record_test($id, $result['ok'], $result['ok'] ? '' : $result['message']);
                     if ($result['ok']) {
                         Options::set('demo_mode', false);
+                        Plugin::flush_mode_cache();
                     } else {
                         self::redirect(sprintf(__('اتصال ذخیره شد اما آزمایش ناموفق بود: %s — می‌توانید فعلاً با حالت دمو ادامه دهید.', 'arvan-reseller'), $result['message']));
+                        return;
                     }
                 } else {
                     Options::set('demo_mode', true); // explicit demo path
@@ -221,7 +267,18 @@ final class Wizard
             case 'ready':
                 Options::set('onboarded', true);
                 Audit::log(0, 'onboarding.completed', 'settings');
-                wp_safe_redirect(admin_url('admin.php?page=arvan-reseller&arvrs_notice=' . rawurlencode(__('راه‌اندازی کامل شد. فروشگاه شما آماده است!', 'arvan-reseller'))));
+                // Never announce a shop that cannot sell. With no priced plan
+                // the storefront renders «پلن‌ها موقتاً در دسترس نیستند», and
+                // «فروشگاه شما آماده است» is precisely the message that hid
+                // that from a real reseller until their first visitor found it.
+                $plans = self::sellable_plans();
+                if ($plans['sellable'] > 0) {
+                    Flash::notice(__('راه‌اندازی کامل شد. فروشگاه شما آماده است!', 'arvan-reseller'));
+                    wp_safe_redirect(admin_url('admin.php?page=arvan-reseller'));
+                    exit;
+                }
+                Flash::error(__('راه‌اندازی انجام شد، اما هیچ پلنی هزینه پایه ندارد؛ تا وارد کردن قیمت‌ها صفحات محصول خالی می‌مانند. پلن‌های آروان را درون‌ریزی و قیمت‌گذاری کنید.', 'arvan-reseller'));
+                wp_safe_redirect(admin_url('admin.php?page=arvan-reseller-pricing'));
                 exit;
         }
 
@@ -229,13 +286,13 @@ final class Wizard
         self::redirect();
     }
 
+    /** Terminates the request; callers still write an explicit `return`. */
     private static function redirect(string $error = ''): void
     {
-        $url = admin_url('admin.php?page=arvan-reseller-setup');
-        if ($error) {
-            $url = add_query_arg('arvrs_error', rawurlencode($error), $url);
+        if ($error !== '') {
+            Flash::error($error);
         }
-        wp_safe_redirect($url);
+        wp_safe_redirect(admin_url('admin.php?page=arvan-reseller-setup'));
         exit;
     }
 }

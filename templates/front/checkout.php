@@ -7,7 +7,7 @@ use ArvanReseller\Support\Helpers;
 
 include __DIR__ . '/partials/shell-top.php';
 ?>
-<h1 class="arvrs-page-title"><?php esc_html_e('سفارش‌های در انتظار پرداخت', 'arvan-reseller'); ?></h1>
+<h2 class="arvrs-page-title"><?php esc_html_e('سفارش‌های در انتظار پرداخت', 'arvan-reseller'); ?></h2>
 
 <?php if (empty($orders)) : ?>
   <div class="arvrs-card arvrs-center arvrs-empty">

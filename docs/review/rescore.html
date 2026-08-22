@@ -1,0 +1,499 @@
+<title>Arvan Reseller Re-Audit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+
+<style>
+  /* Palette is the plugin's own verified-accessible ramp: the stored brand teal
+     it actually renders (#0c6960) and the two semantic inks whose WCAG ratios
+     were recomputed during this audit (5.02:1 and 6.36:1). */
+  :root {
+    --ground:      #f4f7f6;
+    --surface:     #ffffff;
+    --surface-2:   #eef3f2;
+    --line:        #dbe5e3;
+    --line-strong: #c2d2cf;
+    --ink:         #0d1f1d;
+    --ink-2:       #33514d;
+    --muted:       #5b6f6c;
+    --accent:      #0c6960;
+    --accent-soft: #e3efed;
+    --gain:        #0a7c3d;
+    --gain-soft:   #e6f5ec;
+    --loss:        #a81f42;
+    --loss-soft:   #fbebef;
+    --flat:        #8d9d9a;
+    --shadow: 0 1px 2px rgba(13,31,29,.06), 0 8px 24px -12px rgba(13,31,29,.18);
+  }
+  :root:not([data-theme="light"]) {
+    @media (prefers-color-scheme: dark) {
+      --ground:      #0a1413;
+      --surface:     #11201e;
+      --surface-2:   #162926;
+      --line:        #233936;
+      --line-strong: #33504b;
+      --ink:         #e8f0ee;
+      --ink-2:       #b3c7c3;
+      --muted:       #8ba39f;
+      --accent:      #4fbfb2;
+      --accent-soft: #16302d;
+      --gain:        #4fc07d;
+      --gain-soft:   #13291d;
+      --loss:        #f2778f;
+      --loss-soft:   #2b161c;
+      --flat:        #6a807c;
+      --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.6);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground:      #0a1413;
+    --surface:     #11201e;
+    --surface-2:   #162926;
+    --line:        #233936;
+    --line-strong: #33504b;
+    --ink:         #e8f0ee;
+    --ink-2:       #b3c7c3;
+    --muted:       #8ba39f;
+    --accent:      #4fbfb2;
+    --accent-soft: #16302d;
+    --gain:        #4fc07d;
+    --gain-soft:   #13291d;
+    --loss:        #f2778f;
+    --loss-soft:   #2b161c;
+    --flat:        #6a807c;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.6);
+  }
+
+  * { box-sizing: border-box; }
+
+  .sr {
+    position: absolute; width: 1px; height: 1px; overflow: hidden;
+    clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+  }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px 96px; }
+  .col  { max-width: 68ch; }
+
+  /* ---------- masthead ---------- */
+  .masthead {
+    display: flex; flex-direction: column; gap: 28px;
+    padding: 64px 0 40px;
+    border-bottom: 1px solid var(--line);
+  }
+  .eyebrow {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 11.5px; letter-spacing: .13em; text-transform: uppercase;
+    color: var(--muted); margin: 0;
+  }
+  h1 {
+    font-family: Newsreader, ui-serif, Georgia, serif;
+    font-weight: 500; font-size: clamp(34px, 5vw, 52px);
+    line-height: 1.12; letter-spacing: -.015em;
+    margin: 0; text-wrap: balance;
+  }
+  .standfirst {
+    font-family: Newsreader, ui-serif, Georgia, serif;
+    font-size: clamp(18px, 2.2vw, 21px); line-height: 1.6;
+    color: var(--ink-2); margin: 0; max-width: 62ch;
+  }
+
+  /* ---------- headline figures ---------- */
+  .figures {
+    display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px 26px;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-variant-numeric: tabular-nums;
+  }
+  .fig { display: flex; flex-direction: column; gap: 4px; }
+  .fig-label {
+    font-size: 11px; letter-spacing: .11em; text-transform: uppercase; color: var(--muted);
+  }
+  .fig-value { font-size: 42px; font-weight: 500; line-height: 1; letter-spacing: -.02em; }
+  .fig-arrow { font-size: 26px; color: var(--flat); padding-bottom: 6px; }
+  .fig.is-loss .fig-value { color: var(--loss); }
+
+  /* ---------- sections ---------- */
+  section { padding-top: 56px; }
+  h2 {
+    font-family: Newsreader, ui-serif, Georgia, serif;
+    font-weight: 500; font-size: 27px; line-height: 1.25; letter-spacing: -.01em;
+    margin: 0 0 6px; text-wrap: balance;
+  }
+  .sec-note { color: var(--muted); font-size: 14.5px; margin: 0 0 26px; max-width: 66ch; }
+  p { margin: 0 0 16px; }
+  a { color: var(--accent); text-underline-offset: 3px; }
+  a:focus-visible, summary:focus-visible {
+    outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 3px;
+  }
+  strong { font-weight: 600; }
+  code {
+    font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: .88em;
+    background: var(--surface-2); border: 1px solid var(--line);
+    padding: 1px 5px; border-radius: 4px;
+  }
+
+  /* ---------- scorecard ---------- */
+  .card {
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: 10px; box-shadow: var(--shadow); overflow: hidden;
+  }
+  .scroller { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; min-width: 700px; }
+  thead th {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 10.5px; letter-spacing: .11em; text-transform: uppercase;
+    color: var(--muted); font-weight: 500; text-align: right;
+    padding: 14px 16px; border-bottom: 1px solid var(--line-strong); white-space: nowrap;
+  }
+  thead th.l { text-align: left; }
+  tbody td {
+    padding: 11px 16px; border-bottom: 1px solid var(--line);
+    font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap;
+  }
+  tbody tr:last-child td { border-bottom: 0; }
+  tbody tr:hover td { background: var(--surface-2); }
+  td.dim { text-align: left; font-weight: 500; white-space: normal; min-width: 190px; }
+  td.num { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 14.5px; }
+  td.w   { color: var(--muted); font-size: 13px; font-family: "IBM Plex Mono", ui-monospace, monospace; }
+  .delta {
+    font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 14.5px;
+    font-weight: 600; padding: 2px 8px; border-radius: 5px; display: inline-block; min-width: 46px;
+  }
+  .delta.up   { color: var(--gain); background: var(--gain-soft); }
+  .delta.down { color: var(--loss); background: var(--loss-soft); }
+  .delta.pend { color: var(--muted); background: var(--surface-2); font-weight: 500; }
+
+  /* Bar anchored at a zero line: the shape of the result reads before the numbers. */
+  td.bar { width: 190px; padding-right: 20px; }
+  .track { position: relative; height: 16px; }
+  .track::before {
+    content: ""; position: absolute; left: 50%; top: -1px; bottom: -1px;
+    width: 1px; background: var(--line-strong);
+  }
+  .fill { position: absolute; top: 4px; height: 8px; border-radius: 2px; }
+  .fill.up   { left: 50%; background: var(--gain); }
+  .fill.down { right: 50%; background: var(--loss); }
+
+  tr.pending td { color: var(--muted); }
+  tr.pending td.dim { font-weight: 400; }
+
+  .totals td {
+    border-top: 2px solid var(--line-strong); border-bottom: 0;
+    padding-top: 15px; padding-bottom: 16px; font-weight: 600;
+    background: var(--surface-2);
+  }
+  .totals td.dim { font-family: "IBM Plex Sans", sans-serif; }
+
+  /* ---------- two-column reason lists ---------- */
+  .reasons { display: grid; gap: 20px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+  .reason {
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: 10px; padding: 20px 22px;
+  }
+  .reason h3 {
+    margin: 0 0 12px; font-size: 12px; letter-spacing: .1em; text-transform: uppercase;
+    font-family: "IBM Plex Mono", ui-monospace, monospace; font-weight: 500;
+  }
+  .reason.up h3   { color: var(--gain); }
+  .reason.down h3 { color: var(--loss); }
+  .reason ul { margin: 0; padding-left: 1.1em; display: flex; flex-direction: column; gap: 11px; }
+  .reason li { font-size: 15px; line-height: 1.55; }
+  .reason li b { font-weight: 600; }
+
+  /* ---------- evidence ---------- */
+  .evidence { width: 100%; min-width: 560px; }
+  .evidence td, .evidence th { text-align: left; white-space: normal; }
+  .evidence td.n {
+    text-align: right; font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-variant-numeric: tabular-nums; white-space: nowrap; font-size: 14.5px;
+  }
+  .evidence td.n.then { color: var(--muted); }
+  .evidence td.n.now  { color: var(--gain); font-weight: 600; }
+
+  /* ---------- blockers ---------- */
+  .blockers { display: flex; flex-direction: column; gap: 14px; }
+  .blocker {
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: 8px; padding: 16px 20px;
+    display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; align-items: baseline;
+  }
+  /* The marker carries the count, so it says something the border could not. */
+  .blocker .mark {
+    grid-row: 1 / span 2;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 11px; font-weight: 600; letter-spacing: .08em;
+    color: var(--loss); background: var(--loss-soft);
+    border-radius: 4px; padding: 3px 7px; align-self: start;
+    font-variant-numeric: tabular-nums; white-space: nowrap;
+  }
+  .blocker h3 { margin: 0; font-size: 16.5px; font-weight: 600; }
+  @media (max-width: 520px) {
+    .blocker { grid-template-columns: 1fr; }
+    .blocker .mark { grid-row: auto; justify-self: start; margin-bottom: 2px; }
+  }
+  .blocker p { margin: 0; font-size: 15px; color: var(--ink-2); }
+
+  .callout {
+    background: var(--accent-soft); border: 1px solid var(--line);
+    border-radius: 10px; padding: 20px 24px; margin-top: 18px;
+  }
+  .callout p:last-child { margin-bottom: 0; }
+
+  footer {
+    margin-top: 64px; padding-top: 24px; border-top: 1px solid var(--line);
+    color: var(--muted); font-size: 13.5px;
+  }
+
+  @media (max-width: 640px) {
+    .fig-value { font-size: 34px; }
+    .masthead { padding-top: 44px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+</style>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <p class="eyebrow">Independent panel &middot; 15 dimensions &middot; identical criteria</p>
+    <h1>Arvan Reseller: re-audit after remediation</h1>
+    <p class="standfirst">A fresh panel of specialist reviewers re-scored the plugin on the same weighted framework used for the first review. The headline number did not improve. This page shows where it moved, and why.</p>
+    <div class="figures">
+      <div class="fig">
+        <span class="fig-label">Original</span>
+        <span class="fig-value">72.5</span>
+      </div>
+      <span class="fig-arrow" aria-hidden="true">&rarr;</span>
+      <div class="fig is-loss">
+        <span class="fig-label">Re-scored</span>
+        <span class="fig-value">70.4</span>
+      </div>
+      <span class="fig-arrow" aria-hidden="true">&nbsp;</span>
+      <div class="fig">
+        <span class="fig-label">Findings closed</span>
+        <span class="fig-value">141</span>
+      </div>
+      <div class="fig">
+        <span class="fig-label">New findings raised</span>
+        <span class="fig-value">108</span>
+      </div>
+    </div>
+  </header>
+
+  <section>
+    <div class="col">
+      <h2>The short version</h2>
+      <p>Every one of the original 141 findings was worked. The panel's own &ldquo;what holds&rdquo; notes read like a checklist of them &mdash; verb-aware retry with reconcile-by-name, the job reaper, typed provisioner results, rendered admin alerts, a filterable audit log with CSV export, indexed balance aggregates, real database-level idempotency tests.</p>
+      <p>But closing them took roughly <strong>8,300 lines of new code</strong>, and a fresh panel scores the code in front of it, not the diff. The new surface carried new defects &mdash; including two that put wrong money in real customers' ledgers. Three dimensions rose sharply; five fell.</p>
+      <p>Two things are worth knowing before reading the table. First, these scores are a <strong>snapshot taken mid-repair</strong>: several judges filed criticals that were already fixed when they filed them, and one critical they found has been fixed since. Second, the single largest drag &mdash; no production payment gateway ships &mdash; is a pre-existing structural gap this round did not close, and it is what took Product Completeness down 14 points.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Dimension by dimension</h2>
+    <p class="sec-note">Weights are the original framework's, summing to 122. Bars are anchored at zero and scaled to the largest movement in either direction, so the shape of the result reads before the numbers do. Sorted by change.</p>
+    <div class="card scroller">
+      <table>
+        <thead>
+          <tr>
+            <th class="l" scope="col">Dimension</th>
+            <th scope="col">Weight</th>
+            <th scope="col">Original</th>
+            <th scope="col">Final</th>
+            <th scope="col">Change</th>
+            <th class="l" scope="col"><span class="sr">Movement</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="dim">Testing &amp; QA</td><td class="w">9</td>
+            <td class="num">66</td><td class="num">81</td>
+            <td><span class="delta up">+15</span></td>
+            <td class="bar"><div class="track"><div class="fill up" style="width:50%"></div></div></td>
+          </tr>
+          <tr>
+            <td class="dim">Operational readiness</td><td class="w">8</td>
+            <td class="num">68</td><td class="num">78</td>
+            <td><span class="delta up">+10</span></td>
+            <td class="bar"><div class="track"><div class="fill up" style="width:33.3%"></div></div></td>
+          </tr>
+          <tr>
+            <td class="dim">Reliability &amp; data integrity</td><td class="w">10</td>
+            <td class="num">71</td><td class="num">76</td>
+            <td><span class="delta up">+5</span></td>
+            <td class="bar"><div class="track"><div class="fill up" style="width:16.7%"></div></div></td>
+          </tr>
+          <tr>
+            <td class="dim">Business viability</td><td class="w">7</td>
+            <td class="num">56</td><td class="num">58</td>
+            <td><span class="delta up">+2</span></td>
+            <td class="bar"><div class="track"><div class="fill up" style="width:6.7%"></div></div></td>
+          </tr>
+          <tr>
+            <td class="dim">Accessibility &amp; i18n</td><td class="w">5</td>
+            <td class="num">66</td><td class="num">68</td>
+            <td><span class="delta up">+2</span></td>
+            <td class="bar"><div class="track"><div class="fill up" style="width:6.7%"></div></div></td>
+          </tr>
+          <tr>
+            <td class="dim">Integration honesty</td><td class="w">6</td>
+            <td class="num">66</td><td class="num">68</td>
+            <td><span class="delta up">+2</span></td>
+            <td class="bar"><div class="track"><div class="fill up" style="width:6.7%"></div></div></td>
+          </tr>
+          <tr>
+            <td class="dim">UX &amp; usability</td><td class="w">9</td>
+            <td class="num">71</td><td class="num">72</td>
+            <td><span class="delta up">+1</span></td>
+            <td class="bar"><div class="track"><div class="fill up" style="width:3.3%"></div></div></td>
+          </tr>
+          <tr>
+            <td class="dim">Visual design</td><td class="w">7</td>
+            <td class="num">66</td><td class="num">62</td>
+            <td><span class="delta down">&minus;4</span></td>
+            <td class="bar"><div class="track"><div class="fill down" style="width:13.3%"></div></div></td>
+          </tr>
+          <tr>
+            <td class="dim">Security engineering</td><td class="w">12</td>
+            <td class="num">84</td><td class="num">78</td>
+            <td><span class="delta down">&minus;6</span></td>
+            <td class="bar"><div class="track"><div class="fill down" style="width:20%"></div></div></td>
+          </tr>
+          <tr>
+            <td class="dim">Technical architecture</td><td class="w">10</td>
+            <td class="num">77</td><td class="num">71</td>
+            <td><span class="delta down">&minus;6</span></td>
+            <td class="bar"><div class="track"><div class="fill down" style="width:20%"></div></div></td>
+          </tr>
+          <tr>
+            <td class="dim">Data model &amp; analytics</td><td class="w">7</td>
+            <td class="num">72</td><td class="num">66</td>
+            <td><span class="delta down">&minus;6</span></td>
+            <td class="bar"><div class="track"><div class="fill down" style="width:20%"></div></div></td>
+          </tr>
+          <tr>
+            <td class="dim">Scalability &amp; performance</td><td class="w">8</td>
+            <td class="num">62</td><td class="num">54</td>
+            <td><span class="delta down">&minus;8</span></td>
+            <td class="bar"><div class="track"><div class="fill down" style="width:26.7%"></div></div></td>
+          </tr>
+          <tr>
+            <td class="dim">Code quality</td><td class="w">8</td>
+            <td class="num">84</td><td class="num">74</td>
+            <td><span class="delta down">&minus;10</span></td>
+            <td class="bar"><div class="track"><div class="fill down" style="width:33.3%"></div></div></td>
+          </tr>
+          <tr>
+            <td class="dim">Product completeness</td><td class="w">10</td>
+            <td class="num">82</td><td class="num">68</td>
+            <td><span class="delta down">&minus;14</span></td>
+            <td class="bar"><div class="track"><div class="fill down" style="width:46.7%"></div></div></td>
+          </tr>
+          <tr class="pending">
+            <td class="dim">Documentation</td><td class="w">6</td>
+            <td class="num">85</td><td class="num">&mdash;</td>
+            <td><span class="delta pend">pending</span></td>
+            <td class="bar"><div class="track"></div></td>
+          </tr>
+          <tr class="totals">
+            <td class="dim">Weighted total <span style="font-weight:400;color:var(--muted)">(14 scored, weight 116)</span></td>
+            <td class="w">116</td>
+            <td class="num">71.9</td>
+            <td class="num">70.4</td>
+            <td><span class="delta down">&minus;1.5</span></td>
+            <td class="bar"></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Why each direction happened</h2>
+    <p class="sec-note">The reasons are asymmetric: the gains came from the remediation, and so did most of the losses.</p>
+    <div class="reasons">
+      <div class="reason up">
+        <h3>What earned the rises</h3>
+        <ul>
+          <li><b>Testing +15.</b> The suite went from 46 tests to 178, and &mdash; more importantly &mdash; from unable to reach a single database path to exercising the real unique keys and optimistic-claim guards through a SQLite-backed <code>$wpdb</code> double. The judge attacked the assertions and the shim and reported they held.</li>
+          <li><b>Operational readiness +10.</b> The &ldquo;customer paid, no server&rdquo; incident is now fully recoverable from wp-admin: payment-reference lookup, order reclaim/retry/refund, full job payload and error, stale-job reap, filterable audit with export, self-updating credential health.</li>
+          <li><b>Reliability +5.</b> Every concurrency guard the judge attacked &mdash; claim, transition, renewal clock advance, job claim, ledger unique key &mdash; proved to be a real conditional <code>UPDATE</code> or unique constraint rather than a read-then-write.</li>
+        </ul>
+      </div>
+      <div class="reason down">
+        <h3>What caused the falls</h3>
+        <ul>
+          <li><b>Product completeness &minus;14.</b> No production payment gateway ships. With a real ArvanCloud token, checkout and top-up return 503 &mdash; and onboarding still declares the shop ready. The first panel flagged this and scored 82 anyway; this one priced it properly.</li>
+          <li><b>Code quality &minus;10.</b> New config surface that does not work: six option keys readable but permanently unsettable, retention split across two option names, and a brand colour declared in five places under a docblock claiming one source of truth.</li>
+          <li><b>Scalability &minus;8.</b> Two batch engines capped below the documented envelope, plus a type error that killed the usage-sync resume path outright.</li>
+          <li><b>Security &minus;6.</b> The perimeter held under direct attack, but two money-path controls that the docs present as enforced turned out not to be wired.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>What was built and verified</h2>
+    <p class="sec-note">Independent of the score, these are measured facts from the working tree and a real WordPress install.</p>
+    <div class="card scroller">
+      <table class="evidence">
+        <thead>
+          <tr>
+            <th scope="col">Gate</th>
+            <th scope="col" style="text-align:right">Before</th>
+            <th scope="col" style="text-align:right">Now</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Unit tests / assertions</td><td class="n then">46 / 158</td><td class="n now">178 / 687</td></tr>
+          <tr><td>End-to-end checks in a real WordPress</td><td class="n then">46</td><td class="n now">123</td></tr>
+          <tr><td>PHP 7.4 grammar gate</td><td class="n then">none</td><td class="n now">101 files, 0 violations</td></tr>
+          <tr><td>Schema version, unique keys proven at migration</td><td class="n then">v4, unverified</td><td class="n now">v5, all 6 verified</td></tr>
+          <tr><td>Translation catalogue strings</td><td class="n then">none</td><td class="n now">836</td></tr>
+          <tr><td>Distributable package</td><td class="n then">none</td><td class="n now">390 KB, 85 files</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout">
+      <p><strong>Three defects were caught only by packaging and installing the plugin</strong>, not by any amount of code review: a runtime file missing from the archive that made the plugin impossible to license; a compiled translation catalogue whose generator self-verified with a more lenient reader than WordPress uses, so it would have shipped and translated nothing; and a sign inversion that would have suspended every customer with any history on day one.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Why the release is held</h2>
+    <p class="sec-note">The package builds and passes all 123 end-to-end checks. It has not been tagged or published, because the panel proved these first.</p>
+    <div class="blockers">
+      <div class="blocker">
+        <span class="mark">B1</span>
+        <h3>The v5 migration back-dates every renewal clock</h3>
+        <p style="grid-column:2">The backfill set <code>renews_at = created_at + 30 days</code> for every service at upgrade time. A six-month-old service gets a date five months in the past, and the renewal job then bills one back-dated term per run until it catches up &mdash; real wallet debits against real customers for periods that were never sold.</p>
+      </div>
+      <div class="blocker">
+        <span class="mark">B2</span>
+        <h3>Demo services keep billing after go-live</h3>
+        <p style="grid-column:2">Leaving demo mode does not retire demo inventory, and both writers stamp the demo flag from the ambient request-time mode rather than the originating row. Seeded demo services therefore manufacture real revenue and real customer debt.</p>
+      </div>
+      <div class="blocker">
+        <span class="mark">B3</span>
+        <h3>The refund settlement guard was never wired</h3>
+        <p style="grid-column:2">The function that refuses a refund when the original purchase was never ledgered exists, is tested, and has no production caller &mdash; the admin button appends to the ledger directly. One payment can yield double the spendable wallet credit.</p>
+      </div>
+    </div>
+    <p style="margin-top:20px">Shipping a migration that charges customers for periods they never bought is not a defensible way to hit a deadline. A fix pass covering these is in flight; the tag and release are one command away once it lands and the suite is green.</p>
+  </section>
+
+  <footer>
+    <p>Same 15-dimension framework, same weights and calibrated bands as the original review, judged by fresh reviewers with no access to the previous scores. Documentation is unscored pending the documentation pass finishing &mdash; scoring a moving target produces a number that flatters and does not hold.</p>
+  </footer>
+
+</div>

@@ -15,7 +15,7 @@ if ($arvrs_retain) {
 }
 
 global $wpdb;
-foreach (['credentials', 'orders', 'order_events', 'services', 'ledger', 'usage_records', 'jobs', 'audit_log', 'notifications', 'customer_rules', 'base_costs'] as $arvrs_table) {
+foreach (['credentials', 'orders', 'order_events', 'services', 'ledger', 'usage_records', 'jobs', 'audit_log', 'notifications', 'customer_rules', 'base_costs', 'topups'] as $arvrs_table) {
     $wpdb->query('DROP TABLE IF EXISTS ' . $wpdb->prefix . 'arvrs_' . $arvrs_table); // phpcs:ignore WordPress.DB
 }
 foreach (['arvrs_settings', 'arvrs_license', 'arvrs_schema_version', 'arvrs_demo_resources', 'arvrs_demo_failed_once', 'arvrs_last_usage_sync', 'arvrs_auth_prefix'] as $arvrs_option) {

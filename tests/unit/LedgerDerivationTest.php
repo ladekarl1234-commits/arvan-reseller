@@ -1,4 +1,8 @@
 <?php
+
+// Direct-access guard: this harness ships inside the plugin directory (EX-116).
+defined('ABSPATH') || exit;
+
 use ArvanReseller\Wallet\Ledger;
 use PHPUnit\Framework\TestCase;
 

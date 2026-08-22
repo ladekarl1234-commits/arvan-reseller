@@ -11,6 +11,20 @@ final class Options
 {
     private const OPTION = 'arvrs_settings';
 
+    /**
+     * The one brand colour. It used to be declared in six places with two
+     * different teals — and the one used as the actual runtime default,
+     * `#14bfb4`, measured 2.30:1 against white, well under the 4.5:1 AA floor
+     * `Brand::accessible()` exists to enforce on every value an admin is
+     * allowed to save. `#0c6960` (6.55:1) is the single value now; every
+     * other declaration (`Brand::FALLBACK`, `Front\Assets`, the wizard) reads
+     * this constant instead of repeating the hex. Everything that needs a
+     * fallback — settings save, wizard, enqueued CSS variables, admin accents
+     * — reads this constant (or `Options::get('brand_color')`, which falls
+     * back to it).
+     */
+    public const BRAND_COLOR = '#0c6960';
+
     /** Known settings and their defaults. Unknown keys are dropped on write. */
     public const DEFAULTS = [
         'onboarded'            => false,
@@ -25,7 +39,7 @@ final class Options
         'brand_about'          => '',
         'support_email'        => '',
         'support_phone'        => '',
-        'brand_color'          => '#14bfb4',
+        'brand_color'          => self::BRAND_COLOR,
         // Pricing
         'global_markup'        => 20.0,
         'product_markup'       => [],       // product => percent
@@ -40,6 +54,16 @@ final class Options
         // Notification cooldown (hours) per event type
         'notify_cooldown'      => 24,
         'data_retention_on_uninstall' => true,
+        // These six were readable-with-a-fallback everywhere they were used,
+        // which reads like a configurable knob, but none was in this
+        // whitelist — so Options::set() silently dropped every write and the
+        // "setting" was actually fixed at its fallback forever.
+        'sync_batch'            => 500,
+        'usage_markup_percent'  => null, // null = fall back to global_markup
+        'service_term_days'     => 30,
+        'renewal_reminder_days' => 5,
+        'data_retention_days'   => 90,
+        'customer_registration' => true,
     ];
 
     public static function get(string $key, $default = null)
@@ -51,10 +75,11 @@ final class Options
         return array_key_exists($key, self::DEFAULTS) ? self::DEFAULTS[$key] : $default;
     }
 
-    public static function set(string $key, $value): void
+    /** @return bool false when $key is not in the whitelist — the write was dropped, not applied */
+    public static function set(string $key, $value): bool
     {
         if (!array_key_exists($key, self::DEFAULTS)) {
-            return; // whitelist — silently ignore unknown keys
+            return false; // whitelist — silently ignore unknown keys
         }
         $all = get_option(self::OPTION, []);
         if (!is_array($all)) {
@@ -62,6 +87,7 @@ final class Options
         }
         $all[$key] = $value;
         update_option(self::OPTION, $all, false);
+        return true;
     }
 
     /** @param array<string,mixed> $pairs */

@@ -13,8 +13,14 @@
   --arvrs-brand-2: color-mix(in srgb, var(--arvrs-brand) 86%, #05302c);
   --arvrs-brand-3: color-mix(in srgb, var(--arvrs-brand) 74%, #ffffff);
   --arvrs-brand-ink: color-mix(in srgb, var(--arvrs-brand) 74%, #043a35);
+  /* Very light brand tints for hover/active surfaces (nav pills, header chip,
+     product/feature icon marks, unread notification wash) — previously
+     hardcoded teal hexes that ignored a reseller's brand color (EX-034). */
+  --arvrs-brand-surface: color-mix(in srgb, var(--arvrs-brand) 9%, #ffffff);
+  --arvrs-brand-surface-soft: color-mix(in srgb, var(--arvrs-brand) 4%, #ffffff);
+  --arvrs-brand-border-soft: color-mix(in srgb, var(--arvrs-brand) 22%, #ffffff);
   --arvrs-ink: #0e2a29;
-  --arvrs-muted: #5c7876;
+  --arvrs-muted: #405957; /* darkened from #5c7876: 4.29:1 on --arvrs-surface-2 failed AA; now 6.78:1 (EX-048) */
   --arvrs-bg: #f3faf9;
   --arvrs-surface: #ffffff;
   --arvrs-surface-2: #eef4f3;
@@ -25,27 +31,55 @@
   --arvrs-dark-2: #0a4644;
   --arvrs-coral: #f43560;
   --arvrs-coral-2: #f74a6e;
-  --arvrs-coral-ink: #e3305a;
+  --arvrs-coral-ink: #a81f42; /* darkened from #e3305a: 3.86:1 on --arvrs-danger-bg failed AA; now 6.36:1 (EX-036/048) */
   --arvrs-coral-surface: #fdeef2;
-  --arvrs-success: #12a150;  --arvrs-success-bg: #ecfdf3;
-  --arvrs-warning: #b45309;  --arvrs-warning-bg: #fffaeb;
-  --arvrs-danger: #e3305a;   --arvrs-danger-bg: #fdeef2;
-  --arvrs-info: #0e7fd1;     --arvrs-info-bg: #e8f4fd;
+  --arvrs-success: #0a7c3d;  --arvrs-success-bg: #ecfdf3;  /* fg/bg = 5.02:1, was 2.89-3.21:1 (EX-036/048) */
+  --arvrs-warning: #b45309;  --arvrs-warning-bg: #fffaeb;  /* fg/bg = 4.81:1, already AA */
+  --arvrs-danger: #a81f42;   --arvrs-danger-bg: #fdeef2;   /* fg/bg = 6.36:1, was 3.86:1 (EX-036/048) */
+  --arvrs-info: #0a5c99;     --arvrs-info-bg: #e8f4fd;     /* fg/bg = 6.26:1, was 3.78:1 (EX-036/048) */
+  /* Radius scale (EX-035): every border-radius in this file now resolves to
+     one of these, except 999px pills and 50% circles — those are "fully
+     round" shape primitives, not a point on a rounding scale. */
+  --arvrs-radius-8: 8px;
   --arvrs-radius-sm: 10px;
+  --arvrs-radius-12: 12px;
   --arvrs-radius: 14px;
+  --arvrs-radius-16: 16px;
   --arvrs-radius-lg: 18px;
+  --arvrs-radius-20: 20px;
   --arvrs-radius-xl: 22px;
+  --arvrs-radius-24: 24px;
+  --arvrs-radius-26: 26px;
   --arvrs-shadow: 0 12px 32px rgba(10,74,71,.08);
-  --arvrs-shadow-btn: 0 10px 22px rgba(20,191,180,.32);
+  /* Brand-tinted shadow via color-mix toward transparent, not a literal
+     rgba(20,191,180,...) — was the same brand-blindness as the gradients
+     (EX-034). */
+  --arvrs-shadow-btn: 0 10px 22px color-mix(in srgb, var(--arvrs-brand) 32%, transparent);
   --arvrs-shadow-hero: 0 24px 60px rgba(10,74,71,.22);
   --arvrs-font: Vazirmatn, "Vazirmatn RD", -apple-system, "Segoe UI", Tahoma, sans-serif;
-  /* Gradient that adapts to the reseller's brand color while keeping the
-     signature teal feel out of the box. */
-  --arvrs-grad: linear-gradient(135deg, color-mix(in srgb, var(--arvrs-brand) 62%, #2ad3c6), var(--arvrs-brand-2));
-  --arvrs-grad-dark: linear-gradient(135deg, #0a4a47, #0c8a80);
+  /* Brand gradient for buttons/CTAs. Same near-black-anchor technique as
+     --arvrs-grad-dark (see below) rather than the old literal mix toward a
+     fixed bright cyan (#2ad3c6), which put white button text at 2.11:1 —
+     failing AA on the storefront's single most-used interactive element
+     (C16: "primary buttons" is an explicitly named brand surface). Lightest
+     stop (60% brand) is #0e7f78 by default, 4.83:1 against white. */
+  --arvrs-grad: linear-gradient(135deg, color-mix(in srgb, var(--arvrs-brand) 60%, #04201d), color-mix(in srgb, var(--arvrs-brand) 34%, #04201d));
+  /* Dark gradient used everywhere white text sits on brand color (hero, auth
+     aside, brand stat card, gateway head). Mixed from --arvrs-brand toward a
+     near-black anchor so it (a) tracks the reseller's brand color instead of
+     a hardcoded teal literal (EX-034) and (b) stays dark enough for AA white
+     text regardless of stop position: with the default brand, the *lighter*
+     stop (58% brand) is #0d7c75, which is 5.05:1 against white — the darker
+     stop is always darker still, so it only gets safer (EX-035/EX-111). */
+  --arvrs-grad-dark: linear-gradient(135deg, color-mix(in srgb, var(--arvrs-brand) 30%, #04201d), color-mix(in srgb, var(--arvrs-brand) 58%, #04201d));
 }
 
-/* Vazirmatn (SIL OFL, bundled — assets/fonts/OFL.txt). */
+/* Vazirmatn (SIL OFL, bundled — assets/fonts/OFL.txt). Three static faces,
+   not a variable font: 400 regular, 500-600 medium, 700-900 bold-as-one-file.
+   Every font-weight declared below is 400, 500/600, or 800 — 700 and 900
+   were removed because they render identically to 800 (same Bold file,
+   whole 700-900 range), which was a fictional hierarchy, not a real one
+   (EX-035/EX-097). */
 @font-face { font-family: Vazirmatn; src: url("../fonts/Vazirmatn-Regular.woff2") format("woff2"); font-weight: 400; font-display: swap; }
 @font-face { font-family: Vazirmatn; src: url("../fonts/Vazirmatn-Medium.woff2") format("woff2"); font-weight: 500 600; font-display: swap; }
 @font-face { font-family: Vazirmatn; src: url("../fonts/Vazirmatn-Bold.woff2") format("woff2"); font-weight: 700 900; font-display: swap; }
@@ -63,7 +97,16 @@
 .arvrs-app h1, .arvrs-app h2, .arvrs-app h3 { margin: 0 0 8px; line-height: 1.5; text-wrap: pretty; }
 .arvrs-app a { text-decoration: none; color: var(--arvrs-brand-2); }
 .arvrs-app a:hover { color: var(--arvrs-brand-ink); }
-.arvrs-shell { max-width: 1160px; margin-inline: auto; padding: 0 24px; }
+/* Single container primitive: one max-width, one gutter, shared by the
+   header, main content and footer so the mobile gutter changes in one place
+   instead of three (EX-093). Non-container concerns (height, flex, margin
+   between sections) stay in each selector's own rule below. */
+.arvrs-shell,
+.arvrs-header-inner,
+.arvrs-main,
+.arvrs-footer {
+  max-width: 1160px; margin-inline: auto; padding-inline: 24px;
+}
 
 /* ---------- glass header ---------- */
 .arvrs-header {
@@ -73,36 +116,64 @@
   border-bottom: 1px solid var(--arvrs-line);
 }
 .arvrs-header-inner {
-  max-width: 1160px; margin-inline: auto; padding: 0 24px; height: 68px;
-  display: flex; align-items: center; gap: 24px;
+  height: 68px; display: flex; align-items: center; gap: 24px; min-width: 0;
 }
-.arvrs-brand { display: flex; align-items: center; gap: 10px; color: var(--arvrs-ink); }
+.arvrs-brand { display: flex; align-items: center; gap: 10px; color: var(--arvrs-ink); min-width: 0; }
 .arvrs-brand-mark {
-  width: 38px; height: 38px; border-radius: 12px; background: var(--arvrs-grad);
+  width: 38px; height: 38px; border-radius: var(--arvrs-radius-12); background: var(--arvrs-grad);
   display: grid; place-items: center; color: #fff; font-weight: 800; font-size: 17px;
-  box-shadow: 0 6px 14px rgba(20,191,180,.35); overflow: hidden; flex-shrink: 0;
+  box-shadow: 0 6px 14px color-mix(in srgb, var(--arvrs-brand) 35%, transparent); overflow: hidden; flex-shrink: 0;
 }
 .arvrs-brand-mark img { width: 100%; height: 100%; object-fit: cover; }
-.arvrs-brand-name { font-size: 17px; font-weight: 800; }
+.arvrs-brand-name {
+  font-size: 17px; font-weight: 800; overflow: hidden; text-overflow: ellipsis;
+  white-space: nowrap; min-width: 0;
+}
 .arvrs-nav { display: flex; gap: 4px; font-size: 14px; flex-wrap: wrap; }
 .arvrs-nav a { color: var(--arvrs-muted); padding: 8px 14px; border-radius: var(--arvrs-radius-sm); }
-.arvrs-nav a:hover { background: #e9f6f4; color: var(--arvrs-ink); }
-.arvrs-nav a.is-active { color: var(--arvrs-brand-ink); background: #e6f8f6; font-weight: 700; }
-.arvrs-header-actions { margin-inline-start: auto; display: flex; align-items: center; gap: 10px; }
+.arvrs-nav a:hover { background: var(--arvrs-brand-surface); color: var(--arvrs-ink); }
+.arvrs-nav a.is-active { color: var(--arvrs-brand-ink); background: var(--arvrs-brand-surface); font-weight: 800; }
+/* Mobile nav disclosure toggle (front.js: [data-arvrs-nav-toggle], toggles
+   aria-expanded + .is-open on #arvrs-nav) — hidden until the ≤760px band,
+   see the media query below (EX-069/EX-094). */
+.arvrs-nav-toggle {
+  display: none; flex-shrink: 0; width: 38px; height: 38px; padding: 0;
+  align-items: center; justify-content: center; border: 1.5px solid var(--arvrs-line);
+  border-radius: var(--arvrs-radius-sm); background: var(--arvrs-surface); cursor: pointer;
+}
+.arvrs-nav-toggle:focus-visible { outline: 2px solid var(--arvrs-brand-ink); outline-offset: 2px; }
+.arvrs-nav-toggle-mark,
+.arvrs-nav-toggle-mark::before,
+.arvrs-nav-toggle-mark::after {
+  width: 18px; height: 2px; background: var(--arvrs-ink); border-radius: 2px; display: block;
+}
+.arvrs-nav-toggle-mark { position: relative; }
+.arvrs-nav-toggle-mark::before, .arvrs-nav-toggle-mark::after { content: ""; position: absolute; inset-inline-end: 0; }
+.arvrs-nav-toggle-mark::before { top: -6px; }
+.arvrs-nav-toggle-mark::after { top: 6px; }
+.arvrs-sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+}
+.arvrs-header-actions { margin-inline-start: auto; display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 .arvrs-chip {
-  border: 1px solid #c9e8e4; background: #eefaf8; border-radius: 999px;
-  padding: 7px 16px; font-size: 13px; font-weight: 700; color: var(--arvrs-brand-ink);
+  border: 1px solid var(--arvrs-brand-border-soft); background: var(--arvrs-brand-surface-soft);
+  border-radius: 999px; padding: 7px 16px; font-size: 13px; font-weight: 800; color: var(--arvrs-brand-ink);
 }
 
 /* ---------- buttons ---------- */
 .arvrs-btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-  height: 46px; padding: 0 22px; border-radius: 13px; font-family: inherit;
+  height: 46px; padding: 0 22px; border-radius: var(--arvrs-radius-12); font-family: inherit;
   font-size: 14.5px; font-weight: 800; cursor: pointer; border: 1.5px solid transparent;
   transition: filter .15s, background .15s, border-color .15s, transform .15s; white-space: nowrap;
   text-decoration: none;
 }
-.arvrs-btn:focus-visible { outline: 2px solid var(--arvrs-brand); outline-offset: 2px; }
+.arvrs-btn-sm { height: 36px; padding: 0 16px; font-size: 13px; }
+/* Focus ring: 2px solid at 5.2:1 against white (var(--arvrs-brand-ink)) clears
+   the 3:1 non-text-contrast floor; the default --arvrs-brand teal is only
+   2.3:1 on white and would fail it (EX-140). */
+.arvrs-btn:focus-visible { outline: 2px solid var(--arvrs-brand-ink); outline-offset: 2px; }
 .arvrs-btn-primary { background: var(--arvrs-grad); color: #fff !important; box-shadow: var(--arvrs-shadow-btn); }
 .arvrs-btn-primary:hover { filter: brightness(1.06); color: #fff !important; }
 .arvrs-btn-dark { background: var(--arvrs-dark); color: #fff !important; }
@@ -114,7 +185,7 @@
 .arvrs-btn-outline-light { background: transparent; color: #fff !important; border-color: rgba(255,255,255,.55); }
 .arvrs-btn-outline-light:hover { background: rgba(255,255,255,.12); color: #fff !important; }
 .arvrs-btn-white { background: #fff; color: var(--arvrs-brand-ink) !important; box-shadow: 0 10px 24px rgba(0,0,0,.14); }
-.arvrs-btn-white:hover { background: #eefaf8; }
+.arvrs-btn-white:hover { background: var(--arvrs-brand-surface-soft); }
 .arvrs-btn-block { width: 100%; }
 .arvrs-btn[disabled] { opacity: .55; cursor: not-allowed; }
 .arvrs-badge-dot {
@@ -123,37 +194,54 @@
 }
 
 /* ---------- main / cards ---------- */
-.arvrs-main { max-width: 1160px; margin: 28px auto 0; padding: 0 24px 60px; }
+.arvrs-main { margin-block: 28px 0; padding-block-end: 60px; }
 .arvrs-card {
   background: var(--arvrs-surface); border: 1px solid var(--arvrs-line);
   border-radius: var(--arvrs-radius-lg); padding: 26px; box-shadow: var(--arvrs-shadow);
-  margin-bottom: 16px;
+  margin-bottom: 16px; /* only matters for a bare card with no gapped wrapper; the
+    two rules below zero it out inside .arvrs-stack/.arvrs-grid so gap is the
+    single source of spacing there (EX-092) */
 }
+.arvrs-stack > .arvrs-card, .arvrs-grid > .arvrs-card { margin-bottom: 0; }
+.arvrs-card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+.arvrs-card-head .arvrs-card-title { margin-bottom: 0; }
 .arvrs-card-title { font-size: 16px; font-weight: 800; margin-bottom: 16px; }
 .arvrs-stack { display: flex; flex-direction: column; gap: 14px; }
 .arvrs-row-card { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
 .arvrs-grid { display: grid; gap: 20px; }
+.arvrs-grid-gap { gap: 20px; } /* explicit alias used by templates; matches .arvrs-grid's own default */
 .arvrs-grid-2 { grid-template-columns: repeat(2, 1fr); }
 .arvrs-grid-3 { grid-template-columns: repeat(3, 1fr); }
+.arvrs-narrow { max-width: 480px; margin-inline: auto; }
+.arvrs-inline-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .arvrs-muted { color: var(--arvrs-muted); font-size: 13.5px; }
 .arvrs-center { text-align: center; }
 .arvrs-empty { padding: 44px 24px; }
-.arvrs-page-title { font-size: 28px; font-weight: 900; margin-bottom: 16px; }
+.arvrs-page-title { font-size: 28px; font-weight: 800; margin-bottom: 16px; }
 
 /* ---------- hero ---------- */
 .arvrs-hero {
-  position: relative; overflow: hidden; border-radius: 26px; margin-top: 28px;
-  background: linear-gradient(130deg, #0a4a47 0%, #0c8a80 55%, #14bfb4 100%);
+  position: relative; overflow: hidden; border-radius: var(--arvrs-radius-26); margin-top: 28px;
+  /* Was a literal 3-stop gradient ending at bright #14bfb4 (white text ~2:1);
+     now the shared brand-derived --arvrs-grad-dark (EX-034/EX-111), see :root
+     for the contrast math. */
+  background: var(--arvrs-grad-dark);
   padding: 64px 56px; color: #fff; box-shadow: var(--arvrs-shadow-hero);
 }
 .arvrs-hero::after {
   content: ""; position: absolute; inset: 0;
   background: radial-gradient(600px 300px at 15% 110%, rgba(247,74,110,.28), transparent 60%);
-  pointer-events: none;
 }
-.arvrs-hero-body { position: relative; max-width: 560px; display: flex; flex-direction: column; gap: 14px; }
-.arvrs-hero h1 { margin: 0; font-size: 40px; font-weight: 900; line-height: 1.5; }
-.arvrs-hero-sub { margin: 0; font-size: 16px; color: rgba(255,255,255,.85); max-width: 460px; }
+/* z-index:1 so the coral ::after overlay (generated last, painted last in
+   tree order) sits behind the headline/CTA instead of tinting them — the
+   pointer-events:none below was masking this stacking bug, not fixing it
+   (EX-095). */
+.arvrs-hero-body { position: relative; z-index: 1; max-width: 560px; display: flex; flex-direction: column; gap: 14px; }
+.arvrs-hero h1, .arvrs-hero .arvrs-h1 { margin: 0; font-size: 40px; font-weight: 800; line-height: 1.5; }
+/* Solid white, not rgba(255,255,255,.85): the alpha was compositing with the
+   gradient's own contrast headroom and pushing effective contrast down
+   further (EX-111). */
+.arvrs-hero-sub { margin: 0; font-size: 16px; color: #fff; max-width: 460px; }
 .arvrs-hero-badge {
   align-self: flex-start; background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.35);
   border-radius: 999px; padding: 5px 16px; font-size: 13px; font-weight: 600;
@@ -161,19 +249,19 @@
 .arvrs-hero-actions { display: flex; gap: 12px; margin-top: 12px; flex-wrap: wrap; }
 .arvrs-hero-actions .arvrs-btn { height: 48px; }
 /* floating decorative shapes */
-.arvrs-shape { position: absolute; z-index: 0; animation: arvrs-float 7s ease-in-out infinite; }
+.arvrs-shape { position: absolute; z-index: 0; animation: arvrs-float 7s ease-in-out infinite; pointer-events: none; }
 .arvrs-shape-1 {
   left: 56px; top: 50%; width: 150px; height: 210px; transform: translateY(-58%);
-  border-radius: 22px; background: linear-gradient(160deg, rgba(255,255,255,.42), rgba(255,255,255,.08));
+  border-radius: var(--arvrs-radius-xl); background: linear-gradient(160deg, rgba(255,255,255,.42), rgba(255,255,255,.08));
   border: 1.5px solid rgba(255,255,255,.55); backdrop-filter: blur(6px);
 }
 .arvrs-shape-2 {
-  --r: -14deg; left: 230px; top: 22%; width: 64px; height: 64px; border-radius: 16px;
+  --r: -14deg; left: 230px; top: 22%; width: 64px; height: 64px; border-radius: var(--arvrs-radius-16);
   background: linear-gradient(150deg, #ff7a95, #f43560); opacity: .92;
   box-shadow: 0 18px 40px rgba(244,53,96,.4); animation-duration: 5.5s;
 }
 .arvrs-shape-3 {
-  --r: 12deg; left: 180px; bottom: 14%; width: 44px; height: 44px; border-radius: 12px;
+  --r: 12deg; left: 180px; bottom: 14%; width: 44px; height: 44px; border-radius: var(--arvrs-radius-12);
   background: linear-gradient(160deg, rgba(255,255,255,.5), rgba(255,255,255,.12));
   border: 1px solid rgba(255,255,255,.5); animation-duration: 6.5s; animation-delay: 1s;
 }
@@ -191,11 +279,11 @@
 .arvrs-products { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 40px; }
 .arvrs-product-card {
   display: flex; flex-direction: column; gap: 10px; background: var(--arvrs-surface);
-  border: 1px solid var(--arvrs-line); border-radius: 20px; padding: 28px; color: var(--arvrs-ink);
+  border: 1px solid var(--arvrs-line); border-radius: var(--arvrs-radius-20); padding: 28px; color: var(--arvrs-ink);
   transition: box-shadow .2s, transform .2s;
 }
 .arvrs-product-card:hover { box-shadow: 0 18px 44px rgba(10,74,71,.14); transform: translateY(-3px); color: var(--arvrs-ink); }
-.arvrs-product-icon { width: 58px; height: 58px; border-radius: 16px; background: #e6f8f6; color: var(--arvrs-brand-2); display: grid; place-items: center; }
+.arvrs-product-icon { width: 58px; height: 58px; border-radius: var(--arvrs-radius-16); background: var(--arvrs-brand-surface); color: var(--arvrs-brand-2); display: grid; place-items: center; }
 .arvrs-product-icon.is-coral { background: var(--arvrs-coral-surface); color: var(--arvrs-coral); }
 .arvrs-product-card h2 { margin: 0; font-size: 18px; font-weight: 800; }
 .arvrs-product-card p { margin: 0; color: var(--arvrs-muted); font-size: 13.5px; }
@@ -203,18 +291,19 @@
 .arvrs-price-from b { color: var(--arvrs-brand-2); font-weight: 800; }
 .arvrs-product-cta {
   display: inline-flex; align-items: center; justify-content: center; height: 44px;
-  border-radius: 12px; background: var(--arvrs-brand); color: #fff; font-size: 14px; font-weight: 800;
+  border-radius: var(--arvrs-radius-12); background: var(--arvrs-grad-dark); color: #fff; font-size: 14px; font-weight: 800;
+  /* 5.05:1 — raw --arvrs-brand carries white at only 2.30:1 (see :root note). */
 }
 
 /* feature row */
 .arvrs-features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 32px; }
 .arvrs-feature {
   display: flex; align-items: flex-start; gap: 14px; background: var(--arvrs-surface);
-  border: 1px solid var(--arvrs-line); border-radius: 16px; padding: 20px 22px;
+  border: 1px solid var(--arvrs-line); border-radius: var(--arvrs-radius-16); padding: 20px 22px;
 }
 .arvrs-feature-mark {
-  width: 34px; height: 34px; border-radius: 10px; background: #e6f8f6; color: var(--arvrs-brand-2);
-  display: grid; place-items: center; font-weight: 900; flex-shrink: 0;
+  width: 34px; height: 34px; border-radius: var(--arvrs-radius-sm); background: var(--arvrs-brand-surface); color: var(--arvrs-brand-2);
+  display: grid; place-items: center; font-weight: 800; flex-shrink: 0;
 }
 .arvrs-feature-mark.is-coral { background: var(--arvrs-coral-surface); color: var(--arvrs-coral); }
 .arvrs-feature strong { font-size: 14.5px; }
@@ -226,7 +315,7 @@
 .arvrs-breadcrumb a { color: var(--arvrs-muted); }
 .arvrs-breadcrumb b { color: var(--arvrs-ink); font-weight: 600; }
 .arvrs-title-row { display: flex; align-items: center; gap: 14px; margin-bottom: 22px; }
-.arvrs-title-row h1 { margin: 0; font-size: 28px; font-weight: 900; }
+.arvrs-title-row h1, .arvrs-title-row .arvrs-h1 { margin: 0; font-size: 28px; font-weight: 800; }
 
 /* ---------- product page: plans + config ---------- */
 .arvrs-order-layout { display: grid; grid-template-columns: 1fr 350px; gap: 20px; align-items: start; }
@@ -235,10 +324,10 @@
 .arvrs-plan-card input { position: absolute; opacity: 0; width: 0; height: 0; }
 .arvrs-plan-body {
   display: block; background: var(--arvrs-surface); border: 2px solid var(--arvrs-line);
-  border-radius: 18px; padding: 18px 22px; transition: border-color .15s, box-shadow .15s;
+  border-radius: var(--arvrs-radius-lg); padding: 18px 22px; transition: border-color .15s, box-shadow .15s;
 }
-.arvrs-plan-card input:checked + .arvrs-plan-body { border-color: var(--arvrs-brand); box-shadow: 0 12px 30px rgba(20,191,180,.16); }
-.arvrs-plan-card input:focus-visible + .arvrs-plan-body { outline: 2px solid var(--arvrs-brand); outline-offset: 2px; }
+.arvrs-plan-card input:checked + .arvrs-plan-body { border-color: var(--arvrs-brand); box-shadow: 0 12px 30px color-mix(in srgb, var(--arvrs-brand) 16%, transparent); }
+.arvrs-plan-card input:focus-visible + .arvrs-plan-body { outline: 2px solid var(--arvrs-brand-ink); outline-offset: 2px; }
 .arvrs-plan-head { display: flex; align-items: center; gap: 8px 12px; flex-wrap: wrap; }
 .arvrs-plan-name { flex-shrink: 0; }
 .arvrs-plan-dot {
@@ -251,40 +340,48 @@
 .arvrs-plan-name { font-weight: 800; font-size: 15.5px; }
 .arvrs-plan-tag { border-radius: 999px; padding: 2px 12px; font-size: 11.5px; font-weight: 800; background: var(--arvrs-surface-2); color: var(--arvrs-muted); }
 .arvrs-plan-tag.is-featured { background: var(--arvrs-coral-surface); color: var(--arvrs-coral-ink); }
-.arvrs-plan-price { margin-inline-start: auto; font-weight: 900; color: var(--arvrs-brand-2); font-size: 15px; }
+.arvrs-plan-price { margin-inline-start: auto; font-weight: 800; color: var(--arvrs-brand-2); font-size: 15px; }
 .arvrs-plan-price span { color: var(--arvrs-muted); font-weight: 500; font-size: 12.5px; }
 .arvrs-plan-specs { display: flex; flex-wrap: wrap; gap: 6px 22px; font-size: 13px; margin-top: 8px; padding-inline-start: 32px; }
 .arvrs-plan-specs .arvrs-spec-k { color: var(--arvrs-muted); }
 
 .arvrs-config {
   position: sticky; top: 88px; background: var(--arvrs-surface); border: 1px solid var(--arvrs-line);
-  border-radius: 20px; padding: 26px; box-shadow: var(--arvrs-shadow);
+  border-radius: var(--arvrs-radius-20); padding: 26px; box-shadow: var(--arvrs-shadow);
 }
 .arvrs-order-summary {
   display: flex; justify-content: space-between; align-items: center;
   border-top: 1.5px dashed var(--arvrs-line); margin-top: 20px; padding-top: 18px; font-size: 15px;
 }
-.arvrs-order-summary strong { font-size: 19px; font-weight: 900; }
+.arvrs-order-summary strong { font-size: 19px; font-weight: 800; }
 
 /* ---------- forms ---------- */
 .arvrs-field { margin-bottom: 16px; }
-.arvrs-field label { display: block; font-size: 13px; font-weight: 700; margin-bottom: 6px; }
+.arvrs-field label { display: block; font-size: 13px; font-weight: 800; margin-bottom: 6px; }
 .arvrs-field input, .arvrs-field select, .arvrs-field textarea {
   width: 100%; height: 46px; padding: 0 14px; font-family: inherit; font-size: 14px;
-  border: 1.5px solid var(--arvrs-line); border-radius: 12px; background: var(--arvrs-surface); color: var(--arvrs-ink);
+  border: 1.5px solid var(--arvrs-line); border-radius: var(--arvrs-radius-12); background: var(--arvrs-surface); color: var(--arvrs-ink);
 }
 .arvrs-field textarea { height: auto; padding: 12px 14px; line-height: 1.8; }
-.arvrs-field input:focus, .arvrs-field select:focus, .arvrs-field textarea:focus { outline: none; border-color: var(--arvrs-brand); }
+/* 2px outline at var(--arvrs-brand-ink), 3.39:1 on white with the CSS fallback brand, 5.20:1 with the stored default (#0c6960); clears the 3:1 non-text floor either way — was outline:none
+   plus a 2.3:1 border-color change, i.e. no AA-passing focus indicator at
+   all (EX-140's admin counterpart; the same gap existed here). */
+.arvrs-field input:focus, .arvrs-field select:focus, .arvrs-field textarea:focus { outline: 2px solid var(--arvrs-brand-ink); outline-offset: 1px; border-color: var(--arvrs-brand-ink); }
 .arvrs-field-hint { font-size: 12px; color: var(--arvrs-muted); margin: 6px 0 0; }
 .arvrs-error { color: var(--arvrs-danger); font-size: 13px; margin-top: 8px; }
 
 /* ---------- alerts ---------- */
 .arvrs-alert {
   display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
-  border-radius: 14px; padding: 14px 20px; margin-bottom: 20px; border: 1px solid transparent;
+  border-radius: var(--arvrs-radius); padding: 14px 20px; margin-bottom: 20px; border: 1px solid transparent;
 }
 .arvrs-alert p { margin: 0; }
-.arvrs-alert-mark { width: 30px; height: 30px; border-radius: 10px; display: grid; place-items: center; font-weight: 900; flex-shrink: 0; }
+/* p inherits the alert's own ink color instead of the unrelated --arvrs-muted
+   grey-teal it was picking up from the generic .arvrs-muted utility class
+   used inside some alert bodies — that put teal-grey text on a yellow
+   warning alert, ignoring the alert's own #7c2d12 amber ink (EX-096). */
+.arvrs-alert p.arvrs-muted { color: inherit; opacity: .85; }
+.arvrs-alert-mark { width: 30px; height: 30px; border-radius: var(--arvrs-radius-sm); display: grid; place-items: center; font-weight: 800; flex-shrink: 0; }
 .arvrs-alert strong { font-size: 13.5px; }
 .arvrs-alert-success { background: var(--arvrs-success-bg); border-color: #b7ebc6; color: #14532d; }
 .arvrs-alert-success .arvrs-alert-mark { background: #b7ebc6; color: #14532d; }
@@ -307,8 +404,9 @@
 /* ---------- tables ---------- */
 .arvrs-table-wrap { overflow-x: auto; }
 .arvrs-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
-.arvrs-table th { text-align: right; padding: 10px 12px; border-bottom: 1px solid var(--arvrs-line); color: var(--arvrs-muted); font-size: 12px; font-weight: 700; }
+.arvrs-table th { text-align: right; padding: 10px 12px; border-bottom: 1px solid var(--arvrs-line); color: var(--arvrs-muted); font-size: 12px; font-weight: 800; }
 .arvrs-table td { text-align: right; padding: 12px; border-bottom: 1px solid var(--arvrs-line-2); }
+.arvrs-table td.is-strong { font-weight: 800; }
 .arvrs-table tbody tr:hover { background: var(--arvrs-chip); }
 .arvrs-amount-credit { color: var(--arvrs-success); font-weight: 800; }
 .arvrs-amount-debit { color: var(--arvrs-coral-ink); font-weight: 800; }
@@ -316,21 +414,21 @@
 /* ---------- tabs ---------- */
 .arvrs-tabs {
   display: flex; gap: 6px; background: var(--arvrs-surface); border: 1px solid var(--arvrs-line);
-  border-radius: 14px; padding: 6px; margin-bottom: 24px; overflow-x: auto;
+  border-radius: var(--arvrs-radius); padding: 6px; margin-bottom: 24px; overflow-x: auto;
 }
 .arvrs-tab {
   flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px; height: 42px; padding: 0 20px;
-  border: none; border-radius: 10px; font-family: inherit; font-size: 13.5px; font-weight: 800;
+  border: none; border-radius: var(--arvrs-radius-sm); font-family: inherit; font-size: 13.5px; font-weight: 800;
   color: var(--arvrs-muted); background: transparent; cursor: pointer; transition: background .15s, color .15s;
   text-decoration: none;
 }
 .arvrs-tab:hover { color: var(--arvrs-ink); }
 .arvrs-tab.is-active { background: var(--arvrs-dark); color: #fff; }
-.arvrs-tab:focus-visible { outline: 2px solid var(--arvrs-brand); outline-offset: -2px; }
+.arvrs-tab:focus-visible { outline: 2px solid var(--arvrs-brand-ink); outline-offset: -2px; }
 
 /* ---------- dashboard ---------- */
 .arvrs-dash-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; margin-bottom: 18px; }
-.arvrs-dash-head h1 { margin: 0; font-size: 26px; font-weight: 900; }
+.arvrs-dash-head h1, .arvrs-dash-head .arvrs-h1 { margin: 0; font-size: 26px; font-weight: 800; }
 .arvrs-dash-head p { margin: 2px 0 0; color: var(--arvrs-muted); font-size: 14px; }
 .arvrs-stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 20px; }
 .arvrs-stat {
@@ -338,22 +436,32 @@
   padding: 22px 24px; display: flex; flex-direction: column; gap: 4px;
 }
 .arvrs-stat .arvrs-stat-label { font-size: 13px; color: var(--arvrs-muted); }
-.arvrs-stat strong { font-size: 24px; font-weight: 900; }
+.arvrs-stat strong, .arvrs-stat-value { font-size: 24px; font-weight: 800; }
 .arvrs-stat.is-brand {
-  background: linear-gradient(135deg, #0a4a47, #0c8a80); border-color: transparent; color: #fff;
+  /* was a literal 3-stop gradient duplicating --arvrs-grad-dark's old value;
+     now the token itself, brand-derived and AA-safe (EX-034/EX-035/EX-111) */
+  background: var(--arvrs-grad-dark); border-color: transparent; color: #fff;
 }
-.arvrs-stat.is-brand .arvrs-stat-label { color: rgba(255,255,255,.75); }
+/* Solid white, not rgba(255,255,255,.75) (3.07:1 on the old bright stop) —
+   see .arvrs-hero-sub (EX-111). */
+.arvrs-stat.is-brand .arvrs-stat-label { color: #fff; }
+/* Two-part variant (wallet "شارژ/مصرف" split card): row layout, a vertical
+   rule between the two stat groups instead of the single-value strong. */
+.arvrs-stat-split { flex-direction: row; align-items: center; }
+.arvrs-stat-split > div { flex: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.arvrs-stat-rule { align-self: stretch; width: 1px; background: rgba(255,255,255,.25); flex-shrink: 0; }
 .arvrs-service-card { padding: 24px; }
 .arvrs-service-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
 .arvrs-service-head strong { font-size: 15px; }
+.arvrs-service-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .arvrs-kv { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; }
-.arvrs-kv div { display: flex; justify-content: space-between; gap: 12px; padding: 8px 12px; background: var(--arvrs-chip); border-radius: 10px; font-size: 12.5px; }
+.arvrs-kv div { display: flex; justify-content: space-between; gap: 12px; padding: 8px 12px; background: var(--arvrs-chip); border-radius: var(--arvrs-radius-sm); font-size: 12.5px; }
 .arvrs-kv dt, .arvrs-kv .arvrs-kv-k { color: var(--arvrs-muted); margin: 0; }
-.arvrs-kv dd, .arvrs-kv .arvrs-kv-v { margin: 0; font-weight: 700; overflow-wrap: anywhere; }
+.arvrs-kv dd, .arvrs-kv .arvrs-kv-v { margin: 0; font-weight: 800; overflow-wrap: anywhere; }
 
 /* wallet ledger rows */
 .arvrs-ledger-row { display: flex; align-items: center; gap: 14px; padding: 13px 4px; border-bottom: 1px solid var(--arvrs-line-2); }
-.arvrs-ledger-icon { width: 32px; height: 32px; border-radius: 10px; display: grid; place-items: center; font-weight: 900; flex-shrink: 0; }
+.arvrs-ledger-icon { width: 32px; height: 32px; border-radius: var(--arvrs-radius-sm); display: grid; place-items: center; font-weight: 800; flex-shrink: 0; }
 .arvrs-ledger-icon.is-credit { background: var(--arvrs-success-bg); color: var(--arvrs-success); }
 .arvrs-ledger-icon.is-debit { background: var(--arvrs-coral-surface); color: var(--arvrs-coral-ink); }
 .arvrs-ledger-row .arvrs-ledger-body { flex: 1; }
@@ -361,9 +469,10 @@
 .arvrs-ledger-row .arvrs-ledger-body div { color: var(--arvrs-muted); font-size: 12px; }
 
 /* notifications */
-.arvrs-notification { border-radius: 18px; padding: 22px 24px; border: 1px solid var(--arvrs-line); background: var(--arvrs-surface); }
-.arvrs-notification.is-unread { border-color: #c9e8e4; background: #f6fdfc; }
+.arvrs-notification { border-radius: var(--arvrs-radius-lg); padding: 22px 24px; border: 1px solid var(--arvrs-line); background: var(--arvrs-surface); }
+.arvrs-notification.is-unread { border-color: var(--arvrs-brand-border-soft); background: var(--arvrs-brand-surface-soft); }
 .arvrs-notification .arvrs-service-head strong { display: flex; align-items: center; gap: 8px; }
+.arvrs-notification-body { color: var(--arvrs-muted); font-size: 13.5px; }
 .arvrs-notification.is-unread .arvrs-service-head strong::after {
   content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--arvrs-coral-2); display: inline-block;
 }
@@ -372,55 +481,66 @@
 .arvrs-auth { display: grid; grid-template-columns: 1fr 1fr; min-height: 100vh; }
 .arvrs-auth-aside {
   position: relative; overflow: hidden; color: #fff; padding: 64px;
-  background: linear-gradient(150deg, #0a4a47 0%, #0c8a80 55%, #14bfb4 100%);
+  /* Was a literal 3-stop gradient duplicating the hero's, ending bright
+     enough to drop white text to ~2:1; now the shared, brand-derived,
+     AA-safe token (EX-034/EX-035/EX-111). */
+  background: var(--arvrs-grad-dark);
   display: flex; flex-direction: column; justify-content: center;
 }
 .arvrs-auth-aside::after {
   content: ""; position: absolute; inset: 0;
   background: radial-gradient(500px 320px at 20% 100%, rgba(247,74,110,.3), transparent 60%);
 }
-.arvrs-auth-aside-body { position: relative; display: flex; flex-direction: column; gap: 12px; max-width: 380px; }
-.arvrs-auth-aside h1 { margin: 0; font-size: 30px; font-weight: 900; line-height: 1.6; }
-.arvrs-auth-aside p { margin: 0; color: rgba(255,255,255,.82); font-size: 15px; }
+/* z-index:1 so the coral ::after overlay paints behind the welcome copy
+   instead of tinting it (EX-095, same stacking bug as the hero). */
+.arvrs-auth-aside-body { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 12px; max-width: 380px; }
+.arvrs-auth-aside h1, .arvrs-auth-aside .arvrs-h1 { margin: 0; font-size: 30px; font-weight: 800; line-height: 1.6; }
+/* Solid white, not rgba(255,255,255,.82) — see .arvrs-hero-sub (EX-111). */
+.arvrs-auth-aside p { margin: 0; color: #fff; font-size: 15px; }
 .arvrs-auth-mark {
-  width: 46px; height: 46px; border-radius: 14px; background: rgba(255,255,255,.18);
-  border: 1px solid rgba(255,255,255,.4); display: grid; place-items: center; font-weight: 900; font-size: 20px;
+  width: 46px; height: 46px; border-radius: var(--arvrs-radius); background: rgba(255,255,255,.18);
+  border: 1px solid rgba(255,255,255,.4); display: grid; place-items: center; font-weight: 800; font-size: 20px;
 }
 .arvrs-auth-panel { display: flex; align-items: center; justify-content: center; padding: 48px 24px; background: var(--arvrs-bg); }
 .arvrs-auth-card {
   width: 100%; max-width: 420px; background: var(--arvrs-surface); border: 1px solid var(--arvrs-line);
-  border-radius: 22px; padding: 36px; box-shadow: 0 20px 50px rgba(10,74,71,.1);
+  border-radius: var(--arvrs-radius-xl); padding: 36px; box-shadow: 0 20px 50px rgba(10,74,71,.1);
 }
-.arvrs-auth-switch { display: flex; background: var(--arvrs-surface-2); border-radius: 13px; padding: 5px; gap: 5px; margin-bottom: 26px; }
-.arvrs-auth-switch .arvrs-tab { flex: 1; justify-content: center; height: 42px; border-radius: 10px; color: var(--arvrs-muted); background: transparent; }
+.arvrs-auth-switch { display: flex; background: var(--arvrs-surface-2); border-radius: var(--arvrs-radius-12); padding: 5px; gap: 5px; margin-bottom: 26px; }
+.arvrs-auth-switch .arvrs-tab { flex: 1; justify-content: center; height: 42px; border-radius: var(--arvrs-radius-sm); color: var(--arvrs-muted); background: transparent; }
 .arvrs-auth-switch .arvrs-tab.is-active { background: #fff; color: var(--arvrs-brand-ink); box-shadow: 0 2px 8px rgba(10,74,71,.12); }
+.arvrs-auth-link { color: var(--arvrs-brand-ink); font-weight: 800; }
 
 /* ---------- payment gateway ---------- */
 .arvrs-payment-wrap { display: flex; flex-direction: column; align-items: center; padding: 60px 24px; min-height: 100vh; }
 .arvrs-payment-brand { display: flex; align-items: center; gap: 10px; color: var(--arvrs-ink); margin-bottom: 28px; }
 .arvrs-gateway {
   width: 100%; max-width: 460px; background: var(--arvrs-surface); border: 1px solid var(--arvrs-line);
-  border-radius: 22px; overflow: hidden; box-shadow: 0 20px 50px rgba(10,74,71,.1); margin-bottom: 18px;
+  border-radius: var(--arvrs-radius-xl); overflow: hidden; box-shadow: 0 20px 50px rgba(10,74,71,.1); margin-bottom: 18px;
 }
-.arvrs-gateway-head { background: linear-gradient(135deg, #0a4a47, #0c8a80); padding: 24px 28px; color: #fff; display: flex; flex-direction: column; gap: 8px; }
-.arvrs-gateway-head h1 { margin: 0; font-size: 18px; font-weight: 800; }
-.arvrs-gateway-tag { align-self: flex-start; background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.35); border-radius: 999px; padding: 3px 14px; font-size: 12px; font-weight: 700; }
+/* Was a literal duplicate of --arvrs-grad-dark's old value; now the token
+   itself (EX-034/EX-035). */
+.arvrs-gateway-head { background: var(--arvrs-grad-dark); padding: 24px 28px; color: #fff; display: flex; flex-direction: column; gap: 8px; }
+.arvrs-gateway-head h1, .arvrs-gateway-head .arvrs-h1 { margin: 0; font-size: 18px; font-weight: 800; }
+.arvrs-gateway-tag { align-self: flex-start; background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.35); border-radius: 999px; padding: 3px 14px; font-size: 12px; font-weight: 800; }
 .arvrs-gateway-body { padding: 28px; }
 .arvrs-kv-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px; }
-.arvrs-kv-cell { display: flex; flex-direction: column; gap: 2px; background: var(--arvrs-chip); border-radius: 12px; padding: 12px 16px; }
+.arvrs-kv-cell { display: flex; flex-direction: column; gap: 2px; background: var(--arvrs-chip); border-radius: var(--arvrs-radius-12); padding: 12px 16px; }
 .arvrs-kv-cell span { color: var(--arvrs-muted); font-size: 12.5px; }
-.arvrs-kv-cell strong { font-size: 14px; font-weight: 700; }
-.arvrs-kv-cell strong.is-amount { font-size: 15px; font-weight: 900; color: var(--arvrs-brand-ink); }
+.arvrs-kv-cell strong { font-size: 14px; font-weight: 800; }
+.arvrs-kv-cell strong.is-amount { font-size: 15px; font-weight: 800; color: var(--arvrs-brand-ink); }
 .arvrs-gateway-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
 .arvrs-pay-progress { display: flex; align-items: center; gap: 14px; padding: 22px 4px 8px; }
+.arvrs-pay-progress-text { color: var(--arvrs-muted); font-size: 13.5px; }
+.arvrs-pay-result, .arvrs-replay-result { margin-top: 10px; }
 .arvrs-spinner { width: 24px; height: 24px; border-radius: 50%; border: 3px solid var(--arvrs-line); border-top-color: var(--arvrs-brand); animation: arvrs-spin .8s linear infinite; }
 @keyframes arvrs-spin { to { transform: rotate(360deg); } }
-.arvrs-pay-replay { height: 44px; border: 1.5px dashed #c3d6d4; border-radius: 13px; background: transparent; color: var(--arvrs-muted); font-family: inherit; font-size: 13.5px; font-weight: 700; cursor: pointer; }
+.arvrs-pay-replay { height: 44px; border: 1.5px dashed #c3d6d4; border-radius: var(--arvrs-radius-12); background: transparent; color: var(--arvrs-muted); font-family: inherit; font-size: 13.5px; font-weight: 800; cursor: pointer; }
 .arvrs-pay-replay:hover { border-color: var(--arvrs-brand); color: var(--arvrs-brand-ink); }
 
 /* ---------- footer ---------- */
 .arvrs-footer {
-  max-width: 1160px; margin: 48px auto 0; padding: 24px; display: flex; justify-content: space-between;
+  margin-block: 48px 0; padding-block: 24px; display: flex; justify-content: space-between;
   gap: 16px; flex-wrap: wrap; border-top: 1px solid var(--arvrs-line); font-size: 13px; color: var(--arvrs-muted);
 }
 .arvrs-footer strong { color: var(--arvrs-ink); font-size: 14px; }
@@ -433,22 +553,38 @@
   .arvrs-config { position: static; }
   .arvrs-products, .arvrs-features, .arvrs-grid-3 { grid-template-columns: 1fr 1fr; }
   .arvrs-hero { padding: 48px 32px; }
-  .arvrs-hero h1 { font-size: 32px; }
+  .arvrs-hero h1, .arvrs-hero .arvrs-h1 { font-size: 32px; }
   .arvrs-shape { display: none; }
 }
 @media (max-width: 720px) {
   .arvrs-auth { grid-template-columns: 1fr; }
   .arvrs-auth-aside { display: none; }
 }
+/* Nav collapses to a disclosure at ≤760px — this also fixes the 640-760px
+   band where a long brand name used to wrap .arvrs-nav onto a second row
+   inside the fixed 68px header and overflow it (EX-069/EX-094). */
+@media (max-width: 760px) {
+  .arvrs-header-inner { flex-wrap: nowrap; }
+  .arvrs-nav-toggle { display: inline-flex; }
+  .arvrs-nav {
+    display: none; position: absolute; inset-inline: 0; top: 100%;
+    flex-direction: column; gap: 2px; background: var(--arvrs-surface);
+    border-bottom: 1px solid var(--arvrs-line); box-shadow: var(--arvrs-shadow);
+    padding: 10px 16px 14px;
+  }
+  .arvrs-nav.is-open { display: flex; }
+  .arvrs-nav a { padding: 12px 14px; }
+  .arvrs-brand-name { max-width: 40vw; }
+}
 @media (max-width: 640px) {
+  .arvrs-shell, .arvrs-header-inner, .arvrs-main, .arvrs-footer { padding-inline: 16px; }
   .arvrs-header-inner { gap: 12px; }
-  .arvrs-nav { display: none; }
-  .arvrs-main { padding: 16px 16px 60px; margin-top: 16px; }
+  .arvrs-main { padding-block: 16px 60px; margin-block-start: 16px; }
   .arvrs-card { padding: 18px; }
   .arvrs-products, .arvrs-features, .arvrs-grid-2, .arvrs-grid-3, .arvrs-stat-grid, .arvrs-kv-grid { grid-template-columns: 1fr; }
-  .arvrs-hero { padding: 36px 22px; border-radius: 20px; }
-  .arvrs-hero h1 { font-size: 26px; }
-  .arvrs-page-title, .arvrs-title-row h1 { font-size: 22px; }
+  .arvrs-hero { padding: 36px 22px; border-radius: var(--arvrs-radius-20); }
+  .arvrs-hero h1, .arvrs-hero .arvrs-h1 { font-size: 26px; }
+  .arvrs-page-title, .arvrs-title-row h1, .arvrs-title-row .arvrs-h1 { font-size: 22px; }
   .arvrs-footer, .arvrs-footer-contact { flex-direction: column; align-items: flex-start; }
 }
 @media (prefers-reduced-motion: reduce) {

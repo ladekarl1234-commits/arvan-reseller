@@ -37,13 +37,21 @@ Bump `ARVRS_SCHEMA_VERSION`, extend `Schema::migrate` (dbDelta-idempotent — ne
 Register in `Rest\Routes` with `permission_callback` + full `args` schema; owner-scope every query by session user; add a dispatch-level check to the E2E script.
 
 ### Add a job type
-One `case` in `JobRunner::execute` + an enqueue site; decide retryable vs terminal errors explicitly (throw = retry).
+Register a handler via `JobRunner::handle('your_type', $callable)` — either add it in `Jobs\Handlers::register()` if it's a core type, or hook the `arvrs_job_handlers` filter from outside the module (this is the extraction seam: `JobRunner` itself imports nothing from Provisioning/Usage/Billing). The handler throws to mean "retry", returns to mean "done" — decide retryable vs terminal explicitly by branching on a typed result (`ProviderError::kind`, not message text: see `Handlers::provision_order` for the pattern). Add an enqueue site and an E2E check for the new type.
 
 ### Touch the ledger
 Read [ADR-0007](docs/adr/0007-wallet-ledger-model.md) first. New entry types need: direction mapping, a unique ref scheme, derivation handling in `Ledger::derive`, unit tests, and an ADR update. Ledger rows are never updated or deleted — if you need that, you're modeling the problem wrong.
 
 ### Record a decision
 Irreversible or expensive-to-change choices get a numbered ADR (`docs/adr/`) using the existing section template.
+
+## Translations
+
+Every UI string goes through the `arvan-reseller` text domain. The template lives at `languages/arvan-reseller.pot`; a Persian translation ships (`languages/arvan-reseller-fa_IR.po`/`.mo`).
+
+- **Regenerate the template** after adding/changing strings: `php bin/make-pot.php`.
+- **Compile a `.po` to `.mo`** after editing a translation: `php bin/make-mo.php languages/arvan-reseller-<locale>.po`.
+- **Add a new locale**: copy `languages/arvan-reseller.pot` to `languages/arvan-reseller-<locale>.po` (WordPress locale codes, e.g. `ar` or `en_US`), translate the msgstr entries, then compile it with `bin/make-mo.php`. WordPress loads the matching `.mo` automatically once the site locale matches (`{text-domain}-{locale}.mo` in `languages/` is the WordPress convention this follows).
 
 ## Security issues
 

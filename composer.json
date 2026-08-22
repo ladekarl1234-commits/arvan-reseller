@@ -7,11 +7,13 @@
         "php": ">=7.4"
     },
     "require-dev": {
+        "nikic/php-parser": "^5",
         "phpunit/phpunit": "^11 || ^12"
     },
     "scripts": {
         "test": "phpunit",
-        "lint": "@php -l arvan-reseller.php"
+        "lint": "@php bin/php74-check.php",
+        "check:php74": "@php bin/php74-check.php"
     },
     "config": {
         "optimize-autoloader": true,

@@ -24,6 +24,24 @@ jobs:
           find . -name '*.php' -not -path './vendor/*' -print0 | xargs -0 -n1 php -l > /dev/null
           echo "All PHP files lint clean"
 
+  php74:
+    name: PHP 7.4 compatibility gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+      - name: Install dev dependencies
+        run: composer update --no-interaction --no-progress --prefer-dist
+      # "php -l" only ever validates against the interpreter running it, so a
+      # PHP 8 lint job cannot defend the "Requires PHP 7.4" header. This parses
+      # every shipped file with a real 7.4 grammar and walks the AST for the
+      # constructs that parse under 7.4 but mean something newer.
+      - name: Parse every file against the PHP 7.4 grammar
+        run: php bin/php74-check.php
+
   test:
     name: Unit tests (PHP ${{ matrix.php }})
     runs-on: ubuntu-latest

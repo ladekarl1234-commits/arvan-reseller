@@ -16,18 +16,20 @@ include __DIR__ . '/partials/shell-top.php';
 </nav>
 
 <div class="arvrs-title-row">
-  <h1><?php echo esc_html($product_label); ?></h1>
-  <span class="arvrs-tag arvrs-tag-danger"><?php esc_html_e('تحویل آنی', 'arvan-reseller'); ?></span>
+  <h2 class="arvrs-h1"><?php echo esc_html($product_label); ?></h2>
+  <?php // A selling point is a positive claim: it gets the success token, not
+        // the same red the system uses for "suspended" (EX-096). ?>
+  <span class="arvrs-tag arvrs-tag-success"><?php esc_html_e('تحویل آنی', 'arvan-reseller'); ?></span>
 </div>
 
 <?php if (empty($plans)) : ?>
   <div class="arvrs-alert arvrs-alert-warning" role="alert">
-    <span class="arvrs-alert-mark">!</span>
+    <span class="arvrs-alert-mark" aria-hidden="true">!</span>
     <div class="arvrs-alert-body">
       <strong><?php esc_html_e('پلن‌ها موقتاً در دسترس نیستند', 'arvan-reseller'); ?></strong>
-      <p class="arvrs-muted"><?php esc_html_e('دریافت فهرست پلن‌ها با مشکل مواجه شد. چند لحظه دیگر دوباره تلاش کنید.', 'arvan-reseller'); ?></p>
+      <p><?php esc_html_e('دریافت فهرست پلن‌ها با مشکل مواجه شد. چند لحظه دیگر دوباره تلاش کنید.', 'arvan-reseller'); ?></p>
     </div>
-    <button class="arvrs-btn arvrs-btn-secondary" onclick="location.reload()"><?php esc_html_e('تلاش دوباره', 'arvan-reseller'); ?></button>
+    <a class="arvrs-btn arvrs-btn-secondary" href="<?php echo esc_url(add_query_arg([])); ?>"><?php esc_html_e('تلاش دوباره', 'arvan-reseller'); ?></a>
   </div>
 <?php else : ?>
 

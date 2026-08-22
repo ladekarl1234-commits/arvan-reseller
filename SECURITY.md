@@ -42,7 +42,7 @@ Open a **private** GitHub security advisory, or email the maintainer (see repo p
 
 | Rule | Implementation |
 |---|---|
-| Encrypted at rest | `Support\Crypto`: libsodium `secretbox` (XSalsa20-Poly1305), fresh nonce per encryption. Key = HMAC-SHA256 of WP auth salts with a fixed context string — never stored on disk. |
+| Encrypted at rest | `Support\Crypto`: libsodium `secretbox` (XSalsa20-Poly1305), fresh nonce per encryption. Key = HMAC-SHA256 of WP auth salts with a fixed context string — the key itself is never stored anywhere, only derived on demand. **Precondition:** this only keeps the key out of the database if `wp-config.php` defines real `AUTH_KEY`/`AUTH_SALT`/`SECURE_AUTH_KEY`/`SECURE_AUTH_SALT` constants. If it does not, `wp_salt()` falls back to values WordPress generates and stores in `wp_options` — i.e. the same database as the encrypted tokens. The plugin does not currently detect or warn about this case; see `docs/THREAT_MODEL.md` S5. |
 | Never displayed | UI shows `••••last4` only (`Credentials::all` strips `token_enc`). |
 | Never in REST | No REST route selects `token_enc`. |
 | Never logged | `Audit::redact` strips keys matching `token/password/secret/authorization/pat` recursively before persistence. |
@@ -92,3 +92,4 @@ Customers see translated Persian messages (`ProviderError::customer_message`); r
 - The static PAT allowlist prevents casual misuse, not determined piracy (a code-modified plugin bypasses any offline check). Documented as a hackathon constraint; ADR-0009 defines the remote signed-license path.
 - Salt rotation invalidates encrypted credentials by design; the UI detects this and asks for re-entry (fails closed, never plaintext-recovers).
 - Fixed-window rate limiting on transients is per-server, not global, under object-cache-less multi-server setups.
+- **No detection of DB-stored (as opposed to file-defined) WordPress salts.** On an install where `wp-config.php` never had real salt constants written into it, the credential encryption key is derived from salts WordPress itself persisted in the database — so a DB dump alone can decrypt every stored ArvanCloud token, not just a DB dump plus `wp-config.php`. Nothing on the System Health page currently distinguishes this case from the safe one (it only reports sodium availability). Operators on managed/auto-provisioned hosts should verify their `wp-config.php` has real, unique salt constants.

@@ -26,7 +26,7 @@ WP-Cron's weakness (traffic-triggered) only delays execution when the durable st
 Easier: observability (health page reads the table), production hardening (`DISABLE_WP_CRON` + real cron `*/1` — zero code change), later extraction (a worker polls the same table). Harder: sub-minute latency guarantees on idle sites (accepted: inline attempt covers the demo-critical path).
 
 ## Risks
-Long-running jobs vs PHP max_execution_time. Batch size 5 keeps runs short.
+Long-running jobs vs PHP max_execution_time. Batch size 5 keeps runs short. A worker that dies mid-claim (not a clean failure) used to strand the row in `running` forever with no operator path back — `JobRunner::reap_stale()` plus the System Health "release stranded jobs" action now close that; see `docs/RUNBOOK.md` § Jobs stranded in `running`.
 
 ## Revisit Trigger
 >1000 jobs/hour or multi-worker competition → swap claim to `SELECT … FOR UPDATE SKIP LOCKED` semantics / Action Scheduler / external worker per SCALABILITY.

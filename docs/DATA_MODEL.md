@@ -1,6 +1,6 @@
 # Data Model
 
-11 custom tables (`{prefix}arvrs_*`), schema-versioned (`arvrs_schema_version`, migrations in `src/Install/Schema.php`, idempotent dbDelta). Amounts are integer **toman (IRT)** — no floats near money. All timestamps UTC (`created_at`/`updated_at` datetime).
+12 custom tables (`{prefix}arvrs_*`), schema-versioned (`arvrs_schema_version`, migrations in `src/Install/Schema.php`, idempotent dbDelta, currently version 5). Amounts are integer **toman (IRT)** — no floats near money. All timestamps UTC (`created_at`/`updated_at` datetime).
 
 ```mermaid
 erDiagram
@@ -12,6 +12,9 @@ erDiagram
     ORDERS ||--o| SERVICES : "provisions (UNIQUE order_id)"
     SERVICES ||--o{ USAGE_RECORDS : consumes
     USAGE_RECORDS ||--|| LEDGER : "debits (UNIQUE ref)"
+    SERVICES ||--o{ LEDGER : "renewal charges (service_charge)"
+    USERS ||--o{ TOPUPS : starts
+    TOPUPS ||--o| LEDGER : "credits on settle"
     CREDENTIALS ||--o{ SERVICES : "routes via"
     BASE_COSTS ||--o{ ORDERS : "priced from (snapshot)"
 ```
@@ -28,13 +31,16 @@ One row per purchase intent. `status` (state machine), `pricing` (immutable JSON
 Append-only transition log `(order_id, from_status, to_status, actor, note)`. *Key:* `order_id`.
 
 ### `services`
-Permanent mapping `(order_id UNIQUE, customer_id, credential_id, product, plan_id, remote_id, status, connection JSON, is_demo)` — the isolation + usage-attribution anchor. *Keys:* `customer_id`, `status`, `remote_id`.
+Permanent mapping `(order_id UNIQUE, customer_id, credential_id, product, plan_id, remote_id, status, connection JSON, is_demo)` plus the renewal clock — `renews_at`, `term_days` (default 30), `renewal_price`, `renewal_count` — that `Billing\Renewals` charges against. The isolation + usage-attribution + billing anchor. *Keys:* `customer_id`, `status`, `(status, renews_at)` (the renewal-due scan), `remote_id`.
 
 ### `ledger`
-Append-only journal: `type` (topup/payment/purchase/usage_debit/service_charge/adjustment/refund/promo_credit/reservation/release), `direction`, `amount`, `ref_type`+`ref_id`, `actor`. **UNIQUE `(ref_type, ref_id, type)`** — the replay-safety backbone (INSERT IGNORE + `rows_affected`). *Keys:* `customer_id`, `created_at`. Never updated, never deleted.
+Append-only journal: `type` (topup/payment/purchase/usage_debit/service_charge/adjustment/refund/promo_credit/reservation/release), `direction`, `amount`, `ref_type`+`ref_id`, `actor`. **UNIQUE `(ref_type, ref_id, type)`** — the replay-safety backbone (INSERT IGNORE + `rows_affected`). `service_charge` is the type `Billing\Renewals` writes on each term renewal, keyed `('renewal', "{service_id}:{period_start}")`. *Keys:* `customer_id`, `created_at`. Never updated, never deleted. `balance()`/`balances()` read this table through a single indexed `GROUP BY` aggregate, not a per-row PHP sum.
 
 ### `usage_records`
-`(service_id, customer_id, period_start, period_end, quantity, unit, cost)`. **UNIQUE `(service_id, period_start, period_end)`** — a closed period ingests exactly once. *Key:* `customer_id`.
+`(service_id, customer_id, period_start, period_end, quantity, unit, cost, price)`. **UNIQUE `(service_id, period_start, period_end)`** — a closed period ingests exactly once. `cost` and `price` are split so both metered usage and renewal term-charges can report margin (`Reports\Reports`); pre-split rows were backfilled `price = cost` in the v4→v5 migration. *Key:* `customer_id`.
+
+### `topups`
+`(ref UNIQUE, customer_id, amount, status, created_at, expires_at)`. A pending top-up intent: created when a customer starts a wallet top-up, settled or expired by the payment callback / an expiry sweep. Replaces a pre-1.1 design that stored one autoloaded-off `wp_options` row per intent with no expiry and no sweep — the v4→v5 migration moved any still-pending option rows into this table. *Key:* `(status, expires_at)` (the expiry sweep).
 
 ### `jobs`
 Durable queue: `type`, `payload` JSON, `status` (pending/running/done/dead), `attempts`/`max_attempts`, `run_at`, `last_error`. *Key:* `(status, run_at)` — the claim scan.
@@ -53,7 +59,7 @@ One row per customer (PK `customer_id`); every column nullable = inherit default
 
 ## Storage placement rules
 
-- `wp_options`: one whitelisted settings array (`arvrs_settings`), license state, schema version, demo registry, top-up intents (`arvrs_topup_{ref}`, autoload off — ponytail note: move to a table if top-up volume ever matters).
+- `wp_options`: one whitelisted settings array (`arvrs_settings`), license state, schema version, demo registry. Top-up intents live in the `topups` table (above), not in `wp_options`.
 - `usermeta`: only the derived `arvrs_policy_stage`.
 - Everything transactional: the tables above (ADR-0003).
 
