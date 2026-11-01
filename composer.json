@@ -8,7 +8,7 @@
     },
     "require-dev": {
         "nikic/php-parser": "^5",
-        "phpunit/phpunit": "^11 || ^12"
+        "phpunit/phpunit": "^13.4.5"
     },
     "scripts": {
         "test": "phpunit",
